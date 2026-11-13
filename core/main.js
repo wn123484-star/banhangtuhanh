@@ -2204,6 +2204,7 @@ function renderGlobalHeaderAndFooter() {
                             <a href="/services/compare/compare.html" class="nv-hdr-link">⚖️ So Sánh &amp; Wishlist</a>
                             <a href="/services/market_tracker/price-tracker.html" class="text-info fw-bold text-decoration-none text-nowrap">📈 Theo Dõi Giá VN</a>
                             <a href="/services/auction/auction.html" class="text-warning fw-bold text-decoration-none text-nowrap">🔨 Sàn Đấu Giá</a>
+                            <a href="/services/rfq/rfq.html" class="text-nvidia fw-bold text-decoration-none text-nowrap">📋 Đấu Thầu RFQ</a>
                             <a href="/services/vouchers_deals/vouchers.html" data-nv-slot="nav_voucher" class="nv-hdr-link">🎟️ Kho Voucher</a>
                             <a href="/services/minigame/farm.html" data-nv-slot="nav_farm" class="text-nvidia fw-bold text-decoration-none text-nowrap">🌱 Nông Trại Cây</a>
                             <a href="/services/minigame/minigame.html" class="text-warning fw-bold text-decoration-none text-nowrap">🎡 Vòng Quay</a>

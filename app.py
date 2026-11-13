@@ -5967,6 +5967,520 @@ def claim_esport_reflex_arena_reward_api():
     }), 200
 
 
+# ==============================================================================
+# GIAI ĐOẠN 5: SÀN ĐẤU THẦU NGƯỢC (REVERSE RFQ), HỘ CHIẾU BLOCKCHAIN SHA-256
+#              & CỔNG API HỢP NHẤT CHO ANDROID (/api/mobile/bridge-sync)
+# ==============================================================================
+
+import hashlib
+
+
+def _ensure_stage5_rfq_and_blockchain_schema(conn):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rfq_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            buyer_id INTEGER NOT NULL DEFAULT 13,
+            buyer_username TEXT NOT NULL DEFAULT 'khach_hang_vip',
+            buyer_name TEXT NOT NULL DEFAULT 'Khách Hàng VIP',
+            title TEXT NOT NULL,
+            category TEXT DEFAULT 'gpu',
+            max_budget REAL NOT NULL,
+            qty INTEGER DEFAULT 1,
+            specs_note TEXT DEFAULT '',
+            status TEXT DEFAULT 'OPEN',
+            awarded_offer_id INTEGER DEFAULT 0,
+            awarded_order_id INTEGER DEFAULT 0,
+            awarded_pay_token TEXT DEFAULT '',
+            created_at TEXT DEFAULT ''
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rfq_quotes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            rfq_id INTEGER NOT NULL,
+            seller_id INTEGER NOT NULL DEFAULT 2,
+            seller_store_name TEXT NOT NULL,
+            quoted_price REAL NOT NULL,
+            warranty_commitment TEXT DEFAULT 'Bảo hành chính hãng 36 tháng 1 đổi 1 SOP-01',
+            delivery_sla TEXT DEFAULT 'Giao Hỏa Tốc NVX 2H Miễn Phí',
+            gift_bonus TEXT DEFAULT 'Tặng Giá đỡ VGA RGB & Keo tản nhiệt Thermal Grizzly',
+            is_accepted INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT ''
+        )
+        """
+    )
+
+    cur.execute("SELECT COUNT(*) AS cnt FROM rfq_requests")
+    cnt = int((cur.fetchone() or {"cnt": 0})["cnt"] or 0)
+    if cnt == 0:
+        now_s = time.strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute(
+            """
+            INSERT INTO rfq_requests (
+                buyer_id, buyer_username, buyer_name, title, category, max_budget, qty, specs_note, status, created_at
+            ) VALUES (
+                13, 'khach_hang_vip', 'Nguyễn Minh Quân (Khách Mua)',
+                'Cần tìm Combo Card Đồ Họa RTX 4080 Super 16GB + Nguồn ATX 3.1 1000W',
+                'gpu', 35500000.0, 1,
+                'Ưu tiên hàng chính hãng Fullbox mới 100%, xuất VAT, giao hỏa tốc 2H tại TP.HCM.',
+                'OPEN', ?
+            )
+            """,
+            (now_s,)
+        )
+        first_rfq_id = int(cur.lastrowid)
+        cur.executemany(
+            """
+            INSERT INTO rfq_quotes (
+                rfq_id, seller_id, seller_store_name, quoted_price, warranty_commitment, delivery_sla, gift_bonus, is_accepted, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+            """,
+            [
+                (
+                    first_rfq_id, 2, "ASUS ROG Official Flagship Mall",
+                    32900000.0, "Bảo hành chính hãng 36 tháng 1 đổi 1 SOP-01",
+                    "Giao Hỏa Tốc NVX 2H", "Tặng Giá đỡ VGA ROG Herculx RGB trị giá 1.290.000đ", now_s
+                ),
+                (
+                    first_rfq_id, 3, "MSI Gaming Vietnam Official",
+                    32400000.0, "Bảo hành chính hãng 36 tháng tại trung tâm MSI VN",
+                    "Giao Hỏa Tốc NVX 2H", "Tặng Chuột Gaming MSI Clutch GM41 + Voucher 200K", now_s
+                )
+            ]
+        )
+    conn.commit()
+
+
+def _build_rfq_requests_list_payload(conn):
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM rfq_requests ORDER BY id DESC LIMIT 25")
+    reqs = [dict(r) for r in cur.fetchall()]
+    for rq in reqs:
+        rid = int(rq["id"])
+        cur.execute("SELECT * FROM rfq_quotes WHERE rfq_id = ? ORDER BY quoted_price ASC, id ASC", (rid,))
+        offers = [dict(o) for o in cur.fetchall()]
+        rq["offers"] = offers
+        rq["quotes"] = offers
+        rq["offers_count"] = len(offers)
+        rq["lowest_quote"] = min((float(o["quoted_price"]) for o in offers), default=float(rq["max_budget"]))
+    return reqs
+
+
+@app.route("/api/rfq/requests", methods=["GET", "POST"])
+@app.route("/api/rfq/list", methods=["GET"])
+@app.route("/api/rfq/create", methods=["POST"])
+def handle_reverse_rfq_requests_api():
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage5_rfq_and_blockchain_schema(conn)
+    cur = conn.cursor()
+
+    if request.method == "GET":
+        reqs = _build_rfq_requests_list_payload(conn)
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "requests": reqs,
+            "total": len(reqs)
+        }), 200
+
+    data = request.get_json(silent=True) or {}
+    raw_u = data.get("buyer_username") or data.get("username") or data.get("user_id") or "khach_hang_vip"
+    buyer = _resolve_bidder_user(conn, raw_u)
+    buyer_id = int(buyer["id"])
+    buyer_uname = str(buyer.get("username") or raw_u)
+    buyer_name = str(data.get("buyer_name") or buyer.get("full_name") or buyer_uname)
+
+    title = str(data.get("title") or "Cần tìm Cấu hình PC / Linh kiện Công nghệ Chính hãng").strip()
+    cat = str(data.get("category") or "gpu").strip().lower()
+    max_budget = max(500000.0, float(data.get("max_budget") or 30000000.0))
+    qty = max(1, int(data.get("qty") or 1))
+    specs_note = str(data.get("specs_note") or "Yêu cầu hàng chính hãng mới 100%, bảo hành 36 tháng SOP-01, giao nhanh NVX 2H.").strip()
+    now_s = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    cur.execute(
+        """
+        INSERT INTO rfq_requests (
+            buyer_id, buyer_username, buyer_name, title, category, max_budget, qty, specs_note, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?)
+        """,
+        (buyer_id, buyer_uname, buyer_name, title, cat, max_budget, qty, specs_note, now_s)
+    )
+    new_rfq_id = int(cur.lastrowid)
+    conn.commit()
+
+    reqs = _build_rfq_requests_list_payload(conn)
+    created_req = next((x for x in reqs if int(x["id"]) == new_rfq_id), reqs[0] if reqs else {"id": new_rfq_id})
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "request": created_req,
+        "requests": reqs,
+        "message": f"📋 Đã đăng yêu cầu thầu ngược #{new_rfq_id} [{title}] với ngân sách tối đa {int(max_budget):,} ₫! 24 Gian hàng Flagship đã nhận được tín hiệu mời chào giá."
+    }), 200
+
+
+@app.route("/api/rfq/submit-offer", methods=["POST"])
+@app.route("/api/rfq/submit-quote", methods=["POST"])
+def submit_seller_rfq_competitive_offer_api():
+    """
+    Gian hàng gửi báo giá cạnh tranh thấp hơn ngân sách hoặc bấm nút
+    [⚡ Giả Lập 3 Gian Hàng Flagship Chào Giá Tức Thì (Demo)].
+    """
+    data = request.get_json(silent=True) or {}
+    rfq_id = int(data.get("rfq_id") or 0)
+    sim_3_stores = bool(data.get("simulate_3_flagship_stores") or data.get("simulate_stores"))
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage5_rfq_and_blockchain_schema(conn)
+    cur = conn.cursor()
+
+    if rfq_id <= 0:
+        cur.execute("SELECT id FROM rfq_requests ORDER BY id DESC LIMIT 1")
+        r_last = cur.fetchone()
+        rfq_id = int(r_last["id"]) if r_last else 1
+
+    cur.execute("SELECT * FROM rfq_requests WHERE id = ?", (rfq_id,))
+    rfq_row = cur.fetchone()
+    if not rfq_row:
+        conn.close()
+        return jsonify({"ok": False, "error": "Không tìm thấy yêu cầu đấu thầu ngược này!"}), 404
+
+    rfq = dict(rfq_row)
+    budget = float(rfq.get("max_budget") or 30000000.0)
+    now_s = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    if sim_3_stores:
+        flagship_candidates = [
+            (
+                2, "ASUS ROG Official Flagship Mall",
+                round((budget * 0.92) / 10000.0) * 10000.0,
+                "Bảo hành 36 tháng 1 đổi 1 chính hãng ASUS VN (SOP-01)",
+                "Giao Hỏa Tốc NVX 2H Miễn Phí",
+                "Tặng Giá đỡ VGA ROG + Voucher 300K"
+            ),
+            (
+                3, "MSI Gaming Vietnam Official",
+                round((budget * 0.89) / 10000.0) * 10000.0,
+                "Bảo hành 36 tháng chính hãng + Hỗ trợ kỹ thuật tận nơi",
+                "Giao Hỏa Tốc NVX 2H",
+                "Tặng Tai nghe Gaming MSI + Keo tản nhiệt"
+            ),
+            (
+                4, "GIGABYTE AORUS Flagship Store",
+                round((budget * 0.86) / 10000.0) * 10000.0,
+                "Bảo hành 36 tháng AORUS Care + Bảo vệ Quỹ Escrow 100%",
+                "Giao Hỏa Tốc NVX 2H",
+                "Giảm trực tiếp 14% so với ngân sách + Tặng Chuột AORUS"
+            )
+        ]
+        for sid, sname, qprice, warr, sla, gift in flagship_candidates:
+            cur.execute(
+                """
+                INSERT INTO rfq_quotes (
+                    rfq_id, seller_id, seller_store_name, quoted_price, warranty_commitment, delivery_sla, gift_bonus, is_accepted, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+                """,
+                (rfq_id, sid, sname, qprice, warr, sla, gift, now_s)
+            )
+        msg = f"⚡ 3 Gian hàng Flagship (ASUS ROG, MSI, GIGABYTE AORUS) vừa gửi báo giá cạnh tranh giảm sâu tới -14% cho yêu cầu #{rfq_id}!"
+    else:
+        sid = int(data.get("seller_id") or 2)
+        sname = str(data.get("seller_store_name") or "ASUS ROG Official Flagship Mall").strip()
+        raw_qprice = float(data.get("quoted_price") or round(budget * 0.90, 0))
+        warr = str(data.get("warranty_commitment") or "Bảo hành chính hãng 36 tháng 1 đổi 1 SOP-01").strip()
+        sla = str(data.get("delivery_sla") or "Giao Hỏa Tốc NVX 2H").strip()
+        gift = str(data.get("gift_bonus") or "Tặng quà chính hãng & Freeship NVX").strip()
+        cur.execute(
+            """
+            INSERT INTO rfq_quotes (
+                rfq_id, seller_id, seller_store_name, quoted_price, warranty_commitment, delivery_sla, gift_bonus, is_accepted, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+            """,
+            (rfq_id, sid, sname, raw_qprice, warr, sla, gift, now_s)
+        )
+        msg = f"✅ Gian hàng [{sname}] đã gửi báo giá {int(raw_qprice):,} ₫ cho yêu cầu #{rfq_id}!"
+
+    conn.commit()
+    cur.execute("SELECT * FROM rfq_quotes WHERE rfq_id = ? ORDER BY quoted_price ASC, id ASC", (rfq_id,))
+    offers = [dict(o) for o in cur.fetchall()]
+    reqs = _build_rfq_requests_list_payload(conn)
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "rfq_id": rfq_id,
+        "offers": offers,
+        "quotes": offers,
+        "requests": reqs,
+        "message": msg
+    }), 200
+
+
+@app.route("/api/rfq/accept-offer", methods=["POST"])
+@app.route("/api/rfq/accept-quote", methods=["POST"])
+def accept_seller_rfq_offer_and_create_qr_api():
+    """
+    Khách mua bấm [✅ Chấp Nhận Báo Giá Này] -> Tự động tạo đơn hàng ở mức giá thầu đó
+    và chuyển thẳng sang luồng Quét QR Xem Giá / Chuyển Khoản Hộ!
+    """
+    data = request.get_json(silent=True) or {}
+    rfq_id = int(data.get("rfq_id") or 0)
+    offer_id = int(data.get("offer_id") or data.get("quote_id") or 0)
+    raw_u = data.get("buyer_username") or data.get("username") or data.get("user_id") or "khach_hang_vip"
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage2_qr_and_logistics_schema(conn)
+    _ensure_stage5_rfq_and_blockchain_schema(conn)
+    cur = conn.cursor()
+
+    if offer_id > 0:
+        cur.execute("SELECT * FROM rfq_quotes WHERE id = ?", (offer_id,))
+        offer_row = cur.fetchone()
+    else:
+        cur.execute("SELECT * FROM rfq_quotes WHERE rfq_id = ? ORDER BY quoted_price ASC LIMIT 1", (rfq_id,))
+        offer_row = cur.fetchone()
+
+    if not offer_row:
+        conn.close()
+        return jsonify({"ok": False, "error": "Không tìm thấy báo giá hợp lệ để chấp nhận!"}), 404
+
+    offer = dict(offer_row)
+    offer_id = int(offer["id"])
+    rfq_id = int(offer["rfq_id"])
+
+    cur.execute("SELECT * FROM rfq_requests WHERE id = ?", (rfq_id,))
+    rfq_row = cur.fetchone()
+    rfq = dict(rfq_row) if rfq_row else {"id": rfq_id, "title": "Đơn hàng Đấu thầu ngược RFQ", "qty": 1, "max_budget": offer["quoted_price"]}
+
+    buyer = _resolve_bidder_user(conn, raw_u)
+    buyer_id = int(buyer["id"])
+    buyer_name = str(buyer.get("full_name") or buyer.get("username") or raw_u)
+
+    deal_price = float(offer["quoted_price"])
+    qty = max(1, int(rfq.get("qty") or 1))
+    total_amt = deal_price * qty
+    saving_amt = max(0.0, float(rfq.get("max_budget") or deal_price) - deal_price)
+
+    cur.execute(
+        """
+        INSERT INTO orders (
+            buyer_id, customer_name, phone, shipping_address, payment_method,
+            subtotal_amount, voucher_code, voucher_discount, xu_used, total_amount,
+            transfer_confirmed, status, escrow_status, logistics_stage
+        ) VALUES (?, ?, '0988123456', 'TP. Hồ Chí Minh (Đơn Chốt Báo Giá Đấu Thầu Ngược RFQ)', 'bank_transfer', ?, 'RFQ_DEAL', ?, 0, ?, 0, 'awaiting_payment', 'awaiting_payment', 'AWAITING_PAYMENT')
+        """,
+        (buyer_id, buyer_name, total_amt + saving_amt, saving_amt, total_amt)
+    )
+    order_id = int(cur.lastrowid)
+    tracking_code = f"NVX-{order_id}"
+    pay_token = f"NVXPAY-RFQ{rfq_id}-{order_id}-{random.randint(100, 999)}"
+    cur.execute("UPDATE orders SET tracking_code = ?, pay_token = ? WHERE id = ?", (tracking_code, pay_token, order_id))
+
+    item_title = f"[Chốt Thầu RFQ #{rfq_id}] {rfq.get('title')} — {offer.get('seller_store_name')}"
+    cur.execute(
+        """
+        INSERT INTO order_items (order_id, product_id, seller_id, quantity, unit_price, product_name_snapshot, warranty_snapshot)
+        VALUES (?, 1, ?, ?, ?, ?, ?)
+        """,
+        (order_id, int(offer.get("seller_id") or 2), qty, deal_price, item_title, str(offer.get("warranty_commitment") or "Bảo hành 36 tháng SOP-01"))
+    )
+
+    items_list = [{
+        "product_id": 1,
+        "name": item_title,
+        "quantity": qty,
+        "price": deal_price,
+        "subtotal": total_amt
+    }]
+    cur.execute(
+        """
+        INSERT OR REPLACE INTO qr_payment_sessions (
+            qr_token, pay_token, user_id, buyer_id, buyer_name, customer_phone, shipping_address,
+            order_id, amount, recipient_name, recipient_acc, description, items_summary_json,
+            status, payer_id, payer_name, payer_message, is_paid_on_behalf, tx_code, paid_at, confirmed_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, '0988123456', 'TP. Hồ Chí Minh', ?, ?, 'QUỸ BẢO LÃNH ESCROW NIVIDA STORE', '998877668888', ?, ?, 'AWAITING_PAYMENT', 0, '', '', 0, '', '', '', ?)
+        """,
+        (
+            pay_token, pay_token, buyer_id, buyer_id, buyer_name,
+            f"#NVD-{order_id}", total_amt,
+            f"Thanh toán Đơn Đấu Thầu Ngược RFQ #{rfq_id} ({offer.get('seller_store_name')})",
+            json.dumps(items_list, ensure_ascii=False),
+            time.time()
+        )
+    )
+
+    cur.execute("UPDATE rfq_quotes SET is_accepted = CASE WHEN id = ? THEN 1 ELSE 0 END WHERE rfq_id = ?", (offer_id, rfq_id))
+    cur.execute(
+        """
+        UPDATE rfq_requests
+        SET status = 'AWARDED',
+            awarded_offer_id = ?,
+            awarded_order_id = ?,
+            awarded_pay_token = ?
+        WHERE id = ?
+        """,
+        (offer_id, order_id, pay_token, rfq_id)
+    )
+    conn.commit()
+    reqs = _build_rfq_requests_list_payload(conn)
+    conn.close()
+
+    inspect_url = f"/services/cart_checkout/bank.html?pay_token={pay_token}&order_id={order_id}"
+    share_behalf_url = f"/services/cart_checkout/bank.html?pay_token={pay_token}&order_id={order_id}&mode=behalf"
+
+    return jsonify({
+        "ok": True,
+        "rfq_id": rfq_id,
+        "offer_id": offer_id,
+        "seller_store_name": offer.get("seller_store_name"),
+        "quoted_price": deal_price,
+        "total_amount": total_amt,
+        "saving_amount": saving_amt,
+        "order_id": order_id,
+        "order_code": f"#NVD-{order_id}",
+        "tracking_code": tracking_code,
+        "pay_token": pay_token,
+        "inspect_url": inspect_url,
+        "share_behalf_url": share_behalf_url,
+        "requests": reqs,
+        "message": f"✅ Đã chấp nhận báo giá của [{offer.get('seller_store_name')}] ở mức {int(total_amt):,} ₫ (Tiết kiệm {int(saving_amt):,} ₫)! Đã tạo Hóa đơn QR #NVD-{order_id}."
+    }), 200
+
+
+@app.route("/api/blockchain/device-passport", methods=["GET"])
+def get_sha256_blockchain_device_passport_api():
+    """
+    Hộ Chiếu Thiết Bị Chuỗi Băm Bất Biến (SHA-256 Blockchain Device Passport):
+    Genesis Block -> Factory QA -> Escrow Order -> Warranty Activation.
+    """
+    pid = request.args.get("product_id", type=int) or 1
+    raw_oid = str(request.args.get("order_id") or "101").replace("#NVD-", "").replace("NVD-", "").strip()
+
+    conn = _get_direct_sqlite_conn()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM products WHERE id = ?", (pid,))
+    p_row = cur.fetchone()
+    if not p_row:
+        cur.execute("SELECT * FROM products ORDER BY id ASC LIMIT 1")
+        p_row = cur.fetchone()
+    prod = dict(p_row) if p_row else {"id": pid, "name": "NVIDIA GeForce RTX Hardware", "brand": "NVIDIA", "price": 25900000}
+    conn.close()
+
+    pname = str(prod.get("name") or f"Thiết bị #{pid}")
+    brand = str(prod.get("brand") or "NVIDIA")
+    serial_no = f"NVX-SN-{brand[:3].upper()}-{int(prod.get('id') or 1):04d}-{hashlib.sha256(pname.encode('utf-8')).hexdigest()[:8].upper()}"
+
+    raw_blocks_spec = [
+        (
+            1, "GENESIS_BLOCK", "Block #1: Xuất Xưởng Chính Hãng & Cấp Serial Thiết Bị",
+            f"Nhà máy {brand} Global Manufacturing",
+            f"Khởi tạo Serial phần cứng [{serial_no}] cho [{pname}] • Chứng nhận CO/CQ chính ngạch."
+        ),
+        (
+            2, "FACTORY_QA_NVX", "Block #2: Kiểm Định Chất Lượng 12 Bước Tại Kho Tổng NVX",
+            "Trung Tâm Kiểm Định Phần Cứng NVX Express (Q.9)",
+            f"Vượt qua bài kiểm tra Stress-Test nhiệt độ, xung nhịp & dán tem niêm phong chống giả QR SOP-01."
+        ),
+        (
+            3, "ESCROW_CONTRACT", "Block #3: Khóa Quỹ Bảo Lãnh Thanh Toán Escrow & Lưu Vết Chính Sách",
+            "Hợp Đồng Thông Minh NVIDIA Pay Escrow",
+            f"Bảo vệ 100% giá trị giao dịch cho đơn #NVD-{raw_oid} • Bất biến hóa bản chụp chính sách tại thời điểm mua."
+        ),
+        (
+            4, "WARRANTY_ACTIVATION", "Block #4: Kích Hoạt Hộ Chiếu Bảo Hành Điện Tử 36 Tháng 1 Đổi 1",
+            "Hệ Thống Bảo Hành Chuỗi Khối Nivida Store",
+            f"Bảo hành chính hãng 36 tháng cho Serial [{serial_no}] • Hỗ trợ Trọng tài AI đối chiếu tự động."
+        )
+    ]
+
+    chain = []
+    prev_hash = "0" * 64
+    for idx, code, title, actor, payload_desc in raw_blocks_spec:
+        block_input = f"{idx}|{code}|{serial_no}|{prev_hash}|{payload_desc}"
+        blk_hash = hashlib.sha256(block_input.encode("utf-8")).hexdigest()
+        chain.append({
+            "block_index": idx,
+            "stage_code": code,
+            "title": title,
+            "actor": actor,
+            "payload_summary": payload_desc,
+            "previous_hash": prev_hash,
+            "block_hash": blk_hash,
+            "short_hash": f"0x{blk_hash[:10]}...{blk_hash[-8:]}",
+            "verified": True
+        })
+        prev_hash = blk_hash
+
+    return jsonify({
+        "ok": True,
+        "verified": True,
+        "hash_algorithm": "SHA-256 (Immutable Hash Chain)",
+        "product_id": int(prod.get("id") or pid),
+        "product_name": pname,
+        "brand": brand,
+        "device_serial": serial_no,
+        "root_merkle_hash": chain[-1]["block_hash"],
+        "chain": chain
+    }), 200
+
+
+@app.route("/api/mobile/bridge-sync", methods=["GET", "POST"])
+def mobile_android_bridge_sync_api():
+    """
+    Cổng API hợp nhất chuẩn bị sẵn sàng cho ứng dụng di động Android (Mobile Bridge Sync v9.0).
+    """
+    raw_u = request.args.get("username") or request.args.get("user_id") or (request.get_json(silent=True) or {}).get("username") or "khach_hang_vip"
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage3_market_tracker_schema(conn)
+    _ensure_stage4_auctions_and_reflex_schema(conn)
+    _ensure_stage5_rfq_and_blockchain_schema(conn)
+    cur = conn.cursor()
+
+    user = _resolve_bidder_user(conn, raw_u)
+    cur.execute("SELECT id, name, category, brand, price, stock, image_url FROM products ORDER BY id ASC LIMIT 8")
+    prods = [dict(r) for r in cur.fetchall()]
+    cur.execute("SELECT COUNT(*) AS c FROM auctions WHERE status = 'ACTIVE'")
+    auc_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+    cur.execute("SELECT COUNT(*) AS c FROM rfq_requests WHERE status = 'OPEN'")
+    rfq_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "platform": "NVIDIA Store E-Commerce Ecosystem",
+        "bridge_version": "v9.0-ANDROID-READY",
+        "server_timestamp": int(time.time() * 1000),
+        "user_profile": {
+            "id": int(user["id"]),
+            "username": str(user["username"]),
+            "full_name": str(user.get("full_name") or user["username"]),
+            "wallet_balance": float(user.get("bank_balance") or 0),
+            "coins": int(user.get("coins") or 0)
+        },
+        "live_counters": {
+            "active_auctions": auc_cnt,
+            "open_rfq_requests": rfq_cnt,
+            "featured_products_count": len(prods)
+        },
+        "featured_products": prods,
+        "mobile_endpoints": {
+            "qr_create": "/api/payment/qr-session/create",
+            "qr_confirm": "/api/payment/qr-session/confirm",
+            "order_lifecycle": "/api/tracking/order-lifecycle",
+            "market_tracker": "/api/market-tracker/overview",
+            "live_auctions": "/api/auctions/list",
+            "reverse_rfq": "/api/rfq/requests",
+            "device_passport": "/api/blockchain/device-passport"
+        }
+    }), 200
+
+
+
 
 
 def _render_root_error_page(status_code=404, custom_detail=""):

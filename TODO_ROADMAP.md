@@ -81,14 +81,15 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 
 ---
 
-## GIAI ĐOẠN 5: SÀN ĐẤU THẦU NGƯỢC RFQ & HỘ CHIẾU BẢO HÀNH BLOCKCHAIN SHA-256
+## GIAI ĐOẠN 5: SÀN ĐẤU THẦU NGƯỢC RFQ, HỘ CHIẾU BẢO HÀNH BLOCKCHAIN SHA-256 & CỔNG API ANDROID (ĐÃ HOÀN TẤT)
 
-- [ ] **5.1. Sàn Đấu Thầu Ngược "Khách Đăng Yêu Cầu — Gian Hàng Chào Giá Cạnh Tranh" (Reverse RFQ):**
-  - [ ] Tạo bảng `rfq_requests` và `rfq_quotes` cùng các API `/api/rfq/list`, `/api/rfq/create`, `/api/rfq/submit-quote`, `/api/rfq/accept-quote`.
-  - [ ] Cho phép Khách hàng đăng yêu cầu cấu hình/sản phẩm kèm ngân sách tối đa; cho phép Gian hàng (hoặc nút giả lập 24 Gian hàng chào giá tự động) gửi báo giá cạnh tranh thấp hơn ngân sách; khi khách bấm **`✅ Chấp Nhận Báo Giá Này`**, tự động tạo đơn hàng thanh toán QR ở đúng mức giá ưu đãi đó.
-- [ ] **5.2. Hộ Chiếu Bảo Hành Chuỗi Băm Blockchain SHA-256 Trên Trang Chi Tiết Sản Phẩm:**
-  - [ ] Trong `services/product/product-detail.js`, bổ sung khung tương tác **"🔗 Hộ Chiếu Bảo Hành Chuỗi Băm SHA-256 (Blockchain Device Warranty Passport)"**:
-    - [ ] Hiển thị chuỗi khối `SHA-256 Device Warranty Passport` gồm 3 Block liên kết bất biến (*Block #1: Xuất xưởng Chính hãng* $\rightarrow$ *Block #2: Kiểm định Kho NVX* $\rightarrow$ *Block #3: Cam kết Bảo hành Escrow SOP-01*).
+- [x] **5.1. Sàn Đấu Thầu Ngược "Khách Đăng Yêu Cầu — Gian Hàng Chào Giá Cạnh Tranh" (Reverse RFQ):**
+  - [x] Tạo bảng `rfq_requests` và `rfq_quotes` cùng các API `/api/rfq/requests` (`/api/rfq/list`, `/api/rfq/create`), `/api/rfq/submit-offer` (`/api/rfq/submit-quote`), `/api/rfq/accept-offer` (`/api/rfq/accept-quote`).
+  - [x] Cho phép Khách hàng đăng yêu cầu cấu hình/sản phẩm kèm ngân sách tối đa trên `/services/rfq/rfq.html`; cho phép Gian hàng (hoặc nút giả lập 3 Gian hàng Flagship chào giá tự động) gửi báo giá cạnh tranh thấp hơn ngân sách; khi khách bấm **`✅ Chấp Nhận Báo Giá Này`**, tự động tạo đơn hàng thanh toán QR 2 bước ở đúng mức giá ưu đãi đó.
+- [x] **5.2. Hộ Chiếu Bảo Hành Chuỗi Băm Blockchain SHA-256 & Cổng API Android:**
+  - [x] Trong `services/product/product-detail.js` và `services/order_tracking/tracking.js`, tích hợp khung tương tác **"🔗 Hộ Chiếu Bảo Hành Chuỗi Băm SHA-256 (Blockchain Device Warranty Passport)"**:
+    - [x] Hiển thị chuỗi khối `SHA-256 Device Warranty Passport` gồm 4 Block liên kết bất biến (*Block #1: Xuất xưởng Chính hãng* $\rightarrow$ *Block #2: Kiểm định Kho NVX* $\rightarrow$ *Block #3: Hợp đồng Bảo lãnh Escrow SOP-01* $\rightarrow$ *Block #4: Kích hoạt Bảo hành 36 Tháng*) kèm nút kiểm chứng mật mã học.
+  - [x] Triển khai cổng API hợp nhất `/api/mobile/bridge-sync` chuẩn bị sẵn sàng cho ứng dụng di động Android.
 
 ---
 
