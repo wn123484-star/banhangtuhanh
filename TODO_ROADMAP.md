@@ -93,16 +93,16 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 
 ---
 
-## GIAI ĐOẠN 6: RÀ SOÁT, DÒ BUG SÂU TOÀN DIỆN & NGHIỆM THU CUỐI CÙNG (DEEP BUG HUNTING & QA REGRESSION)
+## GIAI ĐOẠN 6: RÀ SOÁT, DÒ BUG SÂU TOÀN DIỆN & NGHIỆM THU CUỐI CÙNG (DEEP BUG HUNTING & QA REGRESSION - ĐÃ HOÀN TẤT)
 
-- [ ] **6.1. Dò Bug Cú Pháp, Biến Trùng & Dấu Cắt Patch Trên Toàn Bộ Dự Án:**
-  - [ ] Quét toàn bộ các tệp `.py`, `.js`, `.html`, `.css` để đảm bảo **0 dòng dấu cắt patch thừa** (`===`, `<<<`, `>>>`), **0 lỗi biên dịch Python** (`py_compile`), và **0 khai báo biến `let`/`const` trùng tên** gây lỗi khi làm rối mã JS.
-- [ ] **6.2. Dò Bug Liên Kết DOM ID, Hàm `onclick` & Đường Dẫn 404:**
-  - [ ] Kiểm tra mọi nút bấm `onclick="tenHam(...)"` trên tất cả các trang HTML đều có hàm `window.tenHam` tương ứng trong `.js`.
-  - [ ] Kiểm tra mọi lệnh `insertBefore` trong `core/main.js`, `admin-center.js`, `product-detail.js`, `tracking.js` đều có bước xác thực `parentNode` an toàn.
-- [ ] **6.3. Kiểm Thử Nghiệm Thu End-to-End 5 Luồng Nghiệp Vụ Trọng Tâm:**
-  - [ ] **Test Case 1 (Icon Studio):** Lưu thử icon ở vị trí 4 (`nav_bank`), 5 (`nav_ai_cat`), 8 (`cat_mainboard`), 11 (`cat_headphones`) trong Admin $\rightarrow$ F5 trang chủ người dùng $\rightarrow$ Xác nhận cả 4 vị trí và toàn bộ 14 vị trí hiển thị ngay icon mới.
-  - [ ] **Test Case 2 (QR Xem Giá & Chuyển Khoản Hộ):** Đặt hàng QR $\rightarrow$ Mở link QR trên `bank.html` $\rightarrow$ Hiện bảng xem giá chi tiết $\rightarrow$ Chọn "Chuyển khoản hộ", nhập tên người chuyển hộ & bấm Xác nhận $\rightarrow$ Đơn hàng chuyển sang `ESCROW_LOCKED` và trang `checkout.html` tự chuyển sang `tracking.html`.
-  - [ ] **Test Case 3 (Vận Đơn & Hoàn Đơn):** Trên `tracking.html`, chuyển trạng thái tới `DELIVERED_INSPECTING` $\rightarrow$ Bấm Yêu cầu Hoàn đơn & Hoàn tiền $\rightarrow$ Xác nhận số dư Ví NVIDIA Pay của khách được cộng hoàn lại 100% số tiền và tồn kho sản phẩm tăng lại.
-  - [ ] **Test Case 4 (Theo Dõi Giá Thị Trường & Báo Động):** Gắn theo dõi 1 sản phẩm với giá mục tiêu $\rightarrow$ Bấm giả lập giảm giá chạm mốc $\rightarrow$ Xác nhận thông báo Chuông `🔔` và huy hiệu báo động kích hoạt chính xác; kiểm tra chặn khi vượt quá giới hạn Quota (5–8 món).
-  - [ ] **Test Case 5 (Đấu Giá Kép, Đấu Thầu RFQ & Đội Bot QA):** Nâng cấp Đội Bot QA (`/api/settings/qa-bot-audit`) quét toàn bộ các trang và API mới, chạy kiểm tra đạt **100% HTTP 200 OK (0 lỗi)**.
+- [x] **6.1. Dò Bug Cú Pháp, Biến Trùng & Dấu Cắt Patch Trên Toàn Bộ Dự Án:**
+  - [x] Quét toàn bộ các tệp `.py`, `.js`, `.html`, `.css` để đảm bảo **0 dòng dấu cắt patch thừa** (`===`, `<<<`, `>>>`), **0 lỗi biên dịch Python** (`py_compile`), và **0 khai báo biến `let`/`const` trùng tên** gây lỗi khi làm rối mã JS.
+- [x] **6.2. Dò Bug Liên Kết DOM ID, Hàm `onclick` & Đường Dẫn 404:**
+  - [x] Kiểm tra mọi nút bấm `onclick="tenHam(...)"` trên tất cả các trang HTML đều có hàm `window.tenHam` tương ứng trong `.js`.
+  - [x] Kiểm tra mọi lệnh `insertBefore` trong `core/main.js`, `admin-center.js`, `product-detail.js`, `tracking.js` đều có bước xác thực `parentNode` an toàn.
+- [x] **6.3. Kiểm Thử Nghiệm Thu End-to-End 5 Luồng Nghiệp Vụ Trọng Tâm:**
+  - [x] **Test Case 1 (Icon Studio):** Lưu thử icon ở vị trí 4 (`nav_bank`), 5 (`nav_ai_cat`), 8 (`cat_mainboard`), 11 (`cat_headphones`) trong Admin $\rightarrow$ F5 trang chủ người dùng $\rightarrow$ Xác nhận cả 4 vị trí và toàn bộ 14 vị trí hiển thị ngay icon mới.
+  - [x] **Test Case 2 (QR Xem Giá & Chuyển Khoản Hộ):** Đặt hàng QR $\rightarrow$ Mở link QR trên `bank.html` $\rightarrow$ Hiện bảng xem giá chi tiết $\rightarrow$ Chọn "Chuyển khoản hộ", nhập tên người chuyển hộ & bấm Xác nhận $\rightarrow$ Đơn hàng chuyển sang `ESCROW_LOCKED` và trang `checkout.html` tự chuyển sang `tracking.html`.
+  - [x] **Test Case 3 (Vận Đơn & Hoàn Đơn):** Trên `tracking.html`, chuyển trạng thái tới `DELIVERED_INSPECTING` $\rightarrow$ Bấm Yêu cầu Hoàn đơn & Hoàn tiền $\rightarrow$ Xác nhận số dư Ví NVIDIA Pay của khách được cộng hoàn lại 100% số tiền và tồn kho sản phẩm tăng lại.
+  - [x] **Test Case 4 (Theo Dõi Giá Thị Trường & Báo Động):** Gắn theo dõi 1 sản phẩm với giá mục tiêu $\rightarrow$ Bấm giả lập giảm giá chạm mốc $\rightarrow$ Xác nhận thông báo Chuông `🔔` và huy hiệu báo động kích hoạt chính xác; kiểm tra chặn khi vượt quá giới hạn Quota (5–8 món).
+  - [x] **Test Case 5 (Đấu Giá Kép, Đấu Thầu RFQ & Đội Bot QA):** Nâng cấp Đội Bot QA (`/api/settings/qa-bot-audit`) quét toàn bộ các trang và API mới, chạy kiểm tra đạt **100% HTTP 200 OK (0 lỗi)**.

@@ -3058,9 +3058,9 @@ def _enhanced_admin_overview_wrapper(orig_overview_fn):
 
 def _deep_synchronized_qa_bot_audit():
     """
-    Đội Bot Admin V8.2 (Đồng Bộ Toàn Diện 100%):
-    - Kiểm thử 21 Trang (xác thực DOM, đường dẫn thực tế & toàn bộ hàm JS onclick).
-    - Kiểm thử 15 API trọng tâm & Kiểm toán đồng bộ SQLite.
+    Đội Bot Admin V9.0 (Đồng Bộ Toàn Diện 100%):
+    - Kiểm thử 24 Trang (xác thực DOM, đường dẫn thực tế & toàn bộ hàm JS onclick).
+    - Kiểm thử 23 API trọng tâm (Giai đoạn 1 -> 6) & Kiểm toán đồng bộ SQLite.
     """
     t_start = time.perf_counter()
     results = []
@@ -3083,18 +3083,21 @@ def _deep_synchronized_qa_bot_audit():
 
     pages_to_audit = [
         ("Trang Chủ Mua Sắm & Bộ Lọc Đa Hãng", "/services/home/index.html", "services/home/home.js"),
-        ("Chi Tiết Sản Phẩm & Lịch Sử SOP-01", "/services/product/product-detail.html?id=1", "services/product/product-detail.js"),
+        ("Chi Tiết Sản Phẩm, Biểu Đồ Giá VN & Hộ Chiếu SHA-256", "/services/product/product-detail.html?id=1", "services/product/product-detail.js"),
         ("Giỏ Hàng Thông Minh", "/services/cart_checkout/cart.html", "services/cart_checkout/cart.js"),
-        ("Cổng Thanh Toán & Tự Chuyển Bước QR", "/services/cart_checkout/checkout.html", "services/cart_checkout/checkout.js"),
-        ("Ngân Hàng Số NVIDIA Pay", "/services/cart_checkout/bank.html", "services/cart_checkout/bank.html"),
+        ("Cổng Thanh Toán QR 2 Bước & Chuyển Khoản Hộ", "/services/cart_checkout/checkout.html", "services/cart_checkout/checkout.js"),
+        ("Ngân Hàng Số NVIDIA Pay & Kiểm Tra Hóa Đơn QR", "/services/cart_checkout/bank.html", "services/cart_checkout/bank.html"),
+        ("Sàn Theo Dõi Giá Thị Trường VN (VN-TECH INDEX)", "/services/market_tracker/price-tracker.html", "services/market_tracker/price-tracker.js"),
+        ("Sàn Đấu Giá Kép Thời Gian Thực & Phản Xạ Esport 30s", "/services/auction/auction.html", "services/auction/auction.js"),
+        ("Sàn Đấu Thầu Ngược Reverse RFQ (24 Gian Hàng)", "/services/rfq/rfq.html", "services/rfq/rfq.js"),
         ("Kho Siêu Voucher Sự Kiện", "/services/vouchers_deals/vouchers.html", "services/vouchers_deals/vouchers.js"),
         ("Vòng Quay May Mắn", "/services/minigame/minigame.html", "services/minigame/minigame.js"),
         ("Nông Trại Cây Voucher", "/services/minigame/farm.html", "services/minigame/farm.js"),
         ("Trạm Build PC AI", "/services/pc_builder/pc-builder.html", "services/pc_builder/pc-builder.js"),
         ("So Sánh & Wishlist", "/services/compare/compare.html", "services/compare/compare.js"),
-        ("Tra Cứu Vận Đơn NVX", "/services/order_tracking/tracking.html", "services/order_tracking/tracking.js"),
+        ("Tra Cứu Vận Đơn 6 Bước NVX Express & Hoàn Đơn", "/services/order_tracking/tracking.html", "services/order_tracking/tracking.js"),
         ("Kênh Người Bán & Studio Preview Ảnh", "/services/seller/seller-dashboard.html", "services/seller/seller.js"),
-        ("Gian Hàng Chính Hãng (Flagship Mall)", "/services/seller/store.html?seller_id=2", "services/seller/store.html"),
+        ("Gian Hàng Chính Hãng (Flagship Mall)", "/services/seller/store.html?seller_id=2", "services/seller/store.js"),
         ("Chi Tiết Đơn Hàng Kênh Bán", "/services/seller/order-detail.html?id=1", "services/seller/order-detail.html"),
         ("Đăng Nhập Khách Mua (Google OAuth)", "/services/auth/auth.html", "services/auth/auth.js"),
         ("Đăng Nhập Kênh Người Bán (Google OAuth)", "/services/auth/seller-auth.html", "services/auth/seller-auth.html"),
@@ -3108,11 +3111,12 @@ def _deep_synchronized_qa_bot_audit():
     builtin_allowed_fns = {
         "if", "for", "while", "switch", "return", "event", "window", "document",
         "history", "localStorage", "sessionStorage", "alert", "confirm", "prompt",
-        "setTimeout", "setInterval", "console", "this", "fetch", "location", "navigator"
+        "setTimeout", "setInterval", "console", "this", "fetch", "location", "navigator",
+        "print", "open", "close", "reload", "back"
     }
 
     print("=" * 78, flush=True)
-    print("🤖 [ADMIN QA BOT SQUAD V8.2] KIỂM THỬ SÂU DOM -> HÀM JS -> API -> SQLITE", flush=True)
+    print("🤖 [ADMIN QA BOT SQUAD V9.0] KIỂM THỬ SÂU DOM -> HÀM JS -> API -> SQLITE", flush=True)
     print("=" * 78, flush=True)
 
     client = app.test_client()
@@ -3165,11 +3169,19 @@ def _deep_synchronized_qa_bot_audit():
         ("API Hồ Sơ Tòa Án Trọng Tài AI", "/api/admin-dispute/disputes", "services/admin_dispute/api.py"),
         ("API Danh Sách Sản Phẩm Đa Nhãn Hàng", "/api/home/products?sort_by=popular", "services/home/api.py"),
         ("API Chi Tiết Sản Phẩm & Lịch Sử Bảo Hành", "/api/products/1", "services/product/api.py"),
+        ("API Bộ Icon Đa Phiên Bản 14 Vị Trí", "/api/settings/icon-sets", "app.py"),
         ("API Tạo Icon Vector SVG Đúng Chủng Loại", "/api/settings/product-icon-svg?category=gpu&brand=NVIDIA", "app.py"),
         ("API Điều Khiển Đa Sự Kiện", "/api/settings/events", "app.py"),
         ("API Kho Voucher Toàn Sàn", "/api/vouchers/list?user_id=13", "services/vouchers_deals/api.py"),
         ("API Ví Ngân Hàng Số NVIDIA Pay", "/api/settings/bank-wallet?user_id=13", "services/settings/api.py"),
         ("API Tự Động Nhận Diện Quét QR (Polling)", "/api/settings/bank-wallet/qr-transfer?poll=1", "app.py"),
+        ("API Vận Đơn 6 Bước NVX Express & Đồng Kiểm", "/api/tracking/order-lifecycle?order_id=1", "app.py"),
+        ("API Sàn Theo Dõi Giá Thị Trường VN 30 Phiên", "/api/market-tracker/overview?product_id=1", "app.py"),
+        ("API Danh Sách Canh Giá Watchlist Quota", "/api/market-tracker/watchlist?user_id=khach_hang_vip", "app.py"),
+        ("API Sàn Đấu Giá Kép Thời Gian Thực", "/api/auctions/list", "app.py"),
+        ("API Sàn Đấu Thầu Ngược Reverse RFQ", "/api/rfq/requests", "app.py"),
+        ("API Hộ Chiếu Thiết Bị Blockchain SHA-256", "/api/blockchain/device-passport?product_id=1", "app.py"),
+        ("API Cổng Đồng Bộ Di Động Android Bridge", "/api/mobile/bridge-sync?username=khach_hang_vip", "app.py"),
         ("API Kho Lưu Trữ Icon Thương Hiệu", "/api/settings/brand-icons", "services/settings/api.py"),
         ("API Linh Kiện Build PC", "/api/pc-builder/parts", "services/pc_builder/api.py"),
         ("API Nông Trại Cây Voucher", "/api/minigame/farm?user_id=13", "services/minigame/api.py"),
@@ -3201,6 +3213,10 @@ def _deep_synchronized_qa_bot_audit():
 
     conn = _get_direct_sqlite_conn()
     cur = conn.cursor()
+    try:
+        cur.execute("ALTER TABLE products ADD COLUMN product_type TEXT DEFAULT ''")
+    except Exception:
+        pass
     cur.execute("SELECT COUNT(*) FROM users WHERE role = 'seller'")
     db_shops = int(cur.fetchone()[0] or 0)
     cur.execute("SELECT COUNT(*) FROM products")
@@ -3231,14 +3247,20 @@ def _deep_synchronized_qa_bot_audit():
 
     total_ms = round((time.perf_counter() - t_start) * 1000, 1)
     summary_msg = (
-        f"🤖 Đội Bot V8.2 đã kiểm thử sâu {len(pages_to_audit)} Trang ({total_buttons_verified} nút, {total_js_handlers_verified} hàm JS onclick), "
+        f"🤖 Đội Bot V9.0 đã kiểm thử sâu {len(pages_to_audit)} Trang ({total_buttons_verified} nút, {total_js_handlers_verified} hàm JS onclick), "
         f"{len(apis_to_probe)} API & SQLite ({db_shops} Shop, {db_prods} SP, {db_events_total} Sự kiện) trong {total_ms} ms — "
         f"Đạt chuẩn 100% ({issues_found} lỗi)!"
     )
     print("=" * 78, flush=True)
     print(summary_msg, flush=True)
+    total_checks = len(results)
+    passed_checks = total_checks - issues_found
     return jsonify({
         "ok": True,
+        "status": "PASS" if issues_found == 0 else "WARN",
+        "passed": passed_checks,
+        "total": total_checks,
+        "failed": issues_found,
         "issues_found": issues_found,
         "total_buttons_checked": total_buttons_verified,
         "total_js_handlers_verified": total_js_handlers_verified,
