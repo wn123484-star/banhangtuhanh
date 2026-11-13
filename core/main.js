@@ -2202,6 +2202,7 @@ function renderGlobalHeaderAndFooter() {
                             <a href="${user && (user.role === 'seller' || user.role === 'admin') ? '/services/seller/seller-dashboard.html' : '/services/auth/seller-auth.html'}" class="nv-hdr-link">🏪 Kênh Người Bán</a>
                             <a href="/services/pc_builder/pc-builder.html" class="nv-hdr-link">🛠️ Build PC</a>
                             <a href="/services/compare/compare.html" class="nv-hdr-link">⚖️ So Sánh &amp; Wishlist</a>
+                            <a href="/services/market_tracker/price-tracker.html" class="text-info fw-bold text-decoration-none text-nowrap">📈 Theo Dõi Giá VN</a>
                             <a href="/services/vouchers_deals/vouchers.html" data-nv-slot="nav_voucher" class="nv-hdr-link">🎟️ Kho Voucher</a>
                             <a href="/services/minigame/farm.html" data-nv-slot="nav_farm" class="text-nvidia fw-bold text-decoration-none text-nowrap">🌱 Nông Trại Cây</a>
                             <a href="/services/minigame/minigame.html" class="text-warning fw-bold text-decoration-none text-nowrap">🎡 Vòng Quay</a>
@@ -2428,13 +2429,36 @@ window.markAllGlobalNotificationsRead = markAllGlobalNotificationsRead;
 async function loadGlobalNotificationsIntoDrawer() {
     const u = getAuthUser();
     const uid = u && u.id ? u.id : 1;
+    const uKey = u && (u.username || u.id) ? String(u.username || u.id) : 'khach_hang_vip';
     try {
-        const [notifRes, legalRes] = await Promise.all([
+        const [notifRes, legalRes, priceAlertRes] = await Promise.all([
             fetch(`/api/compare/notifications?user_id=${uid}`),
-            fetch('/api/legal/clauses?audience=all')
+            fetch('/api/legal/clauses?audience=all'),
+            fetch(`/api/market-tracker/notifications?user_id=${encodeURIComponent(uKey)}&_t=${Date.now()}`, { cache: 'no-store' })
         ]);
         const nData = await notifRes.json();
         const rawNotifs = nData.notifications || (Array.isArray(nData) ? nData : []);
+
+        let priceAlerts = [];
+        if (priceAlertRes && priceAlertRes.ok) {
+            const pData = await priceAlertRes.json();
+            const pList = pData.notifications || [];
+            priceAlerts = pList.map(pa => ({
+                id: 'pa_' + pa.id,
+                notif_type: 'price_drop',
+                title: pa.title,
+                message: pa.message,
+                created_at: pa.created_at || 'Vừa xong',
+                link: pa.link_url || '/services/market_tracker/price-tracker.html'
+            }));
+            if (priceAlerts.length > 0) {
+                const bellBtn = document.getElementById('headerNotifBellBtn');
+                if (bellBtn) {
+                    bellBtn.classList.remove('btn-outline-warning');
+                    bellBtn.classList.add('btn-danger', 'text-white');
+                }
+            }
+        }
 
         let legalItems = [];
         if (legalRes.ok) {
@@ -2450,7 +2474,7 @@ async function loadGlobalNotificationsIntoDrawer() {
             }));
         }
 
-        const merged = [...rawNotifs, ...legalItems];
+        const merged = [...priceAlerts, ...rawNotifs, ...legalItems];
         __nvNotificationsCache = merged.length ? merged : [
             {
                 id: 'def_1',
@@ -2478,6 +2502,21 @@ async function loadGlobalNotificationsIntoDrawer() {
         renderCategorizedNotificationsList();
     } catch (e) {}
 }
+window.loadGlobalNotificationsIntoDrawer = loadGlobalNotificationsIntoDrawer;
+window.refreshGlobalPriceAlertBell = async function(openDrawer) {
+    await loadGlobalNotificationsIntoDrawer();
+    const bellBtn = document.getElementById('headerNotifBellBtn');
+    if (bellBtn) {
+        bellBtn.classList.remove('btn-outline-warning');
+        bellBtn.classList.add('btn-danger', 'text-white');
+    }
+    if (openDrawer) {
+        let drawer = document.getElementById('nvGlobalNotifDrawer');
+        if (!drawer || drawer.classList.contains('d-none')) {
+            await toggleGlobalNotificationDrawer();
+        }
+    }
+};
 
 function renderCategorizedNotificationsList(allRead = false) {
     const listEl = document.getElementById('nvGlobalNotifList');

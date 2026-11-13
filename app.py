@@ -4718,6 +4718,663 @@ for _qr_r in list(app.url_map.iter_rules()):
         app.view_functions[_qr_r.endpoint] = _unified_qr_status_bridge
 
 
+# ==============================================================================
+# GIAI ĐOẠN 3: SÀN THEO DÕI GIÁ THỊ TRƯỜNG CÔNG NGHỆ VIỆT NAM (VN-TECH PRICE TRACKER)
+# ==============================================================================
+
+WATCHLIST_MAX_QUOTA = 6
+
+
+def _ensure_stage3_market_tracker_schema(conn):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS market_price_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            date_str TEXT NOT NULL,
+            open_price REAL NOT NULL,
+            high_price REAL NOT NULL,
+            low_price REAL NOT NULL,
+            close_price REAL NOT NULL,
+            vn_market_avg_price REAL NOT NULL,
+            volume INTEGER DEFAULT 25,
+            UNIQUE(product_id, date_str)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS product_price_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            session_date TEXT NOT NULL,
+            open_price REAL NOT NULL,
+            high_price REAL NOT NULL,
+            low_price REAL NOT NULL,
+            close_price REAL NOT NULL,
+            vn_market_avg_price REAL NOT NULL,
+            volume INTEGER DEFAULT 25,
+            event_tag TEXT DEFAULT 'NORMAL',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_price_watchlist (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            product_id INTEGER NOT NULL,
+            target_price REAL NOT NULL,
+            initial_price REAL NOT NULL,
+            is_triggered INTEGER DEFAULT 0,
+            triggered_at TEXT DEFAULT '',
+            created_at TEXT DEFAULT '',
+            UNIQUE(user_id, product_id)
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS user_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            message TEXT NOT NULL,
+            alert_type TEXT DEFAULT 'PRICE_ALERT',
+            product_id INTEGER DEFAULT 0,
+            link_url TEXT DEFAULT '',
+            is_read INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT ''
+        )
+        """
+    )
+    for col_sql in (
+        "ALTER TABLE user_notifications ADD COLUMN alert_type TEXT DEFAULT 'PRICE_ALERT'",
+        "ALTER TABLE user_notifications ADD COLUMN product_id INTEGER DEFAULT 0",
+        "ALTER TABLE user_notifications ADD COLUMN link_url TEXT DEFAULT ''",
+        "ALTER TABLE user_notifications ADD COLUMN is_read INTEGER DEFAULT 0",
+        "ALTER TABLE user_notifications ADD COLUMN created_at TEXT DEFAULT ''",
+        "ALTER TABLE user_price_watchlist ADD COLUMN triggered_at TEXT DEFAULT ''",
+        "ALTER TABLE user_price_watchlist ADD COLUMN created_at TEXT DEFAULT ''",
+        "ALTER TABLE products ADD COLUMN old_price REAL DEFAULT 0"
+    ):
+        try:
+            cur.execute(col_sql)
+        except Exception:
+            pass
+    conn.commit()
+
+
+def _resolve_normalized_watch_user_key(raw_user):
+    s = str(raw_user or "").strip()
+    if not s:
+        return "khach_hang_vip"
+    conn = _get_direct_sqlite_conn()
+    cur = conn.cursor()
+    try:
+        if s.isdigit():
+            cur.execute("SELECT username FROM users WHERE id = ?", (int(s),))
+            r = cur.fetchone()
+            if r and r["username"]:
+                conn.close()
+                return str(r["username"]).strip().lower()
+        else:
+            cur.execute("SELECT username FROM users WHERE LOWER(username) = LOWER(?)", (s,))
+            r = cur.fetchone()
+            if r and r["username"]:
+                conn.close()
+                return str(r["username"]).strip().lower()
+    except Exception:
+        pass
+    conn.close()
+    return s.lower()
+
+
+def _ensure_30day_price_history_for_product(conn, product_row):
+    cur = conn.cursor()
+    pid = int(product_row["id"])
+    cur_price = float(product_row.get("price") or 12500000)
+    if cur_price <= 0:
+        cur_price = 12500000.0
+
+    cur.execute("SELECT COUNT(*) AS cnt FROM market_price_history WHERE product_id = ?", (pid,))
+    cnt = int((cur.fetchone() or {"cnt": 0})["cnt"] or 0)
+    if cnt >= 30:
+        cur.execute("SELECT * FROM market_price_history WHERE product_id = ? ORDER BY date_str ASC LIMIT 30", (pid,))
+        return [dict(r) for r in cur.fetchall()]
+
+    import datetime
+    today = datetime.date.today()
+    rng = random.Random(pid * 9973 + 2026)
+
+    # Khởi tạo giá cách đây 30 ngày cao hơn khoảng 6% - 14% so với hiện tại để tạo sóng chứng khoán tự nhiên
+    start_multiplier = 1.04 + (pid % 7) * 0.015
+    running_close = round((cur_price * start_multiplier) / 10000.0) * 10000.0
+
+    rows_to_insert = []
+    for day_offset in range(29, -1, -1):
+        d_obj = today - datetime.timedelta(days=day_offset)
+        d_str = d_obj.strftime("%Y-%m-%d")
+
+        if day_offset == 0:
+            open_p = running_close
+            close_p = cur_price
+        else:
+            open_p = running_close
+            drift_target = cur_price + (running_close - cur_price) * (day_offset / 30.0)
+            pct_swing = rng.uniform(-0.028, 0.024)
+            raw_close = drift_target * (1.0 + pct_swing)
+            close_p = max(100000.0, round(raw_close / 10000.0) * 10000.0)
+
+        wiggle_up = max(open_p, close_p) * (1.0 + rng.uniform(0.006, 0.022))
+        wiggle_dn = min(open_p, close_p) * (1.0 - rng.uniform(0.005, 0.019))
+        high_p = round(wiggle_up / 10000.0) * 10000.0
+        low_p = max(50000.0, round(wiggle_dn / 10000.0) * 10000.0)
+
+        # Giá trung bình thị trường Việt Nam thường cao hơn Giá ưu đãi tại Nivida Store từ 4.5% đến 11%
+        vn_avg_p = round((close_p * (1.055 + rng.uniform(0.01, 0.055))) / 10000.0) * 10000.0
+        vol = int(rng.randint(18, 165))
+        running_close = close_p
+
+        rows_to_insert.append((pid, d_str, open_p, high_p, low_p, close_p, vn_avg_p, vol))
+
+    cur.executemany(
+        """
+        INSERT OR REPLACE INTO market_price_history (
+            product_id, date_str, open_price, high_price, low_price, close_price, vn_market_avg_price, volume
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        rows_to_insert
+    )
+    conn.commit()
+    cur.execute("SELECT * FROM market_price_history WHERE product_id = ? ORDER BY date_str ASC LIMIT 30", (pid,))
+    return [dict(r) for r in cur.fetchall()]
+
+
+def _build_watchlist_payload_for_user(conn, user_key):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT w.*, p.name, p.price AS current_price, p.old_price, p.category, p.brand, p.image_url, p.stock
+        FROM user_price_watchlist w
+        LEFT JOIN products p ON w.product_id = p.id
+        WHERE LOWER(w.user_id) = LOWER(?)
+        ORDER BY w.is_triggered DESC, w.id DESC
+        """,
+        (user_key,)
+    )
+    items = []
+    triggered_cnt = 0
+    for r in cur.fetchall():
+        rd = dict(r)
+        pid = int(rd.get("product_id") or 1)
+        cur_p = float(rd.get("current_price") or rd.get("initial_price") or 0)
+        targ_p = float(rd.get("target_price") or 0)
+        init_p = float(rd.get("initial_price") or cur_p)
+        is_trig = 1 if (int(rd.get("is_triggered") or 0) == 1 or (cur_p > 0 and cur_p <= targ_p)) else 0
+        if is_trig and int(rd.get("is_triggered") or 0) == 0:
+            cur.execute("UPDATE user_price_watchlist SET is_triggered = 1, triggered_at = ? WHERE id = ?", (time.strftime("%Y-%m-%d %H:%M:%S"), int(rd["id"])))
+        if is_trig:
+            triggered_cnt += 1
+        cat = str(rd.get("category") or "gpu")
+        brand = str(rd.get("brand") or "NVIDIA")
+        img = str(rd.get("image_url") or f"/api/settings/product-icon-svg?category={cat}&brand={brand}&id={pid}")
+        diff_from_target = cur_p - targ_p
+        drop_pct_from_init = round(((init_p - cur_p) / init_p) * 100, 1) if init_p > 0 else 0.0
+        items.append({
+            "id": int(rd["id"]),
+            "user_id": user_key,
+            "product_id": pid,
+            "name": str(rd.get("name") or f"Sản phẩm công nghệ #{pid}"),
+            "category": cat,
+            "brand": brand,
+            "image_url": img,
+            "current_price": cur_p,
+            "target_price": targ_p,
+            "initial_price": init_p,
+            "diff_from_target": diff_from_target,
+            "drop_pct_from_initial": drop_pct_from_init,
+            "is_triggered": bool(is_trig),
+            "status_badge": "⚡ ĐÃ CHẠM GIÁ MỤC TIÊU — MUA NGAY" if is_trig else "🔔 Đang canh giá tự động 24/7",
+            "triggered_at": str(rd.get("triggered_at") or ""),
+            "created_at": str(rd.get("created_at") or ""),
+            "product_url": f"/services/product/product-detail.html?id={pid}"
+        })
+    conn.commit()
+    return {
+        "ok": True,
+        "user_id": user_key,
+        "items": items,
+        "watchlist": items,
+        "used_quota": len(items),
+        "max_quota": WATCHLIST_MAX_QUOTA,
+        "remaining_quota": max(0, WATCHLIST_MAX_QUOTA - len(items)),
+        "triggered_count": triggered_cnt
+    }
+
+
+@app.route("/api/market-tracker/overview", methods=["GET"])
+def get_vn_tech_market_tracker_overview_api():
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage3_market_tracker_schema(conn)
+    cur = conn.cursor()
+
+    req_pid = request.args.get("product_id", type=int) or 0
+    raw_user = request.args.get("user_id") or request.args.get("username") or "khach_hang_vip"
+    user_key = _resolve_normalized_watch_user_key(raw_user)
+
+    cur.execute("SELECT * FROM products ORDER BY id ASC LIMIT 60")
+    all_prods = [dict(r) for r in cur.fetchall()]
+    if not all_prods:
+        apply_json_catalog_to_sqlite(seed_stores=True, seed_products=True, seed_events=False, clear_existing_products=False)
+        cur.execute("SELECT * FROM products ORDER BY id ASC LIMIT 60")
+        all_prods = [dict(r) for r in cur.fetchall()]
+
+    selected_prod = None
+    if req_pid > 0:
+        cur.execute("SELECT * FROM products WHERE id = ?", (req_pid,))
+        r_sel = cur.fetchone()
+        if r_sel:
+            selected_prod = dict(r_sel)
+    if not selected_prod and all_prods:
+        selected_prod = all_prods[0]
+
+    # Đảm bảo ít nhất 12 sản phẩm đầu có lịch sử 30 phiên để xếp hạng Top Giảm Sâu / Top Sốt Giá
+    movers_list = []
+    for p in all_prods[:14]:
+        hist_p = _ensure_30day_price_history_for_product(conn, p)
+        first_c = float(hist_p[0]["close_price"]) if hist_p else float(p["price"])
+        last_c = float(hist_p[-1]["close_price"]) if hist_p else float(p["price"])
+        vn_avg = float(hist_p[-1]["vn_market_avg_price"]) if hist_p else round(last_c * 1.08, 0)
+        chg_30d_pct = round(((last_c - first_c) / first_c) * 100.0, 2) if first_c > 0 else -5.2
+        vs_vn_pct = round(((last_c - vn_avg) / vn_avg) * 100.0, 2) if vn_avg > 0 else -7.5
+        cat = str(p.get("category") or "gpu")
+        brand = str(p.get("brand") or "NVIDIA")
+        img = str(p.get("image_url") or f"/api/settings/product-icon-svg?category={cat}&brand={brand}&id={p['id']}")
+        movers_list.append({
+            "id": int(p["id"]),
+            "name": str(p["name"]),
+            "brand": brand,
+            "category": cat,
+            "price": last_c,
+            "vn_market_avg_price": vn_avg,
+            "change_30d_pct": chg_30d_pct,
+            "saving_vs_vn_pct": abs(vs_vn_pct),
+            "saving_vs_vn_amount": max(0.0, vn_avg - last_c),
+            "volume_24h": int(hist_p[-1]["volume"]) if hist_p else 48,
+            "image_url": img
+        })
+
+    top_drops = sorted(movers_list, key=lambda x: x["change_30d_pct"])[:6]
+    top_gainers = sorted(movers_list, key=lambda x: x["volume_24h"], reverse=True)[:6]
+
+    raw_history = _ensure_30day_price_history_for_product(conn, selected_prod)
+    enriched_history = []
+    closes_so_far = []
+    for idx, h in enumerate(raw_history):
+        c_val = float(h["close_price"])
+        closes_so_far.append(c_val)
+        win7 = closes_so_far[max(0, len(closes_so_far) - 7):]
+        win30 = closes_so_far[max(0, len(closes_so_far) - 30):]
+        ma7_val = round(sum(win7) / len(win7), 0)
+        ma30_val = round(sum(win30) / len(win30), 0)
+        enriched_history.append({
+            "session_index": idx + 1,
+            "date_str": str(h["date_str"]),
+            "open_price": float(h["open_price"]),
+            "high_price": float(h["high_price"]),
+            "low_price": float(h["low_price"]),
+            "close_price": c_val,
+            "vn_market_avg_price": float(h["vn_market_avg_price"]),
+            "volume": int(h["volume"] or 30),
+            "ma7": ma7_val,
+            "ma30": ma30_val
+        })
+
+    latest_candle = enriched_history[-1]
+    cur_nv_price = float(selected_prod.get("price") or latest_candle["close_price"])
+    latest_candle["close_price"] = cur_nv_price
+    vn_avg_now = float(latest_candle["vn_market_avg_price"])
+    if vn_avg_now <= cur_nv_price:
+        vn_avg_now = round((cur_nv_price * 1.075) / 10000.0) * 10000.0
+        latest_candle["vn_market_avg_price"] = vn_avg_now
+
+    low_30d = min(float(x["low_price"]) for x in enriched_history)
+    high_30d = max(float(x["high_price"]) for x in enriched_history)
+    ma7_now = float(latest_candle["ma7"])
+    ma30_now = float(latest_candle["ma30"])
+    saving_amt = max(0.0, vn_avg_now - cur_nv_price)
+    saving_pct = round((saving_amt / vn_avg_now) * 100.0, 1) if vn_avg_now > 0 else 7.2
+
+    if cur_nv_price <= ma30_now * 0.985 or cur_nv_price <= low_30d * 1.03:
+        ai_rec = {
+            "signal": "STRONG_BUY",
+            "badge_text": "🟢 VÙNG GIÁ ĐÁY 30 NGÀY — NÊN MUA NGAY",
+            "color": "#22c55e",
+            "summary": f"Giá tại Nivida Store đang thấp hơn trung bình 30 ngày (MA30: {int(ma30_now):,} ₫) và rẻ hơn thị trường Việt Nam {int(saving_amt):,} ₫ (-{saving_pct}%). Đây là vùng giá tối ưu để chốt đơn hoặc gom hàng.",
+            "suggested_target_price": max(100000.0, round((cur_nv_price * 0.95) / 10000.0) * 10000.0)
+        }
+    elif cur_nv_price <= ma7_now * 1.015:
+        ai_rec = {
+            "signal": "ACCUMULATE",
+            "badge_text": "🟡 VÙNG TÍCH LŨY ỔN ĐỊNH — CANH NHỊP FLASH DROP",
+            "color": "#eab308",
+            "summary": f"Giá đang đi ngang quanh đường MA7 ({int(ma7_now):,} ₫), vẫn tiết kiệm {int(saving_amt):,} ₫ (-{saving_pct}%) so với mặt bằng chung tại VN. Khuyến nghị gắn Theo Dõi Giá để nhận báo động ngay khi có nhịp Flash Sale.",
+            "suggested_target_price": max(100000.0, round((cur_nv_price * 0.93) / 10000.0) * 10000.0)
+        }
+    else:
+        ai_rec = {
+            "signal": "WAIT_DROP",
+            "badge_text": "🟠 ĐANG CAO HƠN TRUNG BÌNH 30 NGÀY — ĐẶT BÁO ĐỘNG GIÁ",
+            "color": "#f97316",
+            "summary": f"Giá hiện tại đang nhỉnh hơn đường MA30 ({int(ma30_now):,} ₫). Hãy bấm [🔔 Gắn Theo Dõi & Đặt Giá Mục Tiêu] ở mức ~{int(round((ma30_now * 0.96)/10000.0)*10000):,} ₫ để hệ thống tự báo động khi giảm giá.",
+            "suggested_target_price": max(100000.0, round((ma30_now * 0.96) / 10000.0) * 10000.0)
+        }
+
+    watchlist_data = _build_watchlist_payload_for_user(conn, user_key)
+    conn.close()
+
+    sel_cat = str(selected_prod.get("category") or "gpu")
+    sel_brand = str(selected_prod.get("brand") or "NVIDIA")
+    sel_img = str(selected_prod.get("image_url") or f"/api/settings/product-icon-svg?category={sel_cat}&brand={sel_brand}&id={selected_prod['id']}")
+
+    return jsonify({
+        "ok": True,
+        "vn_tech_index": {
+            "index_code": "VN-TECH HARDWARE INDEX",
+            "index_points": 1284.65,
+            "change_points": -16.40,
+            "change_pct": -1.26,
+            "total_volume_24h": sum(x["volume_24h"] for x in movers_list) * 14,
+            "market_sentiment": "Thị trường linh kiện GPU & PC AI Việt Nam đang điều chỉnh giảm nhẹ (-1.26%) — Thời điểm vàng để bắt đáy phần cứng chính hãng.",
+            "updated_at": time.strftime("%d/%m/%Y %H:%M:%S")
+        },
+        "selected_product": {
+            "id": int(selected_prod["id"]),
+            "name": str(selected_prod["name"]),
+            "category": sel_cat,
+            "brand": sel_brand,
+            "image_url": sel_img,
+            "nv_store_price": cur_nv_price,
+            "vn_market_avg_price": vn_avg_now,
+            "saving_vs_vn_market": saving_amt,
+            "saving_pct": saving_pct,
+            "low_30d": low_30d,
+            "high_30d": high_30d,
+            "ma7": ma7_now,
+            "ma30": ma30_now,
+            "stock": int(selected_prod.get("stock") or 20)
+        },
+        "history": enriched_history,
+        "ai_recommendation": ai_rec,
+        "top_drops": top_drops,
+        "top_gainers": top_gainers,
+        "catalog": [
+            {
+                "id": int(p["id"]),
+                "name": str(p["name"]),
+                "brand": str(p.get("brand") or "NVIDIA"),
+                "category": str(p.get("category") or "gpu"),
+                "price": float(p.get("price") or 0)
+            }
+            for p in all_prods
+        ],
+        "watchlist_summary": watchlist_data
+    }), 200
+
+
+@app.route("/api/market-tracker/watchlist", methods=["GET", "POST"])
+def manage_user_price_watchlist_api():
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage3_market_tracker_schema(conn)
+    cur = conn.cursor()
+
+    if request.method == "GET":
+        raw_u = request.args.get("user_id") or request.args.get("username") or "khach_hang_vip"
+        user_key = _resolve_normalized_watch_user_key(raw_u)
+        payload = _build_watchlist_payload_for_user(conn, user_key)
+        conn.close()
+        return jsonify(payload), 200
+
+    data = request.get_json(silent=True) or {}
+    action = str(data.get("action") or "add").strip().lower()
+    raw_u = data.get("user_id") or data.get("username") or "khach_hang_vip"
+    user_key = _resolve_normalized_watch_user_key(raw_u)
+    pid = int(data.get("product_id") or 0)
+    watch_id = int(data.get("watch_id") or data.get("id") or 0)
+
+    if action in ("remove", "delete", "untrack"):
+        if watch_id > 0:
+            cur.execute("DELETE FROM user_price_watchlist WHERE id = ?", (watch_id,))
+        elif pid > 0:
+            cur.execute("DELETE FROM user_price_watchlist WHERE LOWER(user_id) = LOWER(?) AND product_id = ?", (user_key, pid))
+        conn.commit()
+        payload = _build_watchlist_payload_for_user(conn, user_key)
+        conn.close()
+        payload["message"] = "🗑️ Đã gỡ sản phẩm khỏi Danh sách Theo Dõi Giá (Đã giải phóng 1 slot Quota)!"
+        return jsonify(payload), 200
+
+    if pid <= 0:
+        conn.close()
+        return jsonify({"ok": False, "error": "Vui lòng chọn sản phẩm hợp lệ để gắn theo dõi giá!"}), 400
+
+    cur.execute("SELECT id, name, price FROM products WHERE id = ?", (pid,))
+    prod_row = cur.fetchone()
+    if not prod_row:
+        conn.close()
+        return jsonify({"ok": False, "error": "Sản phẩm không tồn tại trên hệ thống!"}), 404
+
+    cur_price = float(prod_row["price"] or 1000000)
+    prod_name = str(prod_row["name"])
+    raw_target = float(data.get("target_price") or 0)
+    if raw_target <= 0:
+        raw_target = max(100000.0, round((cur_price * 0.93) / 10000.0) * 10000.0)
+
+    # Kiểm tra xem sản phẩm đã có trong danh sách của user chưa
+    cur.execute("SELECT id FROM user_price_watchlist WHERE LOWER(user_id) = LOWER(?) AND product_id = ?", (user_key, pid))
+    existing = cur.fetchone()
+
+    if not existing:
+        cur.execute("SELECT COUNT(*) AS cnt FROM user_price_watchlist WHERE LOWER(user_id) = LOWER(?)", (user_key,))
+        current_cnt = int((cur.fetchone() or {"cnt": 0})["cnt"] or 0)
+        if current_cnt >= WATCHLIST_MAX_QUOTA:
+            conn.close()
+            return jsonify({
+                "ok": False,
+                "quota_exceeded": True,
+                "used_quota": current_cnt,
+                "max_quota": WATCHLIST_MAX_QUOTA,
+                "error": f"⚠️ Bạn đã sử dụng hết Quota tối đa ({WATCHLIST_MAX_QUOTA}/{WATCHLIST_MAX_QUOTA} vật phẩm theo dõi/tài khoản)! Vui lòng gỡ bớt 1 sản phẩm cũ trước khi gắn theo dõi mới."
+            }), 400
+
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    is_trig = 1 if cur_price <= raw_target else 0
+    trig_at = now_str if is_trig else ""
+
+    cur.execute(
+        """
+        INSERT OR REPLACE INTO user_price_watchlist (
+            user_id, product_id, target_price, initial_price, is_triggered, triggered_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (user_key, pid, raw_target, cur_price, is_trig, trig_at, now_str)
+    )
+    conn.commit()
+
+    payload = _build_watchlist_payload_for_user(conn, user_key)
+    conn.close()
+    payload["message"] = (
+        f"🔔 Đã gắn theo dõi [{prod_name}] với Giá mục tiêu {int(raw_target):,} ₫ "
+        f"(Quota: {payload['used_quota']}/{WATCHLIST_MAX_QUOTA} vật phẩm)!"
+    )
+    return jsonify(payload), 200
+
+
+@app.route("/api/market-tracker/simulate-flash-drop", methods=["POST"])
+def simulate_market_flash_drop_alert_api():
+    """
+    Giả lập biến động giảm giá thị trường (Demo trực tiếp trên lớp):
+    Hạ giá sản phẩm chạm/thấp hơn target_price -> Tự động bật is_triggered = 1
+    và đẩy thông báo báo động đỏ lên Chuông thông báo (🔔) trên Header!
+    """
+    data = request.get_json(silent=True) or {}
+    raw_u = data.get("user_id") or data.get("username") or "khach_hang_vip"
+    user_key = _resolve_normalized_watch_user_key(raw_u)
+    pid = int(data.get("product_id") or 0)
+    drop_pct = float(data.get("drop_percent") or 15.0)
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage3_market_tracker_schema(conn)
+    cur = conn.cursor()
+
+    # Nếu chưa truyền product_id -> Ưu tiên lấy sản phẩm đầu tiên trong Watchlist của user
+    if pid <= 0:
+        cur.execute("SELECT product_id FROM user_price_watchlist WHERE LOWER(user_id) = LOWER(?) ORDER BY id DESC LIMIT 1", (user_key,))
+        w_first = cur.fetchone()
+        pid = int(w_first["product_id"]) if w_first else 1
+
+    cur.execute("SELECT * FROM products WHERE id = ?", (pid,))
+    p_row = cur.fetchone()
+    if not p_row:
+        cur.execute("SELECT * FROM products ORDER BY id ASC LIMIT 1")
+        p_row = cur.fetchone()
+        pid = int(p_row["id"])
+
+    prod = dict(p_row)
+    old_price = float(prod.get("price") or 15000000)
+    prod_name = str(prod.get("name") or f"Sản phẩm #{pid}")
+
+    # Kiểm tra xem user có đặt target_price cho sản phẩm này chưa; nếu chưa thì tự động gắn vào watchlist để Demo mượt mà
+    cur.execute(
+        "SELECT id, target_price FROM user_price_watchlist WHERE LOWER(user_id) = LOWER(?) AND product_id = ?",
+        (user_key, pid)
+    )
+    w_row = cur.fetchone()
+    if w_row:
+        target_p = float(w_row["target_price"] or round(old_price * 0.92, 0))
+    else:
+        target_p = max(100000.0, round((old_price * 0.92) / 10000.0) * 10000.0)
+        cur.execute("SELECT COUNT(*) AS cnt FROM user_price_watchlist WHERE LOWER(user_id) = LOWER(?)", (user_key,))
+        if int((cur.fetchone() or {"cnt": 0})["cnt"] or 0) < WATCHLIST_MAX_QUOTA:
+            cur.execute(
+                """
+                INSERT OR REPLACE INTO user_price_watchlist (user_id, product_id, target_price, initial_price, is_triggered, created_at)
+                VALUES (?, ?, ?, ?, 0, ?)
+                """,
+                (user_key, pid, target_p, old_price, time.strftime("%Y-%m-%d %H:%M:%S"))
+            )
+
+    # Tính giá mới sau cú sập giá Flash Drop: Đảm bảo luôn <= target_price để kích hoạt báo động đỏ ngay lập tức
+    candidate_by_pct = round((old_price * (1.0 - max(5.0, min(45.0, drop_pct)) / 100.0)) / 10000.0) * 10000.0
+    new_price = max(100000.0, min(candidate_by_pct, target_p - 50000.0 if target_p > 150000 else target_p))
+    actual_drop_amt = max(0.0, old_price - new_price)
+    actual_drop_pct = round((actual_drop_amt / old_price) * 100.0, 1) if old_price > 0 else drop_pct
+
+    # Cập nhật giá sản phẩm & nến ngày hôm nay trong market_price_history
+    cur.execute(
+        "UPDATE products SET old_price = CASE WHEN COALESCE(old_price, 0) < ? THEN ? ELSE old_price END, price = ? WHERE id = ?",
+        (old_price, old_price, new_price, pid)
+    )
+    _ensure_30day_price_history_for_product(conn, prod)
+    cur.execute("SELECT id, low_price FROM market_price_history WHERE product_id = ? ORDER BY date_str DESC LIMIT 1", (pid,))
+    last_h = cur.fetchone()
+    if last_h:
+        new_low = min(float(last_h["low_price"] or new_price), new_price)
+        cur.execute(
+            "UPDATE market_price_history SET close_price = ?, low_price = ? WHERE id = ?",
+            (new_price, new_low, int(last_h["id"]))
+        )
+
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        """
+        UPDATE user_price_watchlist
+        SET is_triggered = 1, triggered_at = ?
+        WHERE product_id = ? AND target_price >= ?
+        """,
+        (now_str, pid, new_price)
+    )
+
+    alert_title = f"🚨 BÁO ĐỘNG GIÁ MỤC TIÊU: {prod_name[:42]} giảm sâu -{actual_drop_pct}%!"
+    alert_msg = (
+        f"Giá tại Nivida Store vừa lao dốc từ {int(old_price):,} ₫ xuống chỉ còn {int(new_price):,} ₫ "
+        f"(Thấp hơn mốc kỳ vọng {int(target_p):,} ₫ của bạn). Chốt đơn ngay trước khi hết hàng!"
+    )
+    link_url = f"/services/product/product-detail.html?id={pid}"
+
+    cur.execute(
+        """
+        INSERT INTO user_notifications (user_id, title, message, alert_type, product_id, link_url, is_read, created_at)
+        VALUES (?, ?, ?, 'PRICE_DROP_RED_ALERT', ?, ?, 0, ?)
+        """,
+        (user_key, alert_title, alert_msg, pid, link_url, now_str)
+    )
+    notif_id = int(cur.lastrowid or 1)
+    conn.commit()
+
+    watchlist_payload = _build_watchlist_payload_for_user(conn, user_key)
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "product_id": pid,
+        "product_name": prod_name,
+        "old_price": old_price,
+        "new_price": new_price,
+        "target_price": target_p,
+        "drop_amount": actual_drop_amt,
+        "drop_percent": actual_drop_pct,
+        "is_triggered": True,
+        "alert_notification": {
+            "id": notif_id,
+            "title": alert_title,
+            "message": alert_msg,
+            "link_url": link_url,
+            "created_at": now_str
+        },
+        "watchlist_summary": watchlist_payload,
+        "message": f"🚨 BÁO ĐỘNG ĐỎ: [{prod_name}] đã giảm mạnh -{actual_drop_pct}% xuống {int(new_price):,} ₫ (Chạm mốc mục tiêu {int(target_p):,} ₫)! Đã đẩy thông báo lên Chuông 🔔 Header!"
+    }), 200
+
+
+@app.route("/api/market-tracker/notifications", methods=["GET", "POST"])
+def user_price_alert_notifications_api():
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage3_market_tracker_schema(conn)
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        raw_u = data.get("user_id") or data.get("username") or "khach_hang_vip"
+        user_key = _resolve_normalized_watch_user_key(raw_u)
+        cur.execute("UPDATE user_notifications SET is_read = 1 WHERE LOWER(user_id) = LOWER(?) OR user_id = 'all'", (user_key,))
+        conn.commit()
+        conn.close()
+        return jsonify({"ok": True, "message": "Đã đánh dấu đã đọc toàn bộ thông báo báo động giá!"}), 200
+
+    raw_u = request.args.get("user_id") or request.args.get("username") or "khach_hang_vip"
+    user_key = _resolve_normalized_watch_user_key(raw_u)
+    cur.execute(
+        """
+        SELECT * FROM user_notifications
+        WHERE LOWER(user_id) = LOWER(?) OR user_id = 'all'
+        ORDER BY id DESC LIMIT 20
+        """,
+        (user_key,)
+    )
+    notifs = [dict(r) for r in cur.fetchall()]
+    unread_cnt = sum(1 for n in notifs if int(n.get("is_read") or 0) == 0)
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "notifications": notifs,
+        "unread_count": unread_cnt
+    }), 200
+
+
+
 def _render_root_error_page(status_code=404, custom_detail=""):
     req_path = request.path or "/"
     is_static = req_path.endswith((".js", ".css", ".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".json", ".txt", ".csv", ".woff", ".ttf"))

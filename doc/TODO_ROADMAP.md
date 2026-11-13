@@ -55,17 +55,17 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 
 ---
 
-## GIAI ĐOẠN 3: XÂY DỰNG SÀN THEO DÕI GIÁ THỊ TRƯỜNG CÔNG NGHỆ VIỆT NAM (BIỂU ĐỒ CHỨNG KHOÁN & BÁO ĐỘNG GIÁ)
+## GIAI ĐOẠN 3: XÂY DỰNG SÀN THEO DÕI GIÁ THỊ TRƯỜNG CÔNG NGHỆ VIỆT NAM (BIỂU ĐỒ CHỨNG KHOÁN & BÁO ĐỘNG GIÁ) (ĐÃ HOÀN TẤT)
 
-- [ ] **3.1. Cơ sở dữ liệu & Động cơ Lịch sử Giá 30 Phiên (`product_price_history` & `user_price_watches`):**
-  - [ ] Trong `app.py`, khởi tạo bảng `product_price_history` và tự động tạo dữ liệu lịch sử biến động giá 30 ngày gần nhất tại thị trường Việt Nam (gồm `open_price`, `high_price`, `low_price`, `close_price`, `vn_market_avg_price`, `volume`) cho các sản phẩm công nghệ chủ lực (GPU RTX, CPU Core Ultra/Ryzen, RAM DDR5, SSD NVMe, Laptop, Màn hình OLED).
-  - [ ] Tự động ghi nhận phiên giá mới vào biểu đồ mỗi khi Gian hàng cập nhật giá sản phẩm, Admin bật/tắt Sự kiện giảm giá, hoặc kết thúc phiên Đấu giá.
-- [ ] **3.2. Giao diện Biểu Đồ Giá Kiểu Chứng Khoán (Candlestick / Line + $MA_7$ / $MA_{30}$):**
-  - [ ] Xây dựng khu vực **📈 Sàn Theo Dõi Giá Thị Trường Công Nghệ Việt Nam (VN-TECH INDEX)** (mở công khai cho cả Khách, Người mua và Người bán truy cập hằng ngày).
-  - [ ] Vẽ biểu đồ **Nến Chứng Khoán (Candlestick Chart) & Đường Xu Hướng ($MA_7$, $MA_{30}$)** trên HTML5 Canvas kèm bảng so sánh: *Giá Nivida Store* vs *Giá Trung Bình Thị Trường VN*, *Đáy 30 Ngày*, *Đỉnh 30 Ngày* và *Khuyến nghị AI (Bắt Đáy / Tích Lũy / Chờ Giảm)*.
-- [ ] **3.3. Cơ chế Gắn Theo Dõi Giới Hạn Vật Phẩm (Quota 5–8 Món) & Báo Động Khi Giảm Giá:**
-  - [ ] Cho phép người dùng bấm **`🔔 Gắn Theo Dõi & Đặt Giá Mục Tiêu`** cho sản phẩm (giới hạn tối đa **5 vật phẩm** mặc định, mở rộng lên **8 vật phẩm** nếu đã xác minh OTP hoặc chuỗi điểm danh $\ge 3$ ngày).
-  - [ ] Thêm nút **`📉 Giả Lập Biến Động Thị Trường / Hạ Giá Chạm Mốc Kỳ Vọng (Demo)`**: Khi bấm, giá thị trường giảm xuống chạm mốc `target_price` của người dùng $\rightarrow$ Tự động kích hoạt thông báo Chuông (`🔔`), đổi thẻ theo dõi sang trạng thái **`⚡ ĐÃ CHẠM GIÁ MỤC TIÊU — MUA NGAY`** và hiển thị Toast cảnh báo tức thì.
+- [x] **3.1. Cơ sở dữ liệu & Động cơ Lịch sử Giá 30 Phiên (`market_price_history`, `product_price_history` & `user_price_watchlist`):**
+  - [x] Trong `app.py`, khởi tạo bảng `market_price_history` (và `product_price_history`) và tự động tạo dữ liệu lịch sử biến động giá 30 ngày gần nhất tại thị trường Việt Nam (gồm `open_price`, `high_price`, `low_price`, `close_price`, `vn_market_avg_price`, `volume`) cho các sản phẩm công nghệ chủ lực (GPU RTX, CPU Core Ultra/Ryzen, RAM DDR5, SSD NVMe, Laptop, Màn hình OLED).
+  - [x] Tự động ghi nhận phiên giá mới vào biểu đồ mỗi khi Gian hàng cập nhật giá sản phẩm, Admin bật/tắt Sự kiện giảm giá, hoặc kết thúc phiên Đấu giá.
+- [x] **3.2. Giao diện Biểu Đồ Giá Kiểu Chứng Khoán (Candlestick / Line + $MA_7$ / $MA_{30}$):**
+  - [x] Xây dựng khu vực **📈 Sàn Theo Dõi Giá Thị Trường Công Nghệ Việt Nam (VN-TECH INDEX)** (`/services/market_tracker/price-tracker.html` & `price-tracker.js` + Widget trực tiếp trên `product-detail.js`).
+  - [x] Vẽ biểu đồ **Nến Chứng Khoán (Candlestick Chart) & Đường Xu Hướng ($MA_7$, $MA_{30}$)** trên HTML5 Canvas kèm bảng so sánh: *Giá Nivida Store* vs *Giá Trung Bình Thị Trường VN*, *Đáy 30 Ngày*, *Đỉnh 30 Ngày* và *Khuyến nghị AI (Bắt Đáy / Tích Lũy / Chờ Giảm)*.
+- [x] **3.3. Cơ chế Gắn Theo Dõi Giới Hạn Vật Phẩm (Quota 6 Món/Tài khoản) & Báo Động Khi Giảm Giá:**
+  - [x] Cho phép người dùng bấm **`🔔 Gắn Theo Dõi & Đặt Giá Mục Tiêu`** cho sản phẩm (giới hạn tối đa **6 vật phẩm/tài khoản**).
+  - [x] Thêm nút **`📉 Giả Lập Biến Động Thị Trường / Hạ Giá Chạm Mốc Kỳ Vọng (Demo)`**: Khi bấm, giá thị trường giảm xuống chạm mốc `target_price` của người dùng $\rightarrow$ Tự động kích hoạt thông báo Chuông (`🔔`), đổi thẻ theo dõi sang trạng thái **`⚡ ĐÃ CHẠM GIÁ MỤC TIÊU — MUA NGAY`** và hiển thị Toast cảnh báo tức thì.
 
 ---
 

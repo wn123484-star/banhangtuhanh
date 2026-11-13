@@ -280,6 +280,42 @@ function renderProductDetailView(p, extraData) {
             '</div>' +
         '</div>' +
 
+        '<!-- KHỐI 1.5: BIỂU ĐỒ LỊCH SỬ GIÁ THỊ TRƯỜNG VN 30 PHIÊN & ĐẶT BÁO ĐỘNG GIẢM GIÁ (STAGE 3) -->' +
+        '<div class="nv-adaptive-card p-4 mb-4 rounded-4 border shadow-sm" style="border-color:rgba(56,189,248,0.45)!important;">' +
+            '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2 mb-3">' +
+                '<div>' +
+                    '<span class="badge bg-info text-dark fw-bold me-2">VN-TECH INDEX</span>' +
+                    '<strong class="text-nvidia fs-6">📈 Biểu Đồ Lịch Sử Giá Thị Trường VN (30 Phiên) &amp; Đặt Báo Động Giảm Giá</strong>' +
+                '</div>' +
+                '<div class="d-flex gap-2">' +
+                    '<a href="/services/market_tracker/price-tracker.html?product_id=' + p.id + '" class="btn btn-outline-info btn-sm fw-bold">📊 Mở Bảng Điện Tử Toàn Sàn</a>' +
+                    '<button type="button" class="btn btn-danger btn-sm fw-bold" onclick="simulateFlashDropFromDetail(' + p.id + ')">📉 Giả Lập Hạ Giá Chạm Mốc (Demo)</button>' +
+                '</div>' +
+            '</div>' +
+            '<div class="row g-3 align-items-center">' +
+                '<div class="col-lg-8">' +
+                    '<div class="p-2 rounded-3 border" style="background:#060b14;border-color:rgba(56,189,248,0.3)!important;">' +
+                        '<canvas id="detailMiniPriceChartCanvas" width="640" height="210" style="width:100%;height:210px;display:block;"></canvas>' +
+                    '</div>' +
+                    '<div id="detailPriceTrackerStatsBar" class="small text-info mt-2">Đang đồng bộ dữ liệu lịch sử giá 30 phiên tại thị trường Việt Nam...</div>' +
+                '</div>' +
+                '<div class="col-lg-4">' +
+                    '<div class="p-3 rounded-3 border h-100" style="background:rgba(118,185,0,0.08);border-color:rgba(118,185,0,0.38)!important;">' +
+                        '<div class="fw-bold text-nvidia small mb-1">🔔 Gắn Theo Dõi &amp; Nhận Báo Động Chuông</div>' +
+                        '<p class="small opacity-85 mb-2">Giới hạn Quota <strong>6 vật phẩm/tài khoản</strong>. Hệ thống tự phát báo động đỏ lên Chuông 🔔 khi giá chạm mốc mục tiêu:</p>' +
+                        '<div class="input-group input-group-sm mb-2">' +
+                            '<input type="number" id="detailTargetPriceInput" class="form-control fw-bold" value="' + Math.round(priceNum * 0.93) + '" step="50000">' +
+                            '<span class="input-group-text">₫</span>' +
+                        '</div>' +
+                        '<button type="button" class="btn btn-nvidia btn-sm w-100 fw-bold py-2 mb-2" onclick="trackProductPriceFromDetail(' + p.id + ')">🔔 Gắn Theo Dõi Giá Sản Phẩm Này</button>' +
+                        '<div id="detailWatchQuotaNote" class="small text-warning fw-bold text-center">Quota theo dõi: Đang kiểm tra...</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+
+        '<div id="detailBlockchainPassportMount"></div>' +
+
         '<!-- KHỐI 2: LỊCH SỬ CHÍNH SÁCH BẢO HÀNH (SOP-01) & ĐÁNH GIÁ KHÁCH HÀNG -->' +
         '<div class="row g-4 mb-4">' +
             '<div class="col-lg-6">' +
@@ -358,6 +394,13 @@ function renderProductDetailView(p, extraData) {
                 '</div>' +
             '</div>'
         ) : '');
+
+    setTimeout(function() {
+        loadDetailPriceTrackerWidget(p.id);
+        if (typeof window.loadDetailBlockchainPassportWidget === 'function') {
+            window.loadDetailBlockchainPassportWidget(p.id);
+        }
+    }, 60);
 }
 
 function openStoreChatFromDetail(sellerId, storeName) {
@@ -498,6 +541,186 @@ function toggleWishlistFromDetail() {
     }
 }
 window.toggleWishlistFromDetail = toggleWishlistFromDetail;
+
+async function loadDetailPriceTrackerWidget(productId) {
+    var pid = Number(productId || (__currentProductDetail && __currentProductDetail.id) || 1);
+    var uRaw = localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user');
+    var userKey = 'khach_hang_vip';
+    try {
+        var u = uRaw ? JSON.parse(uRaw) : null;
+        if (u && (u.username || u.id)) userKey = String(u.username || u.id);
+    } catch (e) {}
+
+    try {
+        var res = await fetch('/api/market-tracker/overview?product_id=' + encodeURIComponent(pid) + '&user_id=' + encodeURIComponent(userKey) + '&_t=' + Date.now(), { cache: 'no-store' });
+        var data = await res.json();
+        if (!data || !data.ok) return;
+
+        var hist = data.history || [];
+        var sp = data.selected_product || {};
+        var ai = data.ai_recommendation || {};
+        var wSum = data.watchlist_summary || {};
+
+        var statsBar = document.getElementById('detailPriceTrackerStatsBar');
+        if (statsBar) {
+            statsBar.innerHTML = (
+                '<span class="badge bg-nvidia me-2">' + (ai.badge_text || '🟢 KHUYẾN NGHỊ AI') + '</span> ' +
+                'Giá Nivida: <strong class="text-nvidia">' + formatVndPrice(sp.nv_store_price) + '</strong> vs ' +
+                'TB Thị Trường VN: <strong class="text-info">' + formatVndPrice(sp.vn_market_avg_price) + '</strong> ' +
+                '(Tiết kiệm <strong class="text-warning">' + formatVndPrice(sp.saving_vs_vn_market) + ' / -' + Number(sp.saving_pct || 0) + '%</strong>)'
+            );
+        }
+
+        var quotaEl = document.getElementById('detailWatchQuotaNote');
+        if (quotaEl) {
+            quotaEl.textContent = 'Quota theo dõi hiện tại: ' + Number(wSum.used_quota || 0) + '/' + Number(wSum.max_quota || 6) + ' vật phẩm';
+        }
+
+        var canvas = document.getElementById('detailMiniPriceChartCanvas');
+        if (canvas && hist.length) {
+            var ctx = canvas.getContext('2d');
+            var W = canvas.width;
+            var H = canvas.height;
+            ctx.clearRect(0, 0, W, H);
+            ctx.fillStyle = '#060b14';
+            ctx.fillRect(0, 0, W, H);
+
+            var padL = 62, padR = 16, padT = 16, padB = 26;
+            var plotW = W - padL - padR;
+            var plotH = H - padT - padB;
+
+            var vals = [];
+            hist.forEach(function (h) {
+                vals.push(Number(h.low_price), Number(h.high_price), Number(h.vn_market_avg_price));
+            });
+            var minP = Math.min.apply(null, vals) * 0.985;
+            var maxP = Math.max.apply(null, vals) * 1.015;
+            if (maxP <= minP) maxP = minP + 1000000;
+
+            function yP(v) {
+                return padT + plotH - ((v - minP) / (maxP - minP)) * plotH;
+            }
+
+            ctx.strokeStyle = 'rgba(148,163,184,0.15)';
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px monospace';
+            for (var g = 0; g <= 3; g++) {
+                var gy = padT + (plotH * g) / 3;
+                var gp = minP + ((maxP - minP) * (3 - g)) / 3;
+                ctx.beginPath();
+                ctx.moveTo(padL, gy);
+                ctx.lineTo(W - padR, gy);
+                ctx.stroke();
+                ctx.fillText((gp / 1000000).toFixed(1) + 'Tr', 6, gy + 3);
+            }
+
+            var stepX = plotW / Math.max(1, hist.length);
+            for (var i = 0; i < hist.length; i++) {
+                var c = hist[i];
+                var cx = padL + i * stepX + stepX * 0.5;
+                var isUp = Number(c.close_price) >= Number(c.open_price);
+                var col = isUp ? '#22c55e' : '#ef4444';
+                ctx.strokeStyle = col;
+                ctx.beginPath();
+                ctx.moveTo(cx, yP(c.high_price));
+                ctx.lineTo(cx, yP(c.low_price));
+                ctx.stroke();
+
+                var bTop = Math.min(yP(c.open_price), yP(c.close_price));
+                var bH = Math.max(3, Math.abs(yP(c.close_price) - yP(c.open_price)));
+                var bW = Math.max(4, stepX * 0.56);
+                ctx.fillStyle = col;
+                ctx.fillRect(cx - bW / 2, bTop, bW, bH);
+            }
+
+            // Đường Giá TB Thị trường VN (nét đứt xanh dương)
+            ctx.save();
+            ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            for (var k = 0; k < hist.length; k++) {
+                var kx = padL + k * stepX + stepX * 0.5;
+                var ky = yP(hist[k].vn_market_avg_price);
+                if (k === 0) ctx.moveTo(kx, ky);
+                else ctx.lineTo(kx, ky);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+    } catch (e) {}
+}
+window.loadDetailPriceTrackerWidget = loadDetailPriceTrackerWidget;
+
+async function trackProductPriceFromDetail(productId) {
+    var pid = Number(productId || (__currentProductDetail && __currentProductDetail.id) || 1);
+    var inp = document.getElementById('detailTargetPriceInput');
+    var targetPrice = Number((inp && inp.value) || 0);
+    var uRaw = localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user');
+    var userKey = 'khach_hang_vip';
+    try {
+        var u = uRaw ? JSON.parse(uRaw) : null;
+        if (u && (u.username || u.id)) userKey = String(u.username || u.id);
+    } catch (e) {}
+
+    try {
+        var res = await fetch('/api/market-tracker/watchlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'add',
+                user_id: userKey,
+                product_id: pid,
+                target_price: targetPrice
+            })
+        });
+        var data = await res.json();
+        if (!res.ok || !data.ok) {
+            if (typeof notifyToast === 'function') notifyToast(data.error || 'Không thể gắn theo dõi giá!', 'warning');
+            return;
+        }
+        var quotaEl = document.getElementById('detailWatchQuotaNote');
+        if (quotaEl) {
+            quotaEl.textContent = 'Quota theo dõi hiện tại: ' + Number(data.used_quota || 0) + '/' + Number(data.max_quota || 6) + ' vật phẩm';
+        }
+        if (typeof notifyToast === 'function') notifyToast(data.message || '🔔 Đã gắn theo dõi giá sản phẩm!', 'success');
+    } catch (e) {}
+}
+window.trackProductPriceFromDetail = trackProductPriceFromDetail;
+
+async function simulateFlashDropFromDetail(productId) {
+    var pid = Number(productId || (__currentProductDetail && __currentProductDetail.id) || 1);
+    var uRaw = localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user');
+    var userKey = 'khach_hang_vip';
+    try {
+        var u = uRaw ? JSON.parse(uRaw) : null;
+        if (u && (u.username || u.id)) userKey = String(u.username || u.id);
+    } catch (e) {}
+
+    try {
+        var res = await fetch('/api/market-tracker/simulate-flash-drop', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: userKey,
+                product_id: pid,
+                drop_percent: 16
+            })
+        });
+        var data = await res.json();
+        if (data && data.ok) {
+            if (__currentProductDetail) {
+                __currentProductDetail.price = data.new_price;
+                var priceDom = document.getElementById('detailProductPrice');
+                if (priceDom) priceDom.textContent = formatVndPrice(data.new_price);
+            }
+            if (typeof notifyToast === 'function') notifyToast(data.message || '🚨 Giá vừa giảm chạm mốc mục tiêu!', 'danger');
+            if (typeof window.refreshGlobalPriceAlertBell === 'function') window.refreshGlobalPriceAlertBell(true);
+            loadDetailPriceTrackerWidget(pid);
+        }
+    } catch (e) {}
+}
+window.simulateFlashDropFromDetail = simulateFlashDropFromDetail;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadProductDetailPage();
