@@ -131,10 +131,10 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 
 ## GIAI ĐOẠN 8: MÈO AI TRÈO LEO HÔ THẦN CHÚ, ĐIỀU KHIỂN QUA PROMPT, VOICE SEARCH TỰ BẤM NÚT & HOÀN THIỆN TOÀN SÀN (`backup-stage-8-cat-ai-final`)
 
-- [ ] **8.1. Nhiệm vụ 4 — Nâng cấp Hoạt Ảnh Mèo AI Trèo Leo Hô Thần Chú, Điều Khiển Qua Prompt & Voice Search Tự Bấm Nút:**
-  - [ ] Trong `core/cat_widget.js` & `core/main.js`: Tạo nhân vật Mèo AI di chuyển/trèo trên màn hình tới đúng vị trí mục tiêu, hiện bong bóng `"✨ Hô thần chú: ..."` kèm tia sáng phép thuật và thực thi hành động thật.
-  - [ ] Bổ sung các nút bấm phép thuật nhanh & **Bộ Phân Tích Lệnh Prompt Thông Minh (AI Action Parser)** trong khung chat Mèo AI hỗ trợ: (1) Lệnh Đổi Giao Diện / Sáng Tối / Mật Độ Lưới, (2) Lệnh Tìm Kiếm Sản Phẩm (trèo lên `#searchInput`, gõ chữ và tự bấm `#searchBtn`), (3) Lệnh Đặt Mua / Thêm Giỏ Hàng / Điều Hướng.
-  - [ ] Trong `services/home/home.js` & `core/cat_widget.js`: Khi người dùng dùng **Google Voice Search (`🎙️`)**, Mèo AI xuất hiện cạnh thanh tìm kiếm, xác nhận `"🐾 Mèo nghe rõ rồi: [Từ khóa]! Để Mèo bấm tìm kiếm giúp bạn ngay!"`, làm hiệu ứng chạm chân bấm nút `🔍 Tìm Kiếm` và cuộn mượt xuống kết quả.
-- [ ] **8.2. Nhiệm vụ 5 — Rà soát tích hợp AI toàn sàn, Hoàn thiện chu trình End-to-End & Đẩy nhánh Backup cuối cùng:**
-  - [ ] Rà soát & xác thực đủ 6 điểm chạm AI trên toàn sàn (Trợ lý Mèo AI điều khiển web, Tìm kiếm giọng nói & gợi ý từ khóa AI, Trạm Build PC AI, Phân tích xu hướng giá & khuyến nghị AI, Tòa án Trọng tài AI, Đánh giá rủi ro bảo mật Admin).
-  - [ ] Kiểm thử khép kín chu trình End-to-End & chạy Đội Bot QA đạt 100% HTTP 200 OK (0 lỗi), đẩy nhánh `backup-stage-8-cat-ai-final` và đồng bộ thẳng vào nhánh `main`.
+- [x] **8.1. Nhiệm vụ 4 — Nâng cấp Hoạt Ảnh Mèo AI Trèo Leo Hô Thần Chú, Điều Khiển Qua Prompt & Voice Search Tự Bấm Nút:**
+  - [x] Trong `core/cat_widget.js` & `core/main.js`: Tạo nhân vật Mèo AI di chuyển/trèo trên màn hình tới đúng vị trí mục tiêu, hiện bong bóng `"✨ Hô thần chú: ..."` kèm tia sáng phép thuật và thực thi hành động thật.
+  - [x] Bổ sung các nút bấm phép thuật nhanh & **Bộ Phân Tích Lệnh Prompt Thông Minh (AI Action Parser)** trong khung chat Mèo AI hỗ trợ: (1) Lệnh Đổi Giao Diện / Sáng Tối / Mật Độ Lưới, (2) Lệnh Tìm Kiếm Sản Phẩm (trèo lên `#searchInput`, gõ chữ và tự bấm `#searchBtn`), (3) Lệnh Đặt Mua / Thêm Giỏ Hàng / Điều Hướng.
+  - [x] Trong `services/home/home.js` & `core/cat_widget.js`: Khi người dùng dùng **Google Voice Search (`🎙️`)**, Mèo AI xuất hiện cạnh thanh tìm kiếm, xác nhận `"🐾 Mèo nghe rõ rồi: [Từ khóa]! Để Mèo bấm tìm kiếm giúp bạn ngay!"`, làm hiệu ứng chạm chân bấm nút `🔍 Tìm Kiếm` và cuộn mượt xuống kết quả.
+- [x] **8.2. Nhiệm vụ 5 — Rà soát tích hợp AI toàn sàn, Hoàn thiện chu trình End-to-End & Đẩy nhánh Backup cuối cùng:**
+  - [x] Rà soát & xác thực đủ 6 điểm chạm AI trên toàn sàn (Trợ lý Mèo AI điều khiển web, Tìm kiếm giọng nói & gợi ý từ khóa AI, Trạm Build PC AI, Phân tích xu hướng giá & khuyến nghị AI, Tòa án Trọng tài AI, Đánh giá rủi ro bảo mật Admin).
+  - [x] Kiểm thử khép kín chu trình End-to-End & chạy Đội Bot QA đạt 100% HTTP 200 OK (0 lỗi), đẩy nhánh `backup-stage-8-cat-ai-final` và đồng bộ thẳng vào nhánh `main`.

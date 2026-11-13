@@ -388,24 +388,23 @@
                     </div>
 
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="cat-action-chip" data-cmd="Cho ăn cá">🐟 Ăn cá</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Uống trà sữa boba">🧋 Trà sữa</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Lộn vòng backflip">🤸 Nhào lộn</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Nằm ổ bánh mì">🍞 Bánh mì</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Tan chảy sploot">🫠 Tan chảy</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Nhảy múa">🎵 Nhảy múa</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Đổi sang giao diện sáng thanh lịch">☀️ Sáng Thanh Lịch</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Đổi giao diện Tài chính Thụy Sĩ">🏛️ Thụy Sĩ</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Đổi sang Bloomberg">🌙 Bloomberg Tối</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Chỉnh lưới 4 cột">📐 Lưới 4 Cột</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Chỉnh lưới 3 cột">📐 Lưới 3 Cột</button>
                     </div>
 
                     <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="cat-action-chip" data-cmd="Đề xuất card RTX 4070 bỏ vào giỏ">🛒 Săn RTX 4070</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Tìm cho tôi RTX 4070">🔍 Tìm RTX 4070</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Mua sản phẩm số 1">🛒 Mua SP Số 1</button>
                         <button type="button" class="cat-action-chip" data-cmd="Tìm bàn phím cơ bỏ vào giỏ">🛒 Săn Phím Cơ</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Đổi giao diện tối">🌙 Nền Tối</button>
-                        <button type="button" class="cat-action-chip" data-cmd="Đổi giao diện sáng">☀️ Nền Sáng</button>
+                        <button type="button" class="cat-action-chip" data-cmd="Mở sàn đấu giá">🔨 Sàn Đấu Giá</button>
                         <button type="button" class="cat-action-chip" data-cmd="Điểm danh nhận xu">✨ Điểm danh</button>
                     </div>
 
                     <form id="nividaCatCmdForm" class="d-flex gap-1">
-                        <input type="text" id="nividaCatCmdInput" class="form-control form-control-sm" style="background:rgb(30,41,59); color:rgb(255,255,255); border-color:rgb(118,185,0);" placeholder="💬 Gõ lệnh (VD: tìm tai nghe sony, đề xuất balo, nền tối)..." required>
+                        <input type="text" id="nividaCatCmdInput" class="form-control form-control-sm" style="background:rgb(30,41,59); color:rgb(255,255,255); border-color:rgb(118,185,0);" placeholder="💬 Gõ lệnh (VD: Tìm RTX 4070, Mua sản phẩm số 1, Chỉnh lưới 4 cột)..." required>
                         <button type="submit" id="nividaCatSendBtn" class="btn btn-nvidia btn-sm px-3 fw-bold">Gửi</button>
                     </form>
                 </div>
@@ -761,9 +760,114 @@
             }
         }
 
+        spawnDomMagicSparklesAt(x, y) {
+            const symbols = ['✨', '🌟', '⚡', '🐾', '💫', '🔮'];
+            for (let i = 0; i < 6; i++) {
+                const sp = document.createElement('div');
+                sp.className = 'nv-cat-magic-sparkle';
+                sp.textContent = symbols[i % symbols.length];
+                const ox = Math.round((Math.random() - 0.5) * 68);
+                const oy = Math.round((Math.random() - 0.5) * 52);
+                sp.style.left = Math.max(12, Math.min(window.innerWidth - 28, x + ox)) + 'px';
+                sp.style.top = Math.max(12, Math.min(window.innerHeight - 28, y + oy)) + 'px';
+                document.body.appendChild(sp);
+                setTimeout(() => sp.remove(), 780);
+            }
+            this.spawnParticle('sparkle');
+            this.spawnParticle('star');
+        }
+
+        async climbToElementAndCastSpell(targetElOrSelector, spellText, actionCallback) {
+            let targetEl = null;
+            if (typeof targetElOrSelector === 'string') {
+                targetEl = document.querySelector(targetElOrSelector);
+            } else if (targetElOrSelector && targetElOrSelector.getBoundingClientRect) {
+                targetEl = targetElOrSelector;
+            }
+
+            let tx = window.innerWidth * 0.52;
+            let ty = 64;
+            if (targetEl) {
+                try {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } catch (e) {}
+                await sleepMs(160);
+                const rect = targetEl.getBoundingClientRect();
+                if (rect.width > 0 || rect.height > 0) {
+                    tx = rect.left + rect.width * 0.5;
+                    ty = Math.max(this.ceilingY + 12, Math.min(this.floorY - 12, rect.top + Math.min(28, rect.height * 0.5)));
+                }
+                targetEl.classList.add('cat-target-glow');
+            }
+
+            const formattedSpell = String(spellText || '').startsWith('✨ Hô thần chú')
+                ? spellText
+                : ('✨ Hô thần chú: ' + spellText);
+
+            this.showBubble(formattedSpell, 7000, false);
+            await this.moveToPointAsync(tx, ty, 'climb_spider_scramble', 'starry_hyped_grin', 490);
+            this.softBody.triggerSquish(1.32, 0.72);
+            this.setCatState('ai_magic_cape_spin', 4.5, 'lovestruck_sparkle', true);
+            this.spawnDomMagicSparklesAt(this.softBody.x, this.softBody.y);
+
+            if (typeof actionCallback === 'function') {
+                await actionCallback(targetEl);
+            }
+
+            if (targetEl) {
+                setTimeout(() => targetEl.classList.remove('cat-target-glow'), 1800);
+            }
+        }
+
+        async performVoiceSearchAutoClick(spokenKeyword) {
+            const cleanKw = String(spokenKeyword || '').trim();
+            if (!cleanKw) return;
+            if (this.choreographyBusy) this.choreographyBusy = false;
+            this.choreographyBusy = true;
+
+            try {
+                const searchInp = document.getElementById('searchInput') || document.getElementById('globalSearchInput');
+                const searchBtn = document.getElementById('searchBtn') || document.getElementById('globalSearchBtn');
+                const globalInp = document.getElementById('globalSearchInput');
+
+                if (searchInp) searchInp.value = cleanKw;
+                if (globalInp) globalInp.value = cleanKw;
+
+                await this.climbToElementAndCastSpell(
+                    searchBtn || searchInp,
+                    `🐾 Mèo nghe rõ rồi: [${cleanKw}]! Để Mèo bấm tìm kiếm giúp bạn ngay!`,
+                    async (btnEl) => {
+                        if (btnEl) {
+                            btnEl.classList.add('cat-target-glow');
+                            setTimeout(() => btnEl.classList.remove('cat-target-glow'), 1500);
+                        }
+                        if (typeof window.executeQuickKeywordSearch === 'function' && document.getElementById('searchInput')) {
+                            await window.executeQuickKeywordSearch();
+                        } else if (typeof window.loadProducts === 'function') {
+                            const newUrl = window.location.pathname + '?q=' + encodeURIComponent(cleanKw);
+                            window.history.replaceState({}, '', newUrl);
+                            await window.loadProducts();
+                        } else if (typeof window.triggerGlobalHeaderSearch === 'function') {
+                            window.triggerGlobalHeaderSearch();
+                        }
+                        const gridEl = document.getElementById('productGrid') || document.getElementById('productList');
+                        if (gridEl) {
+                            setTimeout(() => {
+                                try {
+                                    gridEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                } catch (e) {}
+                            }, 220);
+                        }
+                    }
+                );
+            } finally {
+                this.choreographyBusy = false;
+            }
+        }
+
         async sendCommandToCat(message) {
             const user = typeof getAuthUser === 'function' ? getAuthUser() : null;
-            this.showBubble('Meow~ Đang phân tích lệnh và chuẩn bị phóng đi... 🐾💭', 8000, false);
+            this.showBubble('✨ Hô thần chú: Meow~ Đang phân tích lệnh và chuẩn bị phóng đi... 🐾💭', 8000, false);
             this.setCatState('ai_eureka_lightbulb_perk', 3.0, 'matrix_code_eyes', false);
 
             try {
@@ -794,6 +898,88 @@
                 return;
             }
 
+            if (act === 'SET_SKIN_PRESET') {
+                const skinKey = data.skin_key || 'executive_light';
+                const targetBtn = document.getElementById('settingsSkinSelect') || document.getElementById('headerThemeSettingsBtn');
+                await this.climbToElementAndCastSpell(targetBtn, data.bubble_text || 'Biến hình giao diện Nexora!', () => {
+                    if (typeof window.selectGlobalSeasonalSkin === 'function') {
+                        window.selectGlobalSeasonalSkin(skinKey);
+                    }
+                });
+                return;
+            }
+
+            if (act === 'SET_GRID_DENSITY') {
+                const densityVal = data.grid_density || '4';
+                const targetToolbar = document.getElementById('gridDensityToolbar') || document.getElementById('settingsGridDensitySelect') || document.getElementById('headerThemeSettingsBtn');
+                await this.climbToElementAndCastSpell(targetToolbar, data.bubble_text || `Chỉnh mật độ lưới ${densityVal} cột!`, () => {
+                    if (typeof window.changeHomeGridDensity === 'function') {
+                        window.changeHomeGridDensity(densityVal);
+                    } else if (typeof window.applyProductGridDensity === 'function') {
+                        window.applyProductGridDensity(densityVal, true);
+                    }
+                });
+                return;
+            }
+
+            if (act === 'SEARCH_ONLY_AUTO_CLICK') {
+                const sq = data.search_query || '';
+                const sInp = document.getElementById('searchInput') || document.getElementById('globalSearchInput');
+                const sBtn = document.getElementById('searchBtn') || document.getElementById('globalSearchBtn');
+                await this.climbToElementAndCastSpell(sInp, `Đang gõ "${sq}"... Để Mèo bấm nút tìm giúp bạn nhé! 🔍`, async () => {
+                    if (sInp) {
+                        sInp.focus();
+                        sInp.value = '';
+                        for (let i = 0; i < sq.length; i++) {
+                            sInp.value += sq[i];
+                            await sleepMs(35);
+                        }
+                    }
+                    if (document.getElementById('globalSearchInput')) {
+                        document.getElementById('globalSearchInput').value = sq;
+                    }
+                    await this.climbToElementAndCastSpell(sBtn || sInp, `Bấm nút Tìm kiếm [${sq}] ngay! 🐾🔍`, async () => {
+                        if (typeof window.executeQuickKeywordSearch === 'function' && document.getElementById('searchInput')) {
+                            await window.executeQuickKeywordSearch();
+                        } else if (typeof window.loadProducts === 'function') {
+                            const newUrl = window.location.pathname + '?q=' + encodeURIComponent(sq);
+                            window.history.replaceState({}, '', newUrl);
+                            await window.loadProducts();
+                        } else if (typeof window.triggerGlobalHeaderSearch === 'function') {
+                            window.triggerGlobalHeaderSearch();
+                        }
+                    });
+                });
+                return;
+            }
+
+            if (act === 'BUY_PRODUCT_INDEX') {
+                const idxOneBased = Math.max(1, parseInt(data.product_index || 1, 10));
+                const cards = Array.from(document.querySelectorAll('#productGrid .product-card, #productList .product-card'));
+                const targetCard = cards[idxOneBased - 1] || cards[0] || null;
+                await this.climbToElementAndCastSpell(targetCard, data.bubble_text || `Chọn mua sản phẩm số #${idxOneBased}!`, async (cardEl) => {
+                    const list = Array.isArray(window.__homeProductsCache) ? window.__homeProductsCache : [];
+                    const chosenProd = list[idxOneBased - 1] || list[0];
+                    if (chosenProd && typeof window.addToCartGlobal === 'function') {
+                        window.addToCartGlobal(chosenProd, {
+                            catSuggested: true,
+                            recommendLabel: `🐱 Mèo AI Chọn SP #${idxOneBased}`
+                        });
+                    } else if (cardEl) {
+                        const addBtn = cardEl.querySelector('button[onclick*="addToCart"], button.btn-nvidia');
+                        if (addBtn) addBtn.click();
+                    }
+                    const cartBadge = document.getElementById('headerCartCount');
+                    if (cartBadge) {
+                        await this.climbToElementAndCastSpell(cartBadge, `Đã cất sản phẩm số #${idxOneBased} vào Giỏ hàng! 🛒✨`);
+                    }
+                    if (data.checkout_now) {
+                        setTimeout(() => { window.location.href = '/services/cart_checkout/checkout.html'; }, 800);
+                    }
+                });
+                return;
+            }
+
             if (act === 'HUNT_AND_ADD_TO_CART' || act === 'ADD_TO_CART' || act === 'SEARCH_PRODUCTS') {
                 const prods = Array.isArray(data.products)
                     ? data.products
@@ -814,26 +1000,38 @@
             } else {
                 this.setCatState(st, 6.5, ex);
             }
-            this.spawnParticle(pt);
-            this.showBubble(data.bubble_text || 'Meow~ Đã rõ!', 7500);
+            this.spawnDomMagicSparklesAt(this.softBody.x, this.softBody.y);
+            this.showBubble(data.bubble_text || '✨ Hô thần chú: Meow~ Đã rõ!', 7500);
 
             if (act === 'SET_THEME') {
-                const mode = data.theme_mode || 'dark';
-                localStorage.setItem('theme', mode);
-                if (typeof applySavedTheme === 'function') applySavedTheme();
+                const mode = data.theme_mode || 'light';
+                const targetSkin = data.skin_key || (mode === 'dark' ? 'bloomberg_terminal' : 'executive_light');
+                const targetBtn = document.getElementById('headerThemeSettingsBtn');
+                await this.climbToElementAndCastSpell(targetBtn, data.bubble_text || 'Chuyển chế độ Sáng/Tối!', () => {
+                    if (typeof window.selectGlobalSeasonalSkin === 'function') {
+                        window.selectGlobalSeasonalSkin(targetSkin);
+                    } else {
+                        localStorage.setItem('theme', mode);
+                        if (typeof applySavedTheme === 'function') applySavedTheme();
+                    }
+                });
             } else if (act === 'SET_STYLE_PRESET') {
                 localStorage.setItem('bs_style', data.style_preset || 'nvidia');
                 if (typeof applySavedTheme === 'function') applySavedTheme();
             } else if (act === 'TRIGGER_CHECKIN') {
-                if (typeof triggerHeaderCheckin === 'function') {
-                    triggerHeaderCheckin();
-                }
+                const checkinBtn = document.getElementById('headerCheckinBtn');
+                await this.climbToElementAndCastSpell(checkinBtn, data.bubble_text || 'Điểm danh nhận thưởng!', () => {
+                    if (typeof triggerHeaderCheckin === 'function') {
+                        triggerHeaderCheckin();
+                    }
+                });
             } else if (act === 'NAVIGATE_PAGE' && data.target_url) {
-                this.targetX = window.innerWidth - 90;
-                this.targetY = this.ceilingY;
-                setTimeout(() => {
-                    window.location.href = data.target_url;
-                }, 1000);
+                const navLink = document.querySelector(`a[href*="${data.target_url}"]`);
+                await this.climbToElementAndCastSpell(navLink, data.bubble_text || 'Dịch chuyển tới trang đích!', () => {
+                    setTimeout(() => {
+                        window.location.href = data.target_url;
+                    }, 550);
+                });
             }
         }
 
@@ -1222,6 +1420,24 @@
             });
         }
     }
+
+    window.climbToElementAndCastSpell = function (targetElOrSelector, spellText, actionCallback) {
+        if (window.__nividaCatInstance && typeof window.__nividaCatInstance.climbToElementAndCastSpell === 'function') {
+            return window.__nividaCatInstance.climbToElementAndCastSpell(targetElOrSelector, spellText, actionCallback);
+        }
+    };
+
+    window.performVoiceSearchAutoClick = function (spokenKeyword) {
+        if (window.__nividaCatInstance && typeof window.__nividaCatInstance.performVoiceSearchAutoClick === 'function') {
+            return window.__nividaCatInstance.performVoiceSearchAutoClick(spokenKeyword);
+        }
+    };
+
+    window.sendCommandToCat = function (message) {
+        if (window.__nividaCatInstance && typeof window.__nividaCatInstance.sendCommandToCat === 'function') {
+            return window.__nividaCatInstance.sendCommandToCat(message);
+        }
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
