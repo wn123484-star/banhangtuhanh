@@ -5034,14 +5034,14 @@ main .sticky-top.card {
 main .sticky-top.card .text-muted {
     color: rgb(203, 213, 225) !important;
 }
-.nav-pills,
+.nav-pills:not(.flex-column),
 .seller-nav-tabs {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: wrap !important;
     gap: 8px !important;
 }
-.nav-pills .nav-link {
+.nav-pills:not(.flex-column) .nav-link {
     width: auto !important;
     padding: 8px 14px !important;
     border-radius: 10px !important;
@@ -5505,4 +5505,327 @@ html[data-nv-skin="tet_festival"] {
     font-size: 18px;
     animation: nvCatSparkleFloat 0.85s ease-out forwards;
 }
+
+/* ==========================================================================
+   CSS DEEP POLISH — LAYER Z-INDEX, LOGO KHÔNG CẮT VIỀN, MÈO AI GÓC PHẢI,
+   LƯỚI CARD THOÁNG RỘNG, TƯƠNG PHẢN LIGHT MODE & RESPONSIVE TOÀN SÀN
+   ========================================================================== */
+
+/* 1. Sửa triệt để lỗi cắt Layer Dropdown Topbar & Header */
+#header-placeholder {
+    position: relative !important;
+    z-index: 10045 !important;
+    overflow: visible !important;
+}
+
+.nvidia-header-bar {
+    position: relative !important;
+    z-index: 10040 !important;
+    overflow: visible !important;
+}
+
+.nv-header-top-row,
+.nvx-topbar {
+    position: relative !important;
+    z-index: 10040 !important;
+    overflow: visible !important;
+}
+
+.nv-header-main-row {
+    position: relative !important;
+    z-index: 10010 !important;
+    overflow: visible !important;
+}
+
+.nv-header-cat-row {
+    position: relative !important;
+    z-index: 10005 !important;
+}
+
+.nv-topbar-dropdown {
+    position: relative !important;
+    z-index: 10050 !important;
+}
+
+.nv-topbar-dropdown-menu,
+.nvx-dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 6px) !important;
+    z-index: 10080 !important;
+    overflow: visible !important;
+    max-height: none !important;
+    border-radius: 12px !important;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.22) !important;
+}
+
+/* 2. Logo Nexora Crest luôn hiển thị trọn vẹn 100%, không cắt viền */
+#brandLogoImg,
+#headerBrandLogoImg:not(.d-none),
+.nvx-brand-logo-img,
+#header-placeholder a[href*="index.html"] img:not(.d-none) {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-height: 44px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    padding: 4px !important;
+    border-radius: 10px !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+}
+
+img.nvx-dynamic-slot-icon,
+.nvx-dynamic-slot-icon {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    padding: 1px !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+/* 3. Khoảng đệm đáy an toàn & Vị trí Mèo AI góc dưới bên phải */
+body {
+    padding-bottom: 96px !important;
+}
+
+#nividaCatControlDock.nivida-cat-dock,
+#nividaCatOpenBtn.cat-toggle-pill {
+    left: auto !important;
+    right: 20px !important;
+    bottom: 72px !important;
+}
+
+#nividaCatSpeechBubble:not(:hover) {
+    pointer-events: none !important;
+}
+
+/* 4. Lưới sản phẩm CSS Grid thoáng rộng & Cân bằng chiều cao mọi Card */
+#productGrid,
+#productList,
+.product-grid {
+    display: grid !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    --bs-gutter-x: 0 !important;
+    --bs-gutter-y: 0 !important;
+    align-items: stretch !important;
+}
+
+#productGrid > .nv-product-col,
+#productList > .nv-product-col,
+.product-grid > .nv-product-col,
+#productGrid > [class*="col-"],
+#productList > [class*="col-"],
+.product-grid > [class*="col-"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin-top: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#productGrid[data-grid-density="3"],
+#productList[data-grid-density="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 28px !important;
+    padding: 14px 6px !important;
+}
+
+#productGrid[data-grid-density="3"] .nv-product-card,
+#productList[data-grid-density="3"] .nv-product-card {
+    padding: 20px !important;
+}
+
+#productGrid[data-grid-density="3"] .nv-product-card .nv-card-6col-title,
+#productList[data-grid-density="3"] .nv-product-card .nv-card-6col-title {
+    font-size: 1.08rem !important;
+    line-height: 1.45 !important;
+}
+
+#productGrid[data-grid-density="4"],
+#productList[data-grid-density="4"],
+.product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 22px !important;
+    padding: 10px 4px !important;
+}
+
+#productGrid[data-grid-density="5"],
+#productList[data-grid-density="5"] {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+    padding: 8px 2px !important;
+}
+
+#productGrid[data-grid-density="6"],
+#productList[data-grid-density="6"] {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    padding: 6px 2px !important;
+}
+
+#productGrid[data-grid-density="list"],
+#productList[data-grid-density="list"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 16px !important;
+    padding: 10px 4px !important;
+}
+
+.nv-product-card,
+.product-card {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nv-card-6col-title {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    height: auto !important;
+    min-height: 2.8em !important;
+    line-height: 1.4 !important;
+}
+
+/* 5. Đảm bảo tương phản Light Mode (Executive Light & Giao diện sáng) */
+html[data-theme="light"] .nv-adaptive-card,
+html[data-nv-skin="executive_light"] .nv-adaptive-card,
+html[data-nv-skin="swiss_finance"] .nv-adaptive-card,
+html[data-nv-skin="apple_cupertino"] .nv-adaptive-card,
+html[data-nv-skin="muji_warm_paper"] .nv-adaptive-card,
+html[data-theme="light"] .card:not(.bg-dark):not(.hero-mission-side-card):not(#mainHeroBox):not(#activeEventHeroBanner):not(.auction-hero-banner):not(.rfq-hero-banner):not(#studioLivePreviewBox),
+html[data-theme="light"] .dashboard-content .card:not(.bg-dark),
+html[data-theme="light"] .admin-tab-section .card:not(.bg-dark) {
+    color: #0f172a !important;
+}
+
+html[data-theme="light"] .nv-adaptive-card .text-muted,
+html[data-theme="light"] .nv-adaptive-card .text-secondary,
+html[data-theme="light"] .card:not(.bg-dark):not(.hero-mission-side-card):not(#mainHeroBox) .text-muted,
+html[data-theme="light"] .card:not(.bg-dark):not(.hero-mission-side-card):not(#mainHeroBox) .text-secondary,
+html[data-theme="light"] .dashboard-content .text-muted,
+html[data-theme="light"] .admin-tab-section .text-muted {
+    color: #475569 !important;
+}
+
+html[data-theme="light"] h1:not(.text-white),
+html[data-theme="light"] h2:not(.text-white),
+html[data-theme="light"] h3:not(.text-white),
+html[data-theme="light"] h4:not(.text-white),
+html[data-theme="light"] h5:not(.text-white),
+html[data-theme="light"] .form-label,
+html[data-theme="light"] label:not(.text-white):not(.text-light) {
+    color: #0f172a;
+}
+
+html[data-theme="light"] #homeGridDensityBtnGroup,
+html[data-theme="light"] .nv-density-btn:not(.active) {
+    color: #1e293b !important;
+}
+
+html[data-theme="light"] .form-control,
+html[data-theme="light"] .form-select,
+html[data-theme="light"] textarea.form-control {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .form-control::placeholder,
+html[data-theme="light"] textarea.form-control::placeholder {
+    color: #64748b !important;
+}
+
+html[data-theme="light"] .form-control:focus,
+html[data-theme="light"] .form-select:focus,
+html[data-theme="light"] textarea.form-control:focus {
+    border-color: var(--primary-accent, #059669) !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.16) !important;
+}
+
+/* 6. Responsive Breakpoints (Laptop nhỏ, Tablet, Mobile) */
+@media (max-width: 1280px) {
+    #productGrid[data-grid-density="5"],
+    #productGrid[data-grid-density="6"],
+    #productList[data-grid-density="5"],
+    #productList[data-grid-density="6"] {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+}
+
+@media (max-width: 992px) {
+    #productGrid[data-grid-density="3"],
+    #productGrid[data-grid-density="4"],
+    #productGrid[data-grid-density="5"],
+    #productGrid[data-grid-density="6"],
+    #productList[data-grid-density="3"],
+    #productList[data-grid-density="4"],
+    #productList[data-grid-density="5"],
+    #productList[data-grid-density="6"],
+    .product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+
+    .table-responsive,
+    .admin-table-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 640px) {
+    body {
+        padding-bottom: 108px !important;
+    }
+
+    #productGrid[data-grid-density="3"],
+    #productGrid[data-grid-density="4"],
+    #productGrid[data-grid-density="5"],
+    #productGrid[data-grid-density="6"],
+    #productList[data-grid-density="3"],
+    #productList[data-grid-density="4"],
+    #productList[data-grid-density="5"],
+    #productList[data-grid-density="6"],
+    .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+        padding: 8px 4px !important;
+    }
+
+    #productGrid .nv-product-card,
+    #productList .nv-product-card,
+    .product-grid .product-card {
+        padding: 10px !important;
+    }
+
+    #productGrid .nv-card-6col-title,
+    #productList .nv-card-6col-title {
+        font-size: 0.85rem !important;
+    }
+
+    .nv-header-cat-row {
+        overflow-x: auto !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #nividaCatControlDock.nivida-cat-dock,
+    #nividaCatOpenBtn.cat-toggle-pill {
+        right: 12px !important;
+        bottom: 68px !important;
+    }
+}
+
 

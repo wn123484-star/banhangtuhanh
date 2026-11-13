@@ -14,8 +14,10 @@
     --nv-admin-muted: #94a3b8;
 }
 
+html[data-theme="light"],
 body.theme-light,
 body[data-skin*="daylight"],
+body[data-nv-skin="executive_light"],
 body.minimalist-daylight {
     --nv-admin-card-bg: #ffffff;
     --nv-admin-card-border: rgba(15, 23, 42, 0.12);
@@ -23,6 +25,19 @@ body.minimalist-daylight {
     --nv-admin-row-hover: rgba(118, 185, 0, 0.09);
     --nv-admin-text: #0f172a;
     --nv-admin-muted: #475569;
+}
+
+html[data-theme="light"] .nv-admin-card .form-control,
+html[data-theme="light"] .nv-admin-card .form-select,
+html[data-theme="light"] .admin-tab-section .form-control,
+html[data-theme="light"] .admin-tab-section .form-select {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .nv-admin-card .form-control::placeholder {
+    color: #64748b !important;
 }
 
 /* 1. Khung Thẻ Quản Trị & Command Hub */

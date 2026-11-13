@@ -2130,8 +2130,8 @@ def set_product_discount_reward_mode():
 _EMAIL_OTP_VERIFICATION_STORE = {}
 
 DEFAULT_WORKING_RESEND_KEY = os.environ.get("RESEND_API_KEY", "")
-DEFAULT_WORKING_RESEND_FROM = "Nexora Tech CSKH <noreply@nexora.castle-tech.cloud>"
-DEFAULT_WORKING_RESEND_REPLY = "cskh@nexora.castle-tech.cloud"
+DEFAULT_WORKING_RESEND_FROM = "Nexora Mall CSKH <noreply@mail.castle-tech.cloud>"
+DEFAULT_WORKING_RESEND_REPLY = "cskh@mail.castle-tech.cloud"
 
 
 def _is_clean_ascii_resend_key(k):
@@ -2207,10 +2207,16 @@ def _resolve_clean_resend_config(custom_key="", custom_from=""):
 
     if not chosen_from:
         chosen_from = DEFAULT_WORKING_RESEND_FROM
-    chosen_from = chosen_from.replace("NVIDIA Store", "Nexora Tech").replace("Nivida Store", "Nexora Tech").replace("nvidia.castle-tech.cloud", "nexora.castle-tech.cloud")
+    chosen_from = (
+        chosen_from.replace("NVIDIA Store", "Nexora Mall")
+        .replace("Nivida Store", "Nexora Mall")
+        .replace("Nexora Tech", "Nexora Mall")
+        .replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud")
+        .replace("@nexora.castle-tech.cloud", "@mail.castle-tech.cloud")
+    )
 
     reply_to = (env_map.get("RESEND_REPLY_TO") or os.environ.get("RESEND_REPLY_TO") or db_cfg.get("resend_reply_to") or DEFAULT_WORKING_RESEND_REPLY).strip()
-    reply_to = reply_to.replace("nvidia.castle-tech.cloud", "nexora.castle-tech.cloud")
+    reply_to = reply_to.replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud").replace("@nexora.castle-tech.cloud", "@mail.castle-tech.cloud")
     return chosen_key, chosen_from, reply_to
 
 
