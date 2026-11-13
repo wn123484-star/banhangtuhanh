@@ -652,7 +652,7 @@ ICON_SLOTS_SCHEMA = [
     {"slot_key": "brand_logo", "title": "1. Logo Thương Hiệu & Favicon Thanh Tab", "group": "Thương Hiệu & Điều Hướng", "target_hint": "Góc trên trái Header & Tab trình duyệt"},
     {"slot_key": "nav_voucher", "title": "2. Icon Kho Siêu Voucher", "group": "Thương Hiệu & Điều Hướng", "target_hint": "Thanh menu trên cùng & Trang Voucher"},
     {"slot_key": "nav_farm", "title": "3. Icon Nông Trại Cây & Vòng Quay", "group": "Thương Hiệu & Điều Hướng", "target_hint": "Thanh menu trên cùng & Minigame"},
-    {"slot_key": "nav_bank", "title": "4. Icon Ngân Hàng Số NVIDIA Pay", "group": "Thương Hiệu & Điều Hướng", "target_hint": "Nút Bank & Ví thanh toán QR"},
+    {"slot_key": "nav_bank", "title": "4. Icon Ngân Hàng Số Nexora Pay", "group": "Thương Hiệu & Điều Hướng", "target_hint": "Nút Bank & Ví thanh toán QR"},
     {"slot_key": "nav_ai_cat", "title": "5. Icon Trợ Lý Mèo AI & Tòa Án", "group": "Thương Hiệu & Điều Hướng", "target_hint": "Nút Mèo AI góc dưới & Phòng xử án"},
     {"slot_key": "cat_gpu", "title": "6. Ngành Card Đồ Họa (GPU) & Màn Hình", "group": "9 Danh Mục & Đại Diện Sản Phẩm", "target_hint": "Thanh danh mục & SP thiếu ảnh nhóm GPU"},
     {"slot_key": "cat_cpu", "title": "7. Ngành Vi Xử Lý (CPU) & Laptop", "group": "9 Danh Mục & Đại Diện Sản Phẩm", "target_hint": "Thanh danh mục & SP thiếu ảnh nhóm CPU"},
@@ -669,7 +669,16 @@ ICON_SLOTS_SCHEMA = [
 def _ensure_icon_sets_directories_and_manifest():
     import shutil
     for sub in ("default", "set_1", "set_2", "set_3"):
-        os.makedirs(os.path.join(ICONS_ROOT_DIR, sub), exist_ok=True)
+        sub_dir = os.path.join(ICONS_ROOT_DIR, sub)
+        os.makedirs(sub_dir, exist_ok=True)
+        # Tự động dọn sạch mọi tệp ảnh test 1x1 (< 100 bytes) nếu có
+        try:
+            for fn in os.listdir(sub_dir):
+                fp = os.path.join(sub_dir, fn)
+                if os.path.isfile(fp) and fn != "brand_logo.png" and os.path.getsize(fp) <= 100:
+                    os.remove(fp)
+        except Exception:
+            pass
 
     main_icon = os.path.join(ICONS_ROOT_DIR, "icon.png")
     default_backup = os.path.join(ICONS_ROOT_DIR, "default", "brand_logo.png")
@@ -688,7 +697,7 @@ def _ensure_icon_sets_directories_and_manifest():
 
     default_manifest = {
         "active_set": "default",
-        "use_category_icons_for_products": True,
+        "use_category_icons_for_products": False,
         "updated_at": int(time.time() * 1000),
         "sets": {
             "default": {"name": "Bộ Mặc Định (Hệ Thống)", "slots": {}},
@@ -703,12 +712,21 @@ def _ensure_icon_sets_directories_and_manifest():
             with open(ICON_SETS_MANIFEST_PATH, "r", encoding="utf-8") as rf:
                 loaded = json.load(rf)
             if isinstance(loaded, dict) and "sets" in loaded:
+                dirty = False
                 for k in ("default", "set_1", "set_2", "set_3"):
                     loaded["sets"].setdefault(k, default_manifest["sets"][k])
                     loaded["sets"][k].setdefault("slots", {})
+                    slots_dict = dict(loaded["sets"][k]["slots"])
+                    for sk, rel_p in list(slots_dict.items()):
+                        abs_p = os.path.join(ICONS_ROOT_DIR, str(rel_p).replace("/", os.sep))
+                        if not os.path.isfile(abs_p) or os.path.getsize(abs_p) <= 100:
+                            loaded["sets"][k]["slots"].pop(sk, None)
+                            dirty = True
                 loaded.setdefault("active_set", "default")
-                loaded.setdefault("use_category_icons_for_products", True)
+                loaded.setdefault("use_category_icons_for_products", False)
                 loaded.setdefault("updated_at", int(time.time() * 1000))
+                if dirty:
+                    _save_icon_sets_manifest(loaded)
                 return loaded
         except Exception:
             pass
@@ -768,12 +786,12 @@ def _build_default_slot_svg_xml(slot_key):
     Sinh Icon Vector SVG Mặc định sắc nét cho từng vị trí (khi vị trí đó trong Bộ 1, 2, 3 chưa nạp ảnh riêng)
     """
     slot_configs = {
-        "brand_logo": ("#76b900", "N", "LOGO WEB"),
+        "brand_logo": ("#059669", "NX", "NEXORA"),
         "nav_voucher": ("#f43f5e", "🎟️", "VOUCHER"),
         "nav_farm": ("#10b981", "🌱", "NÔNG TRẠI"),
-        "nav_bank": ("#eab308", "💳", "NVIDIA PAY"),
+        "nav_bank": ("#eab308", "💳", "NEXORA PAY"),
         "nav_ai_cat": ("#a855f7", "🐾", "MÈO AI"),
-        "cat_gpu": ("#76b900", "GPU", "CARD ĐỒ HỌA"),
+        "cat_gpu": ("#059669", "GPU", "CARD ĐỒ HỌA"),
         "cat_cpu": ("#0ea5e9", "CPU", "VI XỬ LÝ"),
         "cat_mainboard": ("#38bdf8", "MB", "MAINBOARD"),
         "cat_ram": ("#10b981", "SSD", "RAM & NVME"),
@@ -783,7 +801,7 @@ def _build_default_slot_svg_xml(slot_key):
         "cat_health_care": ("#14b8a6", "FIT", "SỨC KHỎE"),
         "cat_fashion": ("#6366f1", "BAG", "BALO & SẠC")
     }
-    accent, center_txt, sub_txt = slot_configs.get(slot_key, ("#76b900", "NV", "DEFAULT"))
+    accent, center_txt, sub_txt = slot_configs.get(slot_key, ("#059669", "NX", "NEXORA"))
 
     # Vẽ biểu tượng đồ họa riêng cho từng slot
     if slot_key == "cat_gpu":
@@ -1141,57 +1159,13 @@ def manage_multi_icon_sets_api():
 def serve_product_representative_svg_icon():
     cat = (request.args.get("category") or "gpu").strip().lower()
     p_type = (request.args.get("type") or "").strip()
-    brand = (request.args.get("brand") or "NIVIDA").strip().upper()
+    brand = (request.args.get("brand") or "NEXORA").strip().upper()
+    if brand in ("NIVIDA", "NVIDIA STORE"):
+        brand = "NEXORA"
     name_hint = (request.args.get("name") or "").strip()
 
-    cat_alias_map = {
-        "gpu": "cat_gpu",
-        "monitor": "cat_gpu",
-        "vga": "cat_gpu",
-        "cpu": "cat_cpu",
-        "laptop": "cat_cpu",
-        "mainboard": "cat_mainboard",
-        "psu": "cat_mainboard",
-        "cooling": "cat_mainboard",
-        "case": "cat_mainboard",
-        "ram": "cat_ram",
-        "ssd": "cat_ram",
-        "storage": "cat_ram",
-        "keyboard": "cat_keyboard",
-        "mouse": "cat_keyboard",
-        "gear": "cat_keyboard",
-        "headphones": "cat_headphones",
-        "speaker": "cat_headphones",
-        "audio": "cat_headphones",
-        "home_living": "cat_home_living",
-        "smart_home": "cat_home_living",
-        "health_care": "cat_health_care",
-        "watch": "cat_health_care",
-        "fashion": "cat_fashion",
-        "bag": "cat_fashion"
-    }
-    cat_slot_key = cat_alias_map.get(cat, f"cat_{cat}")
-
-    # Nếu Bộ Icon đang kích hoạt (hoặc default) có nạp Icon riêng cho ngành hàng này (VD: cat_mainboard, cat_headphones...)
-    # thì ưu tiên hiển thị đúng Icon của Bộ đang chọn!
-    manifest = _ensure_icon_sets_directories_and_manifest()
-    active_set = manifest.get("active_set") or "default"
-    if manifest.get("use_category_icons_for_products", True):
-        abs_custom, _, is_fallback = _resolve_slot_custom_file_path(active_set, cat_slot_key, manifest=manifest)
-        if abs_custom and not is_fallback and os.path.isfile(abs_custom):
-            ext = os.path.splitext(abs_custom)[1].lower()
-            mime_map = {
-                ".png": "image/png",
-                ".webp": "image/webp",
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".svg": "image/svg+xml",
-                ".ico": "image/x-icon"
-            }
-            resp = send_file(abs_custom, mimetype=mime_map.get(ext, "image/png"))
-            resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
-            return resp
-
+    # Luôn vẽ hình minh họa Vector SVG chi tiết theo đúng chủng loại sản phẩm (GPU, CPU, Mainboard, RAM/SSD, Phím Chuột, Tai nghe...),
+    # TUYỆT ĐỐI KHÔNG lấy icon nhỏ của thanh menu đè lên ảnh lớn của thẻ sản phẩm.
     low_all = (cat + " " + p_type + " " + name_hint).lower()
 
     if cat in ("mainboard", "psu", "cooling", "case"):
@@ -1732,16 +1706,17 @@ def _global_security_and_js_healer_headers(response):
                     "<style id=\"nvx-anti-fouc-css\">"
                     "@view-transition{navigation:auto;}"
                     "html[data-theme=\"dark\"]{color-scheme:dark;background-color:#070b12!important;color:#f8fafc!important;}"
-                    "html[data-theme=\"light\"]{color-scheme:light;background-color:#f4f6f9!important;color:#111827!important;}"
+                    "html[data-theme=\"light\"]{color-scheme:light;background-color:#f8fafc!important;color:#0f172a!important;}"
                     "</style>\n"
                     "<script id=\"nvx-anti-fouc-guard\">"
                     "(function(){try{"
-                    "var s=localStorage.getItem('nvx_visual_skin')||'pure-daylight';"
-                    "var d=(s!=='pure-daylight');"
+                    "var s=localStorage.getItem('nvx_visual_skin')||'executive_light';"
+                    "var lightSkins=['executive_light','swiss_finance','apple_cupertino','muji_warm_paper','nordic_snow','oxford_academic','pure-daylight'];"
+                    "var d=(lightSkins.indexOf(s)===-1);"
                     "var r=document.documentElement;"
                     "r.setAttribute('data-nv-skin',s);"
                     "r.setAttribute('data-theme',d?'dark':'light');"
-                    "r.style.backgroundColor=d?'#070b12':'#f4f6f9';"
+                    "r.style.backgroundColor=d?'#070b12':'#f8fafc';"
                     "r.style.colorScheme=d?'dark':'light';"
                     "}catch(e){}})();"
                     "</script>"
@@ -2155,8 +2130,8 @@ def set_product_discount_reward_mode():
 _EMAIL_OTP_VERIFICATION_STORE = {}
 
 DEFAULT_WORKING_RESEND_KEY = os.environ.get("RESEND_API_KEY", "")
-DEFAULT_WORKING_RESEND_FROM = "NVIDIA Store CSKH <noreply@nvidia.castle-tech.cloud>"
-DEFAULT_WORKING_RESEND_REPLY = "cskh@nvidia.castle-tech.cloud"
+DEFAULT_WORKING_RESEND_FROM = "Nexora Tech CSKH <noreply@nexora.castle-tech.cloud>"
+DEFAULT_WORKING_RESEND_REPLY = "cskh@nexora.castle-tech.cloud"
 
 
 def _is_clean_ascii_resend_key(k):
@@ -2232,8 +2207,10 @@ def _resolve_clean_resend_config(custom_key="", custom_from=""):
 
     if not chosen_from:
         chosen_from = DEFAULT_WORKING_RESEND_FROM
+    chosen_from = chosen_from.replace("NVIDIA Store", "Nexora Tech").replace("Nivida Store", "Nexora Tech").replace("nvidia.castle-tech.cloud", "nexora.castle-tech.cloud")
 
     reply_to = (env_map.get("RESEND_REPLY_TO") or os.environ.get("RESEND_REPLY_TO") or db_cfg.get("resend_reply_to") or DEFAULT_WORKING_RESEND_REPLY).strip()
+    reply_to = reply_to.replace("nvidia.castle-tech.cloud", "nexora.castle-tech.cloud")
     return chosen_key, chosen_from, reply_to
 
 
@@ -2289,8 +2266,8 @@ def _build_light_theme_no_icon_otp_html(recipient_name, otp_code, purpose_label,
     <div style="background-color:#f4f7fa;padding:32px 16px;font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#1e293b;">
         <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:14px;padding:32px;border:1px solid #dce4ec;box-shadow:0 6px 20px rgba(15,23,42,0.06);">
             <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #eef2f6;padding-bottom:16px;margin-bottom:24px;">
-                <strong style="color:#4d7c0f;font-size:19px;letter-spacing:0.5px;">NIVIDA STORE SECURITY</strong>
-                <span style="background-color:#ecfccb;color:#365314;font-weight:700;padding:5px 12px;border-radius:6px;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">{safe_purpose}</span>
+                <strong style="color:#059669;font-size:19px;letter-spacing:0.5px;">NEXORA MALL SECURITY</strong>
+                <span style="background-color:#d1fae5;color:#065f46;font-weight:700;padding:5px 12px;border-radius:6px;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">{safe_purpose}</span>
             </div>
 
             <p style="font-size:16px;color:#0f172a;margin-top:0;margin-bottom:12px;">
@@ -2298,14 +2275,14 @@ def _build_light_theme_no_icon_otp_html(recipient_name, otp_code, purpose_label,
             </p>
 
             <p style="font-size:14px;color:#334155;line-height:1.65;margin-bottom:22px;">
-                Hệ thống Nivida Store gửi đến bạn mã xác thực một lần (OTP) để hoàn tất yêu cầu <strong>{safe_purpose.lower()}</strong> trên tài khoản của bạn. Vui lòng nhập dãy 6 chữ số bên dưới vào màn hình xác nhận:
+                Hệ thống Nexora Mall gửi đến bạn mã xác thực một lần (OTP) để hoàn tất yêu cầu <strong>{safe_purpose.lower()}</strong> trên tài khoản của bạn. Vui lòng nhập dãy 6 chữ số bên dưới vào màn hình xác nhận:
             </p>
 
-            <div style="text-align:center;margin:24px 0;padding:24px 16px;background-color:#f8fafc;border-radius:12px;border:1px dashed #65a30d;">
+            <div style="text-align:center;margin:24px 0;padding:24px 16px;background-color:#f8fafc;border-radius:12px;border:1px dashed #059669;">
                 <div style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:8px;">
                     MÃ XÁC THỰC OTP CỦA BẠN
                 </div>
-                <div style="font-size:38px;font-weight:900;letter-spacing:10px;color:#3f6212;font-family:'Courier New',Consolas,monospace;">
+                <div style="font-size:38px;font-weight:900;letter-spacing:10px;color:#047857;font-family:'Courier New',Consolas,monospace;">
                     {otp_code}
                 </div>
                 <div style="font-size:12px;color:#64748b;margin-top:8px;">
@@ -2316,7 +2293,7 @@ def _build_light_theme_no_icon_otp_html(recipient_name, otp_code, purpose_label,
             {reward_html}
 
             <p style="font-size:12px;color:#64748b;border-top:1px solid #eef2f6;padding-top:14px;margin-top:24px;margin-bottom:0;line-height:1.6;">
-                Gửi từ: <strong>{safe_from}</strong> • Máy chủ: <code>nvidia.castle-tech.cloud</code>
+                Gửi từ: <strong>{safe_from}</strong> • Máy chủ: <code>nexora.castle-tech.cloud</code>
             </p>
         </div>
     </div>
@@ -2345,7 +2322,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
             "from": sender_address,
             "to": [to_email],
             "reply_to": reply_to,
-            "subject": f"[{otp_code}] Mã xác thực OTP Nivida Store dành cho {recipient_name}",
+            "subject": f"[{otp_code}] Mã xác thực OTP Nexora Mall dành cho {recipient_name}",
             "html": html_body
         }).encode("utf-8")
         req = urllib.request.Request(
@@ -2354,7 +2331,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
             headers={
                 "Authorization": f"Bearer {resend_key}",
                 "Content-Type": "application/json",
-                "User-Agent": "NividaStore-ResendClient/8.7"
+                "User-Agent": "NexoraMall-ResendClient/9.5"
             },
             method="POST"
         )
@@ -2383,7 +2360,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
 
         if http_err.code in (400, 403, 422) and "onboarding@resend.dev" not in from_email:
             try:
-                fallback_sender = "NVIDIA Store CSKH <onboarding@resend.dev>"
+                fallback_sender = "Nexora Tech CSKH <onboarding@resend.dev>"
                 _, resp2 = _call_resend_http(fallback_sender)
                 msg_id2 = resp2.get("id") or "RESEND-SANDBOX-OK"
                 return True, {
@@ -2440,7 +2417,7 @@ def root_admin_test_send_otp_email():
         recipient_name=recipient_name,
         otp_code=otp_code,
         purpose_label="XÁC THỰC BẢO MẬT TÀI KHOẢN",
-        reward_note="Xác minh tài khoản chính chủ và kích hoạt gói thưởng 50.000 Xu vào Ví Nivida Pay.",
+        reward_note="Xác minh tài khoản chính chủ và kích hoạt gói thưởng 50.000 Xu vào Ví Nexora Pay.",
         custom_key=str(data.get("resend_api_key") or ""),
         custom_from=str(data.get("resend_from_email") or "")
     )
@@ -2490,7 +2467,7 @@ def root_user_send_email_verification_otp():
         recipient_name=recipient_name,
         otp_code=otp_code,
         purpose_label="XÁC MINH EMAIL NHẬN THƯỞNG 50.000 XU",
-        reward_note="Nhận ngay +50.000 Xu vào Ví Nivida Pay, +3 Lượt Vòng Quay May Mắn và huy hiệu Email Chính Chủ."
+        reward_note="Nhận ngay +50.000 Xu vào Ví Nexora Pay, +3 Lượt Vòng Quay May Mắn và huy hiệu Email Chính Chủ."
     )
     return jsonify(payload), status_code
 

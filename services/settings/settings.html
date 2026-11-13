@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cài Đặt Tài Khoản, Hoàn Thiện Bảo Mật OTP/Câu Hỏi &amp; Hệ Thống - Nvidia Store</title>
+    <title>Cài Đặt Giao Diện 12 Chủ Đề, Mật Độ Lưới &amp; Bảo Mật OTP - Nexora Mall</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/core/global.css">
     <link rel="stylesheet" href="/services/settings/settings.css">
@@ -12,6 +12,64 @@
     <div id="header-placeholder"></div>
 
     <main class="container py-4">
+        <!-- STUDIO 12 GIAO DIỆN ĐA LỨA TUỔI, HIỆU ỨNG NỀN & MẬT ĐỘ LƯỚI SẢN PHẨM -->
+        <section id="themeStudioSection" class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #059669 !important;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
+                <div>
+                    <span class="badge bg-nvidia mb-1">🎨 STUDIO CÁ NHÂN HÓA GIAO DIỆN TOÀN SÀN NEXORA</span>
+                    <h4 class="fw-bold m-0">Bộ 12 Giao Diện Đa Lứa Tuổi &amp; Mật Độ Hiển Thị Kệ Hàng</h4>
+                    <p class="small text-muted mb-0 mt-1">
+                        Mặc định sử dụng <strong>Executive Pearl Light</strong> (Sáng công sở thanh lịch, dịu mắt). Bạn có thể chuyển nhanh giữa 6 chủ đề Sáng Nghiêm Túc và 6 chủ đề Tối Chuyên Sâu, bật/tắt hiệu ứng nền động hoặc chỉnh số cột sản phẩm.
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="toggleTheme()">🌓 Đổi Nhanh Sáng / Tối</button>
+                    <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="toggleWebIconMode()">🖼️ Đồng Bộ Icon Web</button>
+                </div>
+            </div>
+
+            <div class="row g-3 align-items-center mb-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold mb-1">🎨 Chọn Chủ Đề Giao Diện (12 Themes):</label>
+                    <select id="settingsThemeSkinSelector" class="form-select form-select-sm fw-bold" onchange="applyNvidiaVisualSkin(this.value)">
+                        <option value="executive_light">⚪ 1. Executive Pearl Light (Sáng Công Sở Thanh Lịch - Mặc định)</option>
+                        <option value="swiss_finance">🏛️ 2. Swiss Financial Banking (Ngân Hàng Thụy Sĩ Nghiêm Túc)</option>
+                        <option value="apple_cupertino">🍎 3. Minimalist Cupertino Silver (Tối Giản Hiện Đại)</option>
+                        <option value="muji_warm_paper">📜 4. Warm Ivory Paper (Giấy Kem Dịu Mắt Cho Người Lớn Tuổi)</option>
+                        <option value="nordic_snow">❄️ 5. Nordic Ice Daylight (Bắc Âu Tinh Khiết)</option>
+                        <option value="oxford_academic">🎓 6. Oxford Scholarly Classic (Cổ Điển Học Thuật)</option>
+                        <option value="bloomberg_terminal">📈 7. Wall Street Night Terminal (Chuyên Gia Dữ Liệu Tối)</option>
+                        <option value="obsidian_luxury">👑 8. Obsidian Gold VIP (Đen Kim Tước Sang Trọng)</option>
+                        <option value="emerald_tech">🟢 9. Nexora Emerald Matrix (Công Nghệ Xanh Lục Bảo)</option>
+                        <option value="ocean_breeze">🌊 10. Deep Ocean Breeze (Đại Dương Xanh Thẳm)</option>
+                        <option value="kyoto_autumn">🍁 11. Kyoto Autumn Leaves (Mùa Thu Lá Đỏ Kyoto)</option>
+                        <option value="tet_festival">🧧 12. Lễ Hội Tết Sum Vầy (Đặc Biệt Mùa Lễ Hội)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold mb-1">📐 Mật Độ Hiển Thị Lưới Sản Phẩm (Grid Density):</label>
+                    <select id="settingsGridDensitySelect" class="form-select form-select-sm fw-bold" onchange="applyProductGridDensity(this.value)">
+                        <option value="3">3 Cột (Rộng rãi - Chữ to cho người lớn tuổi)</option>
+                        <option value="4" selected>4 Cột (Tiêu chuẩn - Cân đối)</option>
+                        <option value="5">5 Cột (Chuyên nghiệp)</option>
+                        <option value="6">6 Cột (Siêu gọn - Xem nhiều SP cùng lúc)</option>
+                        <option value="list">Danh sách ngang (List View)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold mb-1 d-block">✨ Hiệu Ứng Nền Động Canvas:</label>
+                    <div class="form-check form-switch mt-1">
+                        <input class="form-check-input" type="checkbox" id="settingsBgFxSwitch" checked onchange="toggleBackgroundEffects(this.checked)">
+                        <label class="form-check-label small fw-semibold" for="settingsBgFxSwitch">Bật hiệu ứng nền</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings12ThemesGridBox" class="row g-2"></div>
+        </section>
+
         <!-- CỐ VẤN HOÀN THIỆN HỒ SƠ BẢO MẬT ĐỂ ĐẢM BẢO KHẢ NĂNG ĐỔI MẬT KHẨU -->
         <div class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #76b900 !important;">
             <div class="row g-3 align-items-center">
@@ -170,7 +228,7 @@
                 </div>
             </div>
             <div class="small text-muted">
-                Hệ thống cơ sở dữ liệu SQLite (WAL Mode) đã đồng bộ đầy đủ cấu trúc Bảo mật OTP, Câu hỏi bảo mật, Ví Voucher và Vận đơn NVIDIA XPRESS.
+                Hệ thống cơ sở dữ liệu SQLite (WAL Mode) đã đồng bộ đầy đủ cấu trúc Bảo mật OTP, Câu hỏi bảo mật, Ví Voucher và Vận đơn NX Express trên <strong>nexora.castle-tech.cloud</strong>.
             </div>
         </section>
     </main>

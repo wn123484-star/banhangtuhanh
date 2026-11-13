@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ngân Hàng Số NVIDIA PAY — Camera Quét QR Thật, Kiểm Tra Hóa Đơn &amp; Chống Trừ Tiền Lặp</title>
+    <title>Ngân Hàng Số NEXORA PAY — Camera Quét QR Thật, Kiểm Tra Hóa Đơn &amp; Chống Trừ Tiền Lặp</title>
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/core/global.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -60,7 +60,7 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
             <div>
                 <span class="badge bg-nvidia mb-1">REAL CAMERA QR SCANNER &amp; ATOMIC IDEMPOTENCY GUARD V8.5</span>
-                <h3 class="fw-bold m-0">🏦 Ngân Hàng Số NVIDIA PAY — Quét QR Nhận Diện Hóa Đơn &amp; Bảo Vệ Số Dư</h3>
+                <h3 class="fw-bold m-0">🏦 Ngân Hàng Số NEXORA PAY — Quét QR Nhận Diện Hóa Đơn &amp; Bảo Vệ Số Dư</h3>
                 <small class="text-muted">Chỉ mở phiếu thanh toán khi giải mã đúng mã QR hóa đơn thật • Khóa nguyên tử chống bấm lặp trừ tiền nhiều lần</small>
             </div>
             <div class="d-flex gap-2">
@@ -115,7 +115,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Ghi chú nguồn nạp</label>
-                            <input type="text" id="bankTopupNoteInput" class="form-control" value="Nạp tiền ngân hàng NVIDIA PAY">
+                            <input type="text" id="bankTopupNoteInput" class="form-control" value="Nạp tiền ngân hàng NEXORA PAY">
                         </div>
                         <div class="col-md-3">
                             <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">⚡ Nạp Tiền</button>
@@ -594,7 +594,7 @@
                             <div>• Tổng số tiền đã thanh toán: <strong class="text-warning fs-6">${billAmt.toLocaleString('vi-VN')} ₫</strong></div>
                             ${behalfTag}
                             ${itemsHtml}
-                            <div class="mt-2"><a href="${info.next_step_url || '/services/order_tracking/tracking.html'}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Mở Trang Theo Dõi Vận Đơn NVX Express (${info.tracking_code || 'NVX'}) ➔</a></div>
+                            <div class="mt-2"><a href="${info.next_step_url || '/services/order_tracking/tracking.html'}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Mở Trang Theo Dõi Vận Đơn NX Express (${info.tracking_code || 'NVX'}) ➔</a></div>
                         `;
                     }
                     if (submitBtn) {
@@ -732,7 +732,7 @@
                             <div>✅ ĐÃ XÁC NHẬN CHUYỂN KHOẢN &amp; KHÓA QUỸ BẢO LÃNH ESCROW (ĐƠN #NVD-${oid})</div>
                             <div>• Mã giao dịch: <code>${data.tx_code}</code> • Số tiền: <strong>-${Number(data.paid_amount ?? amount).toLocaleString('vi-VN')} ₫</strong></div>
                             ${behalfHtml}
-                            <div class="mt-2"><a href="${trackUrl}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Xem Hành Trình Vận Đơn NVX Express #NVD-${oid} (${tCode}) Ngay ➔</a></div>
+                            <div class="mt-2"><a href="${trackUrl}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Xem Hành Trình Vận Đơn NX Express #NVD-${oid} (${tCode}) Ngay ➔</a></div>
                         `;
                     }
 
@@ -806,7 +806,7 @@
             const uid = getActiveUserId();
             if (!uid) return;
             const amount = Number(document.getElementById('bankTopupAmountInput')?.value || 0);
-            const note = document.getElementById('bankTopupNoteInput')?.value || 'Nạp tiền tự do NVIDIA PAY';
+            const note = document.getElementById('bankTopupNoteInput')?.value || 'Nạp tiền tự do NEXORA PAY';
             try {
                 const res = await fetch('/api/settings/bank-wallet/topup', {
                     method: 'POST',

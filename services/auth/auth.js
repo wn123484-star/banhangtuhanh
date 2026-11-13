@@ -730,6 +730,28 @@ function initLeftArtisticSceneryCanvas() {
         const w = canvas.width;
         const h = canvas.height;
         const horizonY = h * 0.77;
+        const isLightMode = document.documentElement.getAttribute('data-theme') !== 'dark';
+
+        if (isLightMode) {
+            const lightGrad = ctx.createLinearGradient(0, 0, w, h);
+            lightGrad.addColorStop(0, '#f8fafc');
+            lightGrad.addColorStop(0.5, '#f0fdf4');
+            lightGrad.addColorStop(1, '#eff6ff');
+            ctx.fillStyle = lightGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.strokeStyle = 'rgba(15, 23, 42, 0.045)';
+            ctx.lineWidth = 1;
+            const step = 64;
+            for (let x = 0; x < w; x += step) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
+            for (let y = 0; y < h; y += step) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+            __sceneryAnimId = requestAnimationFrame(renderFullPanorama);
+            return;
+        }
 
         /* Nhánh 1: Hố Đen Vũ Trụ Thuần Khiết */
         if (__scenerySceneMode === 'galaxy_blackhole') {
@@ -842,24 +864,7 @@ function isCurrentOriginAllowedForGoogleGsi() {
     return false;
 }
 
-function isCurrentOriginAllowedForGoogleGsi() {
-    const host = (window.location.hostname || '').toLowerCase();
-    /* Google OAuth không cho phép IP trần (127.0.0.1 / 180.93.x.x); chỉ bật GSI khi chạy trên tên miền hoặc localhost */
-    if (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud') {
-        return true;
-    }
-    return false;
-}
-
 let __configuredFacebookAppId = '';
-
-function isCurrentOriginAllowedForGoogleGsi() {
-    const host = (window.location.hostname || '').toLowerCase();
-    if (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud') {
-        return true;
-    }
-    return false;
-}
 
 function loadFacebookSdkIfConfigured(fbAppId) {
     if (!fbAppId || window.FB || document.getElementById('facebook-jssdk')) return;
@@ -877,14 +882,6 @@ function loadFacebookSdkIfConfigured(fbAppId) {
     js.async = true;
     js.defer = true;
     document.head.appendChild(js);
-}
-
-function isCurrentOriginAllowedForGoogleGsi() {
-    const host = (window.location.hostname || '').toLowerCase();
-    if (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud') {
-        return true;
-    }
-    return false;
 }
 
 async function initGoogleOAuthClient() {

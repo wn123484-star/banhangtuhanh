@@ -1,10 +1,16 @@
 /* ==========================================================================
-   AUTH.CSS - GIAO DIỆN ĐĂNG NHẬP / ĐĂNG KÝ SANG TRỌNG & KHUNG ĐIỀU KHOẢN SỐNG ĐỘNG
+   AUTH.CSS - GIAO DIỆN ĐĂNG NHẬP / ĐĂNG KÝ NEXORA MALL (LIGHT EXECUTIVE & DARK ADAPTIVE)
    ========================================================================== */
 
 body.auth-panoramic-page {
     position: relative;
     min-height: 100vh;
+    background: var(--nv-bg-primary, #f8fafc) !important;
+    color: var(--nv-text-main, #0f172a) !important;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+html[data-theme="dark"] body.auth-panoramic-page {
     background: #040711 !important;
     color: #f8fafc !important;
 }
@@ -39,51 +45,115 @@ body.auth-panoramic-page {
     flex-direction: column;
     justify-content: space-between;
     padding: 8px 16px 8px 4px;
-    color: #ffffff;
+    color: var(--nv-text-main, #0f172a);
     pointer-events: none;
 }
 
+html[data-theme="dark"] .auth-art-showcase {
+    color: #ffffff;
+}
+
 .auth-art-overlay-top,
-.auth-art-overlay-bottom {
+.auth-art-overlay-bottom,
+.auth-vector-illustration-card {
     position: relative;
     z-index: 6;
     pointer-events: auto;
+}
+
+/* BANNER MINH HỌA VECTOR HIỆN ĐẠI CỘT TRÁI (SÁNG RÕ & THÍCH ỨNG SÁNG/TỐI) */
+.auth-vector-illustration-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 18px 20px;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+    margin: 14px 0;
+}
+
+html[data-theme="dark"] .auth-vector-illustration-card {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(118, 185, 0, 0.45);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.auth-showcase-heading {
+    color: #0f172a !important;
+    text-shadow: none !important;
+    letter-spacing: -0.3px;
+}
+
+html[data-theme="dark"] .auth-showcase-heading {
+    color: #ffffff !important;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.85) !important;
+}
+
+.auth-showcase-subtext {
+    color: #334155 !important;
+    text-shadow: none !important;
+}
+
+html[data-theme="dark"] .auth-showcase-subtext {
+    color: #e2e8f0 !important;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85) !important;
 }
 
 .auth-hero-badge-pill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(11, 17, 30, 0.78);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(118, 185, 0, 0.65);
-    color: #a3e635;
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    color: #047857;
     font-size: 11.5px;
     font-weight: 700;
     letter-spacing: 0.4px;
     padding: 6px 14px;
     border-radius: 99px;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.12);
+}
+
+html[data-theme="dark"] .auth-hero-badge-pill {
+    background: rgba(11, 17, 30, 0.78);
+    border-color: rgba(118, 185, 0, 0.65);
+    color: #a3e635;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .auth-art-glass-pill {
-    background: rgba(10, 16, 29, 0.74) !important;
-    backdrop-filter: blur(16px) saturate(150%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.16) !important;
-    border-top: 2px solid rgba(118, 185, 0, 0.7) !important;
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-top: 3px solid var(--nv-green, #059669) !important;
     border-radius: 16px !important;
     padding: 13px 15px !important;
+    color: #0f172a !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06) !important;
+    transition: transform 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
+}
+
+html[data-theme="dark"] .auth-art-glass-pill {
+    background: rgba(10, 16, 29, 0.76) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 2px solid rgba(118, 185, 0, 0.7) !important;
     color: #f8fafc !important;
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45) !important;
-    transition: transform 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
 }
 
 .auth-art-glass-pill:hover {
     transform: translateY(-3px);
-    border-color: #76b900 !important;
-    background: rgba(14, 22, 38, 0.88) !important;
+    border-color: var(--nv-green, #059669) !important;
+}
+
+.auth-art-glass-pill .text-light {
+    color: #475569 !important;
+}
+
+html[data-theme="dark"] .auth-art-glass-pill .text-light {
+    color: #e2e8f0 !important;
 }
 
 .auth-pill-icon-box {
@@ -94,8 +164,8 @@ body.auth-panoramic-page {
     align-items: center;
     justify-content: center;
     font-size: 16px;
-    background: rgba(118, 185, 0, 0.18);
-    border: 1px solid rgba(118, 185, 0, 0.45);
+    background: rgba(5, 150, 105, 0.12);
+    border: 1px solid rgba(5, 150, 105, 0.35);
     margin-bottom: 6px;
 }
 
@@ -106,45 +176,85 @@ body.auth-panoramic-page {
     width: 100%;
     max-width: 495px;
     margin-left: auto;
-    background: rgba(9, 14, 26, 0.88) !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 22px !important;
+    padding: 22px 24px !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.10), 0 4px 16px rgba(5, 150, 105, 0.06) !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+html[data-theme="dark"] .auth-stationary-card {
+    background: rgba(9, 14, 26, 0.90) !important;
     backdrop-filter: blur(24px) saturate(170%) !important;
     -webkit-backdrop-filter: blur(24px) saturate(170%) !important;
     color: #f8fafc !important;
     border: 1.8px solid rgba(118, 185, 0, 0.58) !important;
-    border-radius: 22px !important;
-    padding: 20px 24px !important;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.72), 0 0 38px rgba(118, 185, 0, 0.14) !important;
-    animation: none !important;
-    transform: none !important;
 }
 
 .auth-stationary-card h4,
 .auth-stationary-card label,
 .auth-stationary-card .form-label {
+    color: #0f172a !important;
+}
+
+html[data-theme="dark"] .auth-stationary-card h4,
+html[data-theme="dark"] .auth-stationary-card label,
+html[data-theme="dark"] .auth-stationary-card .form-label {
+    color: #f1f5f9 !important;
+}
+
+.auth-stationary-card .text-light {
+    color: #334155 !important;
+}
+
+html[data-theme="dark"] .auth-stationary-card .text-light {
     color: #f1f5f9 !important;
 }
 
 .auth-stationary-card .text-muted {
+    color: #64748b !important;
+}
+
+html[data-theme="dark"] .auth-stationary-card .text-muted {
     color: #94a3b8 !important;
 }
 
 .auth-stationary-card .form-control,
 .auth-stationary-card .form-select {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+html[data-theme="dark"] .auth-stationary-card .form-control,
+html[data-theme="dark"] .auth-stationary-card .form-select {
     background-color: rgba(15, 23, 42, 0.90) !important;
     color: #f8fafc !important;
     border: 1px solid rgba(148, 163, 184, 0.35) !important;
-    border-radius: 10px !important;
-    padding: 7px 12px !important;
-    font-size: 13px !important;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .auth-stationary-card .form-control::placeholder {
-    color: #64748b !important;
+    color: #94a3b8 !important;
 }
 
 .auth-stationary-card .form-control:focus,
 .auth-stationary-card .form-select:focus {
+    background-color: #ffffff !important;
+    border-color: var(--nv-green, #059669) !important;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.18) !important;
+    color: #0f172a !important;
+}
+
+html[data-theme="dark"] .auth-stationary-card .form-control:focus,
+html[data-theme="dark"] .auth-stationary-card .form-select:focus {
     background-color: rgba(15, 23, 42, 0.98) !important;
     border-color: #76b900 !important;
     box-shadow: 0 0 0 3px rgba(118, 185, 0, 0.24) !important;
@@ -153,10 +263,15 @@ body.auth-panoramic-page {
 
 .auth-segmented-tabs {
     display: inline-flex;
-    background: rgba(15, 23, 42, 0.9);
+    background: #f1f5f9;
     padding: 3.5px;
     border-radius: 12px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
+    border: 1px solid #cbd5e1;
+}
+
+html[data-theme="dark"] .auth-segmented-tabs {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: rgba(148, 163, 184, 0.28);
 }
 
 .auth-segmented-tabs .btn {
@@ -176,24 +291,35 @@ body.auth-panoramic-page {
     border-radius: 10px;
     font-size: 12.5px;
     font-weight: 600;
-    border: 1px solid rgba(148, 163, 184, 0.32) !important;
-    background: rgba(30, 41, 59, 0.75) !important;
-    color: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
     transition: all 0.18s ease;
 }
 
+html[data-theme="dark"] .social-login-btn {
+    border: 1px solid rgba(148, 163, 184, 0.32) !important;
+    background: rgba(30, 41, 59, 0.75) !important;
+    color: #f8fafc !important;
+}
+
 .social-login-btn:hover {
+    border-color: var(--nv-green, #059669) !important;
+    background: #ecfdf5 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.15);
+}
+
+html[data-theme="dark"] .social-login-btn:hover {
     border-color: #76b900 !important;
     background: rgba(30, 41, 59, 0.96) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(118, 185, 0, 0.22);
 }
 
 .auth-security-subbox {
     border-radius: 12px;
     padding: 8px 11px;
-    background: rgba(118, 185, 0, 0.08);
-    border: 1px solid rgba(118, 185, 0, 0.35);
+    background: rgba(5, 150, 105, 0.06);
+    border: 1px solid rgba(5, 150, 105, 0.28);
 }
 
 /* ==========================================================================
@@ -202,15 +328,25 @@ body.auth-panoramic-page {
 .auth-terms-consent-box {
     border-radius: 14px;
     padding: 10px 12px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(20, 34, 54, 0.88));
-    border: 1.5px solid rgba(56, 189, 248, 0.45);
+    background: #f8fafc;
+    border: 1.5px solid #94a3b8;
     transition: all 0.2s ease;
 }
 
+html[data-theme="dark"] .auth-terms-consent-box {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(20, 34, 54, 0.88));
+    border-color: rgba(56, 189, 248, 0.45);
+}
+
 .auth-terms-consent-box.terms-accepted-active {
+    border-color: var(--nv-green, #059669) !important;
+    background: #ecfdf5 !important;
+    box-shadow: 0 0 14px rgba(5, 150, 105, 0.16);
+}
+
+html[data-theme="dark"] .auth-terms-consent-box.terms-accepted-active {
     border-color: #76b900 !important;
     background: linear-gradient(135deg, rgba(20, 40, 22, 0.90), rgba(15, 23, 42, 0.92)) !important;
-    box-shadow: 0 0 18px rgba(118, 185, 0, 0.22);
 }
 
 .auth-terms-consent-box .form-check-input {
@@ -218,33 +354,43 @@ body.auth-panoramic-page {
     height: 18px;
     margin-top: 2px;
     cursor: pointer;
-    border: 2px solid #76b900;
+    border: 2px solid var(--nv-green, #059669);
+    background-color: #ffffff;
+}
+
+html[data-theme="dark"] .auth-terms-consent-box .form-check-input {
     background-color: #090d16;
 }
 
 .auth-terms-consent-box .form-check-input:checked {
-    background-color: #76b900;
-    border-color: #a3e635;
+    background-color: var(--nv-green, #059669);
+    border-color: var(--nv-green, #059669);
 }
 
 .auth-inline-terms-drawer {
     margin-top: 8px;
     padding: 8px 10px;
     border-radius: 10px;
-    background: rgba(9, 13, 22, 0.92);
-    border: 1px solid rgba(118, 185, 0, 0.45);
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
     max-height: 135px;
     overflow-y: auto;
     font-size: 11px;
     line-height: 1.45;
+    color: #334155;
+}
+
+html[data-theme="dark"] .auth-inline-terms-drawer {
+    background: rgba(9, 13, 22, 0.92);
+    border-color: rgba(118, 185, 0, 0.45);
     color: #cbd5e1;
 }
 
 .seller-portal-callout {
     border-radius: 14px;
     padding: 10px 14px;
-    background: linear-gradient(135deg, rgba(118, 185, 0, 0.15), rgba(14, 165, 233, 0.12));
-    border: 1px dashed rgba(118, 185, 0, 0.65);
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(30, 58, 138, 0.06));
+    border: 1px dashed rgba(5, 150, 105, 0.55);
 }
 
 @media (max-width: 991.98px) {

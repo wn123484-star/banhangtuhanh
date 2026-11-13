@@ -1,5 +1,5 @@
 # HIẾN PHÁP KỸ THUẬT & QUY TẮC BẮT BUỘC CHO AI (AI ENGINEERING CONSTITUTION)
-**Dự án:** Sàn Thương Mại Điện Tử Công Nghệ & Đời Sống — **Nvidia Store V9.0**
+**Dự án:** Sàn Thương Mại Điện Tử Công Nghệ & Đời Sống — **Nexora Mall (NEXORA V9.5)**
 
 Mọi tác nhân AI (4 Argon High / Argon Medium / Flash) khi đọc, phân tích và chỉnh sửa mã nguồn trong thư mục dự án này **BẮT BUỘC** phải tuân thủ tuyệt đối 8 nhóm quy tắc hiến pháp dưới đây. Bất kỳ thay đổi nào vi phạm các quy tắc này đều bị coi là lỗi nghiêm trọng.
 
@@ -84,6 +84,27 @@ Mọi tác nhân AI (4 Argon High / Argon Medium / Flash) khi đọc, phân tíc
 6.2. **Giới hạn số lượng vật phẩm theo dõi (Watchlist Quota) & Cảnh báo tự động:**
 - Mỗi tài khoản mặc định được gắn theo dõi tối đa **05 vật phẩm cùng lúc** (tránh spam; nếu đã xác minh OTP hoặc chuỗi điểm danh $\ge 3$ ngày được mở rộng lên **08 vật phẩm**).
 - Khi người dùng đặt mức **Giá Mục Tiêu (`target_price`)**, bất kỳ khi nào giá sản phẩm giảm chạm hoặc thấp hơn `target_price` (do Gian hàng giảm giá, Sự kiện bật, hoặc biến động thị trường), hệ thống phải tự động bật thông báo Chuông (`🔔`), hiển thị huy hiệu **`⚡ ĐÃ CHẠM GIÁ MỤC TIÊU`** và cho phép chốt mua ngay.
+
+## ĐIỀU 6B: QUY TẮC THƯƠNG HIỆU NEXORA, 12 GIAO DIỆN NỀN SÁNG MẶC ĐỊNH, HEADER TINH GỌN & TRỢ LÝ MÈO AI
+6B.1. **Đổi tên thương hiệu hiển thị sang NEXORA (Chống khóa Resend):**
+- Toàn bộ tên hiển thị trên UI, tiêu đề trang, Footer, Chatbot và mẫu Email OTP phải dùng thương hiệu **NEXORA** (`Nexora Mall — Sàn Thương Mại Công Nghệ & Đời Sống`, Ví `Nexora Pay`, Vận đơn `NX Express`, máy chủ `nexora.castle-tech.cloud`, Email gửi mặc định: `Nexora Tech CSKH <noreply@nexora.castle-tech.cloud>`).
+- Tuyệt đối không dùng chữ `NVIDIA Store` hay `Nivida` trong nội dung Email gửi qua Resend; giữ nguyên tên các biến kỹ thuật nội bộ (`localStorage` keys, tên bảng/file DB) để đảm bảo tương thích ngược 100%.
+6B.2. **Xử lý dứt điểm lỗi "Ô vuông xanh lá" & Cấm để lại dữ liệu rác sau khi chạy Auto-Test:**
+- Xóa toàn bộ tệp ảnh test màu xanh lá trong `assets/icons/default/`, `set_1/`, `set_2/`, `set_3/` và đặt `icon_sets_manifest.json` về `"active_set": "default"` với `"slots": {}` sạch sẽ.
+- Trong `app.py` (`serve_product_representative_svg_icon`): Luôn vẽ hình minh họa Vector SVG chi tiết theo đúng chủng loại sản phẩm (GPU, CPU, Mainboard, RAM/SSD, Phím Chuột, Tai nghe...), KHÔNG lấy icon nhỏ của thanh menu đè lên ảnh lớn của thẻ sản phẩm.
+- Trong `core/main.js` (`_applySlotIconToElement`): Khóa chặt CSS của `.nvx-dynamic-slot-icon` với `width: 18px !important; height: 18px !important; max-width: 18px !important; max-height: 18px !important; object-fit: contain !important; display: inline-block !important;`.
+- Khi script Auto-Test kiểm thử tính năng lưu Icon (`/api/settings/icon-sets`), sau khi assert xong BẮT BUỘC phải khôi phục `icon_sets_manifest.json` nguyên vẹn và xóa tệp ảnh test.
+6B.3. **Tái cấu trúc Header tinh gọn, chuyển Game Esport sang Minigame & Chỉnh Mật Độ Lưới:**
+- Chuyển **Đấu Trường Phản Xạ Tâm Ngắm Esport 30s (Aim Reflex Arena)** từ `auction.html` sang `services/minigame/minigame.html` & `minigame.js` (cạnh Vòng Quay May Mắn).
+- Gom nhóm Header Topbar trong `core/main.js` thành các cụm/Dropdown: `🏪 Kênh Người Bán`, `📈 Sàn Giao Dịch ▾`, `🎮 Giải Trí & Săn Thưởng ▾`, `🛠️ Tiện Ích ▾`, `🏦 Nexora Pay`, và chỉ để lại 1 nút nhỏ gọn `🎨 Giao Diện & Cài Đặt` dẫn tới `/services/settings/settings.html`.
+- Bổ sung công cụ **Chỉnh Mật Độ Hiển Thị Lưới Sản Phẩm (Grid Density Control)** (`3 Cột`, `4 Cột`, `5 Cột`, `6 Cột`, `Danh sách ngang`) ở cả Thanh công cụ Trang Chủ (`index.html`) và Trang Cài Đặt (`settings.html`).
+6B.4. **Mặc định Nền Sáng Thanh Lịch (`executive_light` - Executive Pearl Light) & 12 Giao Diện Đa Lứa Tuổi:**
+- Khi người dùng mới vào web (chưa có cấu hình trong `localStorage`), giao diện BẮT BUỘC mở ở chế độ **Nền Sáng Thanh Lịch (`executive_light`)** — tông trắng sứ `#f8fafc`, thẻ trắng `#ffffff`, viền `#e2e8f0`, chữ xám than `#0f172a`, điểm nhấn xanh lục bảo `#059669` & xanh navy `#1e3a8a`.
+- Quản lý đủ **12 Giao Diện Đa Lứa Tuổi** (6 giao diện Nghiêm túc Nền Sáng: `executive_light`, `swiss_finance`, `apple_cupertino`, `muji_warm_paper`, `nordic_snow`, `oxford_academic`; 6 giao diện Chuyên nghiệp/Lễ hội Nền Tối: `bloomberg_terminal`, `obsidian_luxury`, `emerald_tech`, `ocean_breeze`, `kyoto_autumn`, `tet_festival`) kèm nút bật/tắt hiệu ứng nền động.
+- Trang Đăng nhập / Đăng ký (`auth.html`, `seller-auth.html`) mặc định ở Nền Sáng Thanh Lịch và tự động hiển thị bộ minh họa Vector sáng/tối tương ứng.
+6B.5. **Hoạt ảnh Mèo AI trèo leo hô thần chú, Điều khiển qua Prompt & Voice Search tự bấm nút:**
+- Nhân vật Mèo AI trong `core/cat_widget.js` có khả năng trèo/di chuyển tới vị trí mục tiêu trên màn hình, hiện bong bóng `"✨ Hô thần chú: ..."` và thực thi lệnh thật (Đổi giao diện/mật độ lưới, Tìm kiếm sản phẩm và tự bấm `#searchBtn`, Đặt mua/Thêm giỏ hàng/Điều hướng).
+- Khi tìm kiếm bằng giọng nói (`🎙️` Google Voice Search), Mèo AI xuất hiện cạnh thanh tìm kiếm, xác nhận từ khóa vừa nói, chạm chân bấm nút `🔍 Tìm Kiếm` và cuộn mượt xuống kết quả.
 
 ---
 

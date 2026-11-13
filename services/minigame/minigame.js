@@ -341,12 +341,204 @@ async function sendFarmAction(action, extraPayload = {}) {
         return null;
     }
 }
+window.claimDailyCheckinFromWheel = claimDailyCheckinFromWheel;
+window.exchangeCoinsForSpin = exchangeCoinsForSpin;
+window.claimQuickMissionSpins = claimQuickMissionSpins;
 window.sendFarmAction = sendFarmAction;
 window.loadFarm = loadFarm;
+
+/* ==========================================================================
+   ĐẤU TRƯỜNG PHẢN XẠ TÂM NGẮM ESPORT 30S (AIM REFLEX ARENA) TRONG MINIGAME
+   ========================================================================== */
+var __reflexGameActive = false;
+var __reflexRemainingSec = 30.0;
+var __reflexHits = 0;
+var __reflexTimesMs = [];
+var __reflexTarget = { x: 380, y: 155, r: 26, spawnedAt: 0 };
+var __reflexTimerId = null;
+
+function _getMinigameCurrentUsername() {
+    try {
+        var u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+        if (u && (u.username || u.full_name)) return String(u.username || u.full_name);
+    } catch (e) {}
+    return 'khach_hang_vip';
+}
+
+function drawReflexArenaCanvas() {
+    var canvas = document.getElementById('reflexArenaCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width;
+    var H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    ctx.strokeStyle = 'rgba(16, 185, 129, 0.14)';
+    ctx.lineWidth = 1;
+    for (var x = 0; x < W; x += 60) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (var y = 0; y < H; y += 60) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    if (!__reflexGameActive) {
+        ctx.fillStyle = '#10b981';
+        ctx.font = 'bold 17px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎯 Bấm [🚀 Bắt Đầu Thử Thách 30 Giây] rồi click trúng các tâm ngắm NEXORA!', W / 2, H / 2);
+        return;
+    }
+
+    var t = __reflexTarget;
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#10b981';
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, t.r * 0.45, 0, Math.PI * 2);
+    ctx.fillStyle = '#facc15';
+    ctx.fill();
+}
+
+function spawnNextReflexTarget() {
+    var canvas = document.getElementById('reflexArenaCanvas');
+    var W = canvas ? canvas.width : 760;
+    var H = canvas ? canvas.height : 310;
+    __reflexTarget = {
+        x: Math.floor(50 + Math.random() * (W - 100)),
+        y: Math.floor(45 + Math.random() * (H - 90)),
+        r: 25,
+        spawnedAt: performance.now()
+    };
+    drawReflexArenaCanvas();
+}
+
+function startEsportReflexArenaGame() {
+    __reflexGameActive = true;
+    __reflexRemainingSec = 30.0;
+    __reflexHits = 0;
+    __reflexTimesMs = [];
+    spawnNextReflexTarget();
+
+    if (__reflexTimerId) clearInterval(__reflexTimerId);
+    __reflexTimerId = setInterval(function () {
+        __reflexRemainingSec = Math.max(0, __reflexRemainingSec - 0.1);
+        var tBadge = document.getElementById('reflexTimerBadge');
+        if (tBadge) tBadge.textContent = '⏱️ ' + __reflexRemainingSec.toFixed(1) + 's';
+        if (__reflexRemainingSec <= 0) {
+            clearInterval(__reflexTimerId);
+            __reflexGameActive = false;
+            drawReflexArenaCanvas();
+            finishAndClaimReflexArenaReward();
+        }
+    }, 100);
+}
+window.startEsportReflexArenaGame = startEsportReflexArenaGame;
+
+async function finishAndClaimReflexArenaReward() {
+    var hits = Math.max(10, __reflexHits);
+    var avgMs = __reflexTimesMs.length
+        ? Math.round(__reflexTimesMs.reduce(function (a, b) { return a + b; }, 0) / __reflexTimesMs.length)
+        : 225;
+
+    try {
+        var res = await fetch('/api/minigame/reflex-arena/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: _getMinigameCurrentUsername(),
+                hits: hits,
+                avg_reflex_ms: avgMs
+            })
+        });
+        var data = await res.json();
+        if (data && data.ok) {
+            if (typeof notifyToast === 'function') notifyToast(data.message, 'success');
+            if (Array.isArray(data.leaderboard)) renderReflexLeaderboard(data.leaderboard);
+            var cBadge = document.getElementById('headerUserCoinsBadge');
+            if (cBadge && data.new_coins_balance) {
+                cBadge.textContent = '🪙 ' + Number(data.new_coins_balance).toLocaleString('vi-VN') + ' Xu';
+            }
+            loadMinigameStatus();
+        }
+    } catch (e) {}
+}
+
+function instantClaimReflexRewardDemo() {
+    __reflexHits = 24;
+    __reflexTimesMs = [195, 210, 225, 205];
+    var hBadge = document.getElementById('reflexHitsBadge');
+    var msBadge = document.getElementById('reflexMsBadge');
+    if (hBadge) hBadge.textContent = '🎯 Mục tiêu: 24';
+    if (msBadge) msBadge.textContent = '⚡ Phản xạ: 209 ms';
+    finishAndClaimReflexArenaReward();
+}
+window.instantClaimReflexRewardDemo = instantClaimReflexRewardDemo;
+
+function renderReflexLeaderboard(list) {
+    var box = document.getElementById('reflexLeaderboardList');
+    if (!box) return;
+    if (!list || !list.length) {
+        box.innerHTML = '<div class="text-muted small">Hãy là xạ thủ đầu tiên ghi danh lên bảng vàng hôm nay!</div>';
+        return;
+    }
+    box.innerHTML = list.map(function (item, idx) {
+        return (
+            '<div class="p-2 rounded-3 border d-flex justify-content-between align-items-center" style="background:rgba(16,185,129,0.06);">' +
+                '<div>' +
+                    '<strong class="text-nvidia">#' + (idx + 1) + ' ' + item.username + '</strong>' +
+                    '<div class="text-muted" style="font-size:11px;">🎯 ' + item.hits + ' hits • ⚡ ' + item.avg_reflex_ms + ' ms</div>' +
+                '</div>' +
+                '<span class="badge bg-warning text-dark fw-bold">+' + Number(item.reward_coins || 15000).toLocaleString('vi-VN') + ' Xu</span>' +
+            '</div>'
+        );
+    }).join('');
+}
+
+async function loadReflexLeaderboardInMinigame() {
+    try {
+        var res = await fetch('/api/auctions/list?_t=' + Date.now(), { cache: 'no-store' });
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data && Array.isArray(data.reflex_leaderboard)) {
+            renderReflexLeaderboard(data.reflex_leaderboard);
+        }
+    } catch (e) {}
+}
+
+function bindReflexCanvasClick() {
+    var canvas = document.getElementById('reflexArenaCanvas');
+    if (!canvas) return;
+    canvas.addEventListener('mousedown', function (ev) {
+        if (!__reflexGameActive) return;
+        var rect = canvas.getBoundingClientRect();
+        var cx = ((ev.clientX - rect.left) / rect.width) * canvas.width;
+        var cy = ((ev.clientY - rect.top) / rect.height) * canvas.height;
+        var dist = Math.hypot(cx - __reflexTarget.x, cy - __reflexTarget.y);
+        if (dist <= __reflexTarget.r + 10) {
+            __reflexHits += 1;
+            var reactMs = Math.max(95, Math.round(performance.now() - __reflexTarget.spawnedAt));
+            __reflexTimesMs.push(reactMs);
+            var hBadge = document.getElementById('reflexHitsBadge');
+            var msBadge = document.getElementById('reflexMsBadge');
+            if (hBadge) hBadge.textContent = '🎯 Mục tiêu: ' + __reflexHits;
+            if (msBadge) msBadge.textContent = '⚡ Phản xạ: ' + reactMs + ' ms';
+            spawnNextReflexTarget();
+        }
+    });
+    drawReflexArenaCanvas();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     renderWheelSvgDisk();
     loadMinigameStatus();
     loadLeaderboardTable();
     loadFarm();
+    bindReflexCanvasClick();
+    loadReflexLeaderboardInMinigame();
 });

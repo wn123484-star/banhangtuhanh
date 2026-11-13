@@ -106,3 +106,35 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
   - [x] **Test Case 3 (Vận Đơn & Hoàn Đơn):** Trên `tracking.html`, chuyển trạng thái tới `DELIVERED_INSPECTING` $\rightarrow$ Bấm Yêu cầu Hoàn đơn & Hoàn tiền $\rightarrow$ Xác nhận số dư Ví NVIDIA Pay của khách được cộng hoàn lại 100% số tiền và tồn kho sản phẩm tăng lại.
   - [x] **Test Case 4 (Theo Dõi Giá Thị Trường & Báo Động):** Gắn theo dõi 1 sản phẩm với giá mục tiêu $\rightarrow$ Bấm giả lập giảm giá chạm mốc $\rightarrow$ Xác nhận thông báo Chuông `🔔` và huy hiệu báo động kích hoạt chính xác; kiểm tra chặn khi vượt quá giới hạn Quota (5–8 món).
   - [x] **Test Case 5 (Đấu Giá Kép, Đấu Thầu RFQ & Đội Bot QA):** Nâng cấp Đội Bot QA (`/api/settings/qa-bot-audit`) quét toàn bộ các trang và API mới, chạy kiểm tra đạt **100% HTTP 200 OK (0 lỗi)**.
+
+---
+
+## GIAI ĐOẠN 7: SỬA DỨT ĐIỂM "Ô VUÔNG XANH LÁ", ĐỔI THƯƠNG HIỆU NEXORA, GOM HEADER, 12 GIAO DIỆN NỀN SÁNG MẶC ĐỊNH & CHỈNH LƯỚI (`backup-stage-7-rebrand-ui`)
+
+- [x] **7.1. Nhiệm vụ 1 — Xử lý dứt điểm lỗi "Ô vuông xanh lá" & Đổi tên thương hiệu sang NEXORA:**
+  - [x] Xóa toàn bộ tệp ảnh test màu xanh lá trong `assets/icons/default/`, `set_1/`, `set_2/`, `set_3/` và đặt `assets/icons/icon_sets_manifest.json` về `"active_set": "default"` với `"slots": {}` sạch sẽ.
+  - [x] Trong `app.py` (`serve_product_representative_svg_icon`): Luôn vẽ hình minh họa Vector SVG chi tiết theo đúng chủng loại sản phẩm (GPU, CPU, Mainboard, RAM/SSD, Phím Chuột, Tai nghe...), KHÔNG lấy icon nhỏ của thanh menu đè lên ảnh lớn của thẻ sản phẩm.
+  - [x] Trong `core/main.js` (`_applySlotIconToElement`): Khóa chặt CSS của `.nvx-dynamic-slot-icon` với `width: 18px !important; height: 18px !important; max-width: 18px !important; max-height: 18px !important; object-fit: contain !important; display: inline-block !important;`.
+  - [x] Trong mọi script Auto-Test: Sau khi kiểm thử lưu icon xong BẮT BUỘC khôi phục lại `icon_sets_manifest.json` nguyên vẹn như ban đầu và xóa tệp ảnh test.
+  - [x] Đổi toàn bộ nhãn hiển thị trên Header, Footer, Trang chủ, Trang đăng nhập, Kênh người bán, Quản trị Admin, Tòa án AI và mẫu Email OTP sang **`NEXORA`** / **`Nexora Mall`**, Ví ngân hàng số **`Nexora Pay`**, Vận chuyển **`NX Express`**, tên miền **`nexora.castle-tech.cloud`** (`Nexora Tech CSKH <noreply@nexora.castle-tech.cloud>`), giữ nguyên tên biến kỹ thuật nội bộ.
+- [x] **7.2. Nhiệm vụ 2 — Tái cấu trúc Header gọn gàng, chuyển Game Esport sang Minigame & Chỉnh Mật Độ Lưới:**
+  - [x] Chuyển **Đấu Trường Phản Xạ Tâm Ngắm Esport 30s (Aim Reflex Arena)** từ `services/auction/auction.html` (`auction.js`) sang `services/minigame/minigame.html` (`minigame.js`) đặt cạnh **Vòng Quay May Mắn** (kèm lối dẫn nhanh sang Nông Trại Cây Voucher); giữ `auction.html` gọn gàng chuyên sâu cho Sàn Đấu Giá Kép.
+  - [x] Gom nhóm thanh Header Topbar trong `core/main.js` thành các cụm/Dropdown: `🏪 Kênh Người Bán`, `📈 Sàn Giao Dịch ▾`, `🎮 Giải Trí & Săn Thưởng ▾`, `🛠️ Tiện Ích ▾`, `🏦 Nexora Pay`, và 1 nút tinh gọn `🎨 Giao Diện & Cài Đặt` dẫn tới `/services/settings/settings.html`.
+  - [x] Bổ sung công cụ **Chỉnh Mật Độ Hiển Thị Lưới Sản Phẩm (Grid Density Control)** (`3 Cột`, `4 Cột`, `5 Cột`, `6 Cột`, `Danh sách ngang`) ở cả Thanh công cụ Trang Chủ (`index.html`) và Trang Cài Đặt (`settings.html`).
+- [x] **7.3. Nhiệm vụ 3 — Mặc định Nền Sáng Thanh Lịch (`executive_light`), 12 Bộ Giao Diện Đa Lứa Tuổi & Trang Đăng Ký Sáng:**
+  - [x] Đặt mặc định toàn sàn là **Nền Sáng Thanh Lịch (`executive_light` - Executive Pearl Light: nền `#f8fafc`, thẻ `#ffffff`, viền `#e2e8f0`, chữ `#0f172a`, điểm nhấn `#059669` & `#1e3a8a`)**.
+  - [x] Xây dựng trọn bộ **12 Giao Diện Đa Lứa Tuổi** trong `settings.html` và `core/main.js` / `core/global.css` (6 giao diện Nghiêm túc Nền Sáng: `executive_light`, `swiss_finance`, `apple_cupertino`, `muji_warm_paper`, `nordic_snow`, `oxford_academic`; 6 giao diện Chuyên nghiệp/Lễ hội Nền Tối: `bloomberg_terminal`, `obsidian_luxury`, `emerald_tech`, `ocean_breeze`, `kyoto_autumn`, `tet_festival`) kèm nút bật/tắt hiệu ứng nền động.
+  - [x] Nâng cấp Trang Đăng Nhập & Đăng Ký (`services/auth/auth.html`, `seller-auth.html`, `auth.css`, `auth.js`) mặc định ở Nền Sáng Thanh Lịch kèm **Bộ Minh Họa Vector/Banner Sáng Rõ, Hiện Đại** tự động đổi theo chế độ Sáng/Tối.
+  - [x] Chạy Auto-Test Gate Giai đoạn 7 đạt 100% PASS và đẩy nhánh `backup-stage-7-rebrand-ui`.
+
+---
+
+## GIAI ĐOẠN 8: MÈO AI TRÈO LEO HÔ THẦN CHÚ, ĐIỀU KHIỂN QUA PROMPT, VOICE SEARCH TỰ BẤM NÚT & HOÀN THIỆN TOÀN SÀN (`backup-stage-8-cat-ai-final`)
+
+- [ ] **8.1. Nhiệm vụ 4 — Nâng cấp Hoạt Ảnh Mèo AI Trèo Leo Hô Thần Chú, Điều Khiển Qua Prompt & Voice Search Tự Bấm Nút:**
+  - [ ] Trong `core/cat_widget.js` & `core/main.js`: Tạo nhân vật Mèo AI di chuyển/trèo trên màn hình tới đúng vị trí mục tiêu, hiện bong bóng `"✨ Hô thần chú: ..."` kèm tia sáng phép thuật và thực thi hành động thật.
+  - [ ] Bổ sung các nút bấm phép thuật nhanh & **Bộ Phân Tích Lệnh Prompt Thông Minh (AI Action Parser)** trong khung chat Mèo AI hỗ trợ: (1) Lệnh Đổi Giao Diện / Sáng Tối / Mật Độ Lưới, (2) Lệnh Tìm Kiếm Sản Phẩm (trèo lên `#searchInput`, gõ chữ và tự bấm `#searchBtn`), (3) Lệnh Đặt Mua / Thêm Giỏ Hàng / Điều Hướng.
+  - [ ] Trong `services/home/home.js` & `core/cat_widget.js`: Khi người dùng dùng **Google Voice Search (`🎙️`)**, Mèo AI xuất hiện cạnh thanh tìm kiếm, xác nhận `"🐾 Mèo nghe rõ rồi: [Từ khóa]! Để Mèo bấm tìm kiếm giúp bạn ngay!"`, làm hiệu ứng chạm chân bấm nút `🔍 Tìm Kiếm` và cuộn mượt xuống kết quả.
+- [ ] **8.2. Nhiệm vụ 5 — Rà soát tích hợp AI toàn sàn, Hoàn thiện chu trình End-to-End & Đẩy nhánh Backup cuối cùng:**
+  - [ ] Rà soát & xác thực đủ 6 điểm chạm AI trên toàn sàn (Trợ lý Mèo AI điều khiển web, Tìm kiếm giọng nói & gợi ý từ khóa AI, Trạm Build PC AI, Phân tích xu hướng giá & khuyến nghị AI, Tòa án Trọng tài AI, Đánh giá rủi ro bảo mật Admin).
+  - [ ] Kiểm thử khép kín chu trình End-to-End & chạy Đội Bot QA đạt 100% HTTP 200 OK (0 lỗi), đẩy nhánh `backup-stage-8-cat-ai-final` và đồng bộ thẳng vào nhánh `main`.
