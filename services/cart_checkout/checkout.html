@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh Toán Đơn Hàng, Quét QR 3 Bước &amp; Bảo Lãnh Escrow - Nivida Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/cart_checkout/checkout.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .qr-scanner-stage {
+            position: relative;
+            border-radius: 18px;
+            border: 2px solid #76b900;
+            background: rgba(9, 14, 24, 0.92);
+            padding: 20px;
+            overflow: hidden;
+        }
+        @keyframes qrLaserSweep {
+            0% { top: 8%; opacity: 0.95; }
+            50% { top: 88%; opacity: 1; }
+            100% { top: 8%; opacity: 0.95; }
+        }
+        .qr-laser-beam {
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #a3e635, #38bdf8, #a3e635, transparent);
+            box-shadow: 0 0 16px #76b900, 0 0 28px #38bdf8;
+            z-index: 15;
+            animation: qrLaserSweep 1.25s infinite ease-in-out;
+        }
+        .qr-paid-stamp-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 18, 12, 0.88);
+            backdrop-filter: blur(6px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            color: #a3e635;
+            border-radius: 16px;
+        }
+        .confirm-transfer-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 9, 18, 0.84);
+            backdrop-filter: blur(12px);
+            z-index: 1095;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px;
+        }
+        .confirm-transfer-card {
+            width: 100%;
+            max-width: 520px;
+            background: #090d16;
+            color: #f8fafc;
+            border: 2px solid #76b900;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 25px 65px rgba(0, 0, 0, 0.8), 0 0 40px rgba(118, 185, 0, 0.22);
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <!-- THANH TIÊU ĐỀ & CHUYỂN CHẾ ĐỘ THANH TOÁN -->
+        <div class="nv-adaptive-card p-3 mb-4 shadow-sm" style="border-left: 5px solid #76b900 !important;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <span class="badge bg-nvidia mb-1">CỔNG THANH TOÁN BẢO LÃNH ESCROW &amp; QUÉT QR 3 BƯỚC CHỐNG TRỪ LẶP</span>
+                    <h4 class="fw-bold m-0">💳 Xác Nhận Đơn Hàng, Áp Voucher &amp; Thanh Toán QR Thông Minh</h4>
+                    <small class="text-muted">Quy trình chuẩn 3 bước: 1. Quét nhận diện mã QR ➔ 2. Kiểm tra hóa đơn &amp; Xác nhận chuyển tiền ➔ 3. Tự động hoàn tất đơn &amp; Chặn trừ tiền 2 lần.</small>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/services/cart_checkout/cart.html" class="btn btn-outline-secondary btn-sm py-2">🛒 Sửa Giỏ Hàng</a>
+                    <a href="/services/cart_checkout/bank.html" class="btn btn-outline-info btn-sm fw-bold py-2">🏦 Mở Trang Ngân Hàng Số NVIDIA PAY</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIÊN LAI ĐẶT HÀNG THÀNH CÔNG (TỰ ĐỘNG HIỆN NGAY KHI XÁC NHẬN CHUYỂN TIỀN QR XONG) -->
+        <section id="orderSuccessReceiptSection" class="nv-adaptive-card p-4 mb-4 shadow-lg d-none" style="border: 2.5px solid #76b900 !important;">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="badge bg-success px-3 py-2 fs-6">✅ ĐÃ THANH TOÁN QR &amp; KHỞI TẠO VẬN ĐƠN THÀNH CÔNG</span>
+                        <span class="badge bg-dark border border-warning text-warning font-monospace px-3 py-2" id="receiptTxCodeBadge">Mã GD: NVX-QR-0001</span>
+                    </div>
+                    <h3 class="fw-bold text-nvidia mb-2" id="receiptOrderTitle">Đơn hàng #NVD-2611-0001 đang được chuẩn bị giao!</h3>
+                    <p class="small text-muted mb-3" id="receiptOrderSummary">
+                        Khoản tiền của bạn đã được bảo lãnh an toàn tại Quỹ Nvidia Escrow. Mã QR của đơn hàng này đã được khóa tự động để bảo vệ chống trừ tiền lặp lại.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="/services/order_tracking/tracking.html" id="receiptTrackOrderBtn" class="btn btn-nvidia fw-bold px-4 py-2">🚚 Theo Dõi Lộ Trình Đơn Hàng</a>
+                        <a href="/services/seller/order-detail.html?id=1" id="receiptQrWaybillBtn" target="_blank" class="btn btn-warning text-dark fw-bold px-3 py-2">🧾 Xem Phiếu Vận Đơn QR (URL Riêng)</a>
+                        <a href="/services/home/index.html" class="btn btn-outline-secondary py-2">🏠 Tiếp Tục Mua Sắm</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <div class="p-3 rounded-4 border d-inline-block" style="background: rgba(118, 185, 0, 0.08);">
+                        <div class="fw-bold small text-nvidia mb-1">🛡️ TRẠNG THÁI MÃ QR ĐƠN HÀNG</div>
+                        <div class="fs-5 fw-bold text-success">ĐÃ THANH TOÁN (PAID)</div>
+                        <small class="text-muted d-block mt-1">Chống quét lặp &amp; trừ tiền 2 lần: <strong>Đang Bật</strong></small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- KHUNG THANH TOÁN CHÍNH 2 CỘT -->
+        <div class="row g-4" id="checkoutMainWorkspace">
+            <!-- CỘT TRÁI (7 CỘT): THÔNG TIN NGƯỜI NHẬN, DANH SÁCH SẢN PHẨM & VOUCHER / XU -->
+            <div class="col-lg-7">
+                <div class="nv-adaptive-card p-4 shadow-sm mb-4">
+                    <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">📍 1. Thông Tin Người Nhận &amp; Cam Kết Giao Nhanh SLA</h5>
+                    <div class="row g-3 small">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Họ và tên người nhận *</label>
+                            <input type="text" id="chkCustomerName" class="form-control" value="Nguyễn Văn Khách" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Số điện thoại liên hệ *</label>
+                            <input type="tel" id="chkCustomerPhone" class="form-control" value="0988 777 666" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Địa chỉ nhận hàng chi tiết *</label>
+                            <input type="text" id="chkShippingAddress" class="form-control" value="Số 1 Đại Cồ Việt, Quận Hai Bà Trưng, Hà Nội" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Đơn vị vận chuyển SLA</label>
+                            <select id="chkShippingCarrier" class="form-select" onchange="recalculateCheckoutTotals()">
+                                <option value="30000">🚚 NVIDIA XPRESS 2H (30.000đ • Tặng 50K nếu trễ)</option>
+                                <option value="0">🎁 Giao Tiêu Chuẩn Miễn Phí (0đ • Bảo hiểm hàng hóa)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Phương thức thanh toán</label>
+                            <select id="chkPaymentMethod" class="form-select fw-bold text-nvidia" onchange="onChangePaymentMethod(this.value)">
+                                <option value="NVIDIA_PAY_QR">🏦 Quét Mã QR / Ngân Hàng Số NVIDIA PAY (Khuyên dùng)</option>
+                                <option value="COD_ESCROW">📦 Thanh Toán Khi Nhận Hàng (COD Đồng Kiểm)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DANH SÁCH SẢN PHẨM TRONG ĐƠN & CHỌN VOUCHER / XU -->
+                <div class="nv-adaptive-card p-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h5 class="fw-bold text-nvidia m-0">🛍️ 2. Sản Phẩm Đặt Mua &amp; Khấu Trừ Ưu Đãi</h5>
+                        <span class="badge bg-nvidia" id="chkItemsCountBadge">0 món</span>
+                    </div>
+
+                    <div id="chkCartItemsList" class="mb-3"></div>
+
+                    <!-- Áp dụng Voucher & Xu -->
+                    <div class="p-3 rounded-3 border" style="background: rgba(118, 185, 0, 0.06);">
+                        <div class="row g-2 align-items-end small">
+                            <div class="col-md-7">
+                                <label class="fw-bold text-nvidia mb-1">🎟️ Chọn hoặc Nhập Mã Giảm Giá (Voucher Sàn / Shop)</label>
+                                <div class="input-group input-group-sm">
+                                    <select id="chkVoucherSelect" class="form-select" onchange="onSelectCheckoutVoucher(this.value)">
+                                        <option value="">-- Chọn mã giảm giá trong Ví --</option>
+                                    </select>
+                                    <input type="text" id="chkVoucherCodeInput" class="form-control font-monospace" placeholder="Nhập mã (VD: TRIAN2011)">
+                                    <button type="button" class="btn btn-nvidia fw-bold" onclick="applyCheckoutVoucherCode()">Áp Mã</button>
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="chkUseCoinsToggle" checked onchange="recalculateCheckoutTotals()">
+                                    <label class="form-check-label fw-bold text-warning" for="chkUseCoinsToggle">
+                                        🪙 Dùng Xu tích lũy (<span id="chkAvailableCoinsText">25.000</span> Xu)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="chkVoucherAppliedMsg" class="small text-nvidia fw-bold mt-2 d-none"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI (5 CỘT): TRẠM QUÉT MÃ QR 3 BƯỚC & TỔNG KẾT THANH TOÁN -->
+            <div class="col-lg-5">
+                <div class="nv-adaptive-card p-4 shadow-sm sticky-top" style="top: 86px; border: 2px solid #76b900 !important;">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <div>
+                            <span class="badge bg-nvidia">TRẠM QUÉT QR THÔNG MINH 3 BƯỚC</span>
+                            <h5 class="fw-bold m-0 mt-1">🏦 3. Quét Mã QR &amp; Xác Nhận Thanh Toán</h5>
+                        </div>
+                        <span class="badge bg-warning text-dark font-monospace" id="chkQrStatusBadge">⏳ Chờ quét QR</span>
+                    </div>
+
+                    <!-- KHỐI HIỂN THỊ MÃ QR ĐƠN HÀNG & TIA LASER QUÉT -->
+                    <div class="qr-scanner-stage text-center mb-3" id="chkQrScannerStage">
+                        <div id="chkLaserBeam" class="qr-laser-beam d-none"></div>
+
+                        <!-- Lớp đóng dấu ĐÃ THANH TOÁN (Chặn quét lại 100%) -->
+                        <div id="chkQrPaidOverlay" class="qr-paid-stamp-overlay d-none">
+                            <div class="fs-1 mb-1">✅</div>
+                            <div class="fw-bold fs-5">MÃ QR ĐÃ THANH TOÁN</div>
+                            <div class="small text-light opacity-90 px-3 mt-1" id="chkQrPaidOverlaySub">
+                                Đơn hàng đã được tất toán. Hệ thống khóa mã QR này để chống trừ tiền 2 lần!
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center small text-light mb-2">
+                            <span class="font-monospace text-info" id="chkQrTokenText">Mã QR: QR-NVD-0001</span>
+                            <span class="badge bg-dark border border-success text-nvidia">Số dư Ví: <strong id="chkBankBalanceText">25.000.000 ₫</strong></span>
+                        </div>
+
+                        <div class="bg-white p-3 rounded-4 d-inline-block shadow my-1">
+                            <div id="checkoutQrCanvasBox"></div>
+                        </div>
+
+                        <div class="small text-light mt-2" id="chkQrScanStepHint">
+                            📱 <strong>Quy trình Quét QR 2 Bước (Xem Giá ➔ Xác Nhận):</strong> Mã QR hiện đang ở trạng thái <span class="badge bg-warning text-dark">AWAITING_PAYMENT</span> (chưa trừ tiền). Hãy bấm mở màn hình xem giá bên dưới hoặc gửi link nhờ bạn bè / người thân chuyển khoản hộ!
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 mt-3">
+                            <button type="button" id="btnOpenBankAppScan" class="btn btn-warning text-dark btn-sm fw-bold px-3 py-2 shadow-sm" onclick="openBankAppForQrScan()">
+                                📱 Mở Màn Hình Xem Giá &amp; Xác Nhận Quét QR
+                            </button>
+                            <button type="button" id="btnCopyShareBehalfLink" class="btn btn-outline-success btn-sm fw-bold px-3 py-2" style="color:#a3e635;border-color:#76b900;" onclick="copySharePayOnBehalfLink()">
+                                🤝 Copy Link Nhờ Bạn Bè / Người Thân Chuyển Khoản Hộ
+                            </button>
+                            <button type="button" id="btnDownloadInvoiceQr" class="btn btn-outline-info btn-sm fw-bold px-3 py-1" onclick="downloadCheckoutInvoiceQrImage()">
+                                ⬇️ Tải Ảnh Mã QR Hóa Đơn (.PNG)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- BẢNG TỔNG KẾT SỐ TIỀN ĐƠN HÀNG -->
+                    <div class="p-3 rounded-3 border mb-3 small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Tạm tính tiền hàng:</span>
+                            <strong id="chkSubtotalAmount">0 ₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Phí vận chuyển SLA (NVX 2H):</span>
+                            <strong id="chkShippingFeeAmount">30.000 ₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1 text-nvidia">
+                            <span>Giảm giá Voucher:</span>
+                            <strong id="chkVoucherDiscountAmount">-0 ₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 text-warning">
+                            <span>Khấu trừ Xu tích lũy:</span>
+                            <strong id="chkCoinsDiscountAmount">-0 ₫</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-baseline border-top pt-2">
+                            <span class="fw-bold fs-6">TỔNG THANH TOÁN:</span>
+                            <span class="fw-bold fs-4 text-nvidia" id="chkFinalTotalAmount">0 ₫</span>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnMainCheckoutAction" class="btn btn-nvidia w-100 fw-bold py-2 fs-6 shadow" onclick="handlePrimaryCheckoutButtonClick()">
+                        🏦 Mở App Ngân Hàng NVIDIA PAY Để Quét QR Thanh Toán
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL BƯỚC 2: XÁC NHẬN CHUYỂN KHOẢN NGÂN HÀNG & NHẬP PIN 6 SỐ (CHỐNG TRỪ TIỀN VỘI) -->
+    <div id="step2ConfirmTransferModal" class="confirm-transfer-modal-backdrop d-none">
+        <div class="confirm-transfer-card">
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
+                <div>
+                    <span class="badge bg-warning text-dark fw-bold">BƯỚC 2 / 3 • KIỂM TRA &amp; XÁC NHẬN CHUYỂN KHOẢN</span>
+                    <h5 class="fw-bold m-0 mt-1 text-nvidia">🏦 Phiếu Xác Nhận Giao Dịch QR NVIDIA PAY</h5>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="closeStep2ConfirmModal()">✕</button>
+            </div>
+
+            <div class="p-3 rounded-3 border border-secondary mb-3 small" style="background: rgba(15, 23, 42, 0.85);">
+                <div class="d-flex justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-secondary">Mã phiên hóa đơn QR:</span>
+                    <strong class="font-monospace text-info" id="modalQrTokenText">QR-NVD-0001</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-secondary">Tài khoản thụ hưởng:</span>
+                    <strong class="text-white">QUỸ BẢO LÃNH NVIDIA ESCROW (888899992026)</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-secondary">Số dư khả dụng hiện tại:</span>
+                    <strong class="text-light" id="modalCurrentBalanceText">25.000.000 ₫</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2 pb-1 border-bottom border-secondary border-opacity-25">
+                    <span class="text-secondary">Số tiền chuyển khoản:</span>
+                    <strong class="fs-5 text-nvidia" id="modalTransferAmountText">0 ₫</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-secondary">Số dư còn lại sau GD:</span>
+                    <strong class="text-warning" id="modalBalanceAfterText">25.000.000 ₫</strong>
+                </div>
+            </div>
+
+            <form onsubmit="submitStep3ConfirmTransfer(event)">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-nvidia">🔒 Nhập Mã PIN Bảo Mật Giao Dịch 6 Số (Mặc định: 123456) *</label>
+                    <input type="password" id="modalPurchasePinInput" class="form-control text-center font-monospace fs-5 fw-bold" style="background:#0f172a;color:#a3e635;border-color:#76b900;letter-spacing:6px;" maxlength="6" value="123456" required>
+                </div>
+
+                <div class="form-check mb-3 small">
+                    <input class="form-check-input" type="checkbox" id="modalEscrowAgreeCheck" checked required>
+                    <label class="form-check-label text-light" for="modalEscrowAgreeCheck" style="font-size:11.5px;">
+                        Tôi xác nhận chuyển số tiền trên vào Quỹ Bảo Lãnh Escrow và đồng ý khóa mã QR sau khi thanh toán để chống trừ tiền lặp lại.
+                    </label>
+                </div>
+
+                <div id="modalTransferErrorAlert" class="alert alert-danger py-2 small d-none mb-2"></div>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary flex-fill fw-bold py-2" onclick="closeStep2ConfirmModal()">❌ Hủy / Chưa Chuyển</button>
+                    <button type="submit" id="btnStep3FinalPay" class="btn btn-nvidia flex-fill fw-bold py-2 shadow">
+                        💸 Xác Nhận Chuyển Tiền Ngay (Bước 3)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/cart_checkout/checkout.js"></script>
+</body>
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập &amp; Đăng Ký Thành Viên Mua Sắm - Nivida</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/auth/auth.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="auth-panoramic-page">
+    <!-- CANVAS ĐẠI THỤ ANH ĐÀO & VŨ TRỤ TOÀN CẢNH 100% MÀN HÌNH -->
+    <canvas id="authSceneryCanvas"></canvas>
+
+    <div id="header-placeholder"></div>
+
+    <main class="container auth-ecommerce-section">
+        <div class="row g-4 align-items-center w-100 m-0">
+            <!-- KHU VỰC TRÁI (7 CỘT TRÊN PC): KHÔNG GIAN HIỂN THỊ ĐẠI THỤ ANH ĐÀO SỐNG ĐỘNG -->
+            <div class="col-lg-7 order-2 order-lg-1 d-flex">
+                <div class="auth-art-showcase w-100">
+                    <div class="auth-art-overlay-top">
+                        <div class="auth-hero-badge-pill mb-2">
+                            <span>🌸 SÀN THƯƠNG MẠI ĐIỆN TỬ CHÍNH HÃNG NIVIDA</span>
+                        </div>
+                        <h2 class="fw-bold text-white mb-2" style="text-shadow: 0 4px 18px rgba(0,0,0,0.92);">Không Gian Mua Sắm Minh Bạch</h2>
+                        <p class="small text-light opacity-90 mb-0" style="max-width: 490px; line-height: 1.55; text-shadow: 0 2px 10px rgba(0,0,0,0.92);">
+                            Trải nghiệm mua sắm công nghệ &amp; đời sống bảo lãnh 100% quyền lợi bởi Quỹ Đảm Bảo Escrow, miễn phí giao nhanh và ưu đãi thành viên mỗi ngày.
+                        </p>
+                    </div>
+
+                    <div class="auth-art-overlay-bottom mt-4">
+                        <div class="row g-3">
+                            <div class="col-md-4 col-sm-6">
+                                <div class="auth-art-glass-pill h-100">
+                                    <div class="auth-pill-icon-box">🎁</div>
+                                    <div class="fw-bold text-warning small">Quà Thành Viên Mới</div>
+                                    <div class="small text-light opacity-85 mt-1" style="font-size: 12px;">Tặng ngay gói Voucher 150K &amp; 20.000 Xu mua sắm</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-6">
+                                <div class="auth-art-glass-pill h-100">
+                                    <div class="auth-pill-icon-box">🛡️</div>
+                                    <div class="fw-bold text-nvidia small">Đảm Bảo Chính Hãng</div>
+                                    <div class="small text-light opacity-85 mt-1" style="font-size: 12px;">Hoàn tiền 100% nếu sản phẩm không đúng mô tả</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-12">
+                                <div class="auth-art-glass-pill h-100">
+                                    <div class="auth-pill-icon-box">🚚</div>
+                                    <div class="fw-bold text-info small">Giao Nhanh Đúng Hẹn</div>
+                                    <div class="small text-light opacity-85 mt-1" style="font-size: 12px;">Miễn phí vận chuyển &amp; tặng mã giảm giá nếu giao trễ</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI (5 CỘT TRÊN PC): HỘP ĐĂNG NHẬP / ĐĂNG KÝ CHUYÊN NGHIỆP -->
+            <div class="col-lg-5 order-1 order-lg-2 d-flex">
+                <div class="auth-stationary-card">
+                    <div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2 mb-3">
+                            <div>
+                                <span class="badge bg-nvidia mb-1" style="font-size: 10.5px;">DÀNH CHO KHÁCH MUA HÀNG</span>
+                                <h4 class="fw-bold m-0 fs-5" id="authHeaderTitle">Đăng Nhập Tài Khoản</h4>
+                            </div>
+                            <div class="auth-segmented-tabs" role="group">
+                                <button type="button" id="authTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchAuthTab('login')">Đăng nhập</button>
+                                <button type="button" id="authTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchAuthTab('register')">Đăng ký</button>
+                            </div>
+                        </div>
+
+                        <div id="authAlertBanner" class="alert d-none py-2 small mb-2"></div>
+
+                        <!-- TAB 1: ĐĂNG NHẬP KHÁCH HÀNG -->
+                        <div id="authPane_login">
+                            <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold mb-1">Email / Số điện thoại / Tên đăng nhập</label>
+                                    <input type="text" id="loginUsername" class="form-control" placeholder="Nhập Email, SĐT hoặc Tên đăng nhập" required>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label small fw-bold m-0">Mật khẩu</label>
+                                        <a href="javascript:void(0)" class="small text-nvidia text-decoration-none fw-semibold" onclick="switchAuthTab('recovery')">Quên mật khẩu?</a>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="password" id="loginPassword" class="form-control" placeholder="Nhập mật khẩu của bạn" required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2 mb-2 shadow-sm">Đăng Nhập Ngay</button>
+                            </form>
+
+                            <div class="d-flex align-items-center gap-2 my-2">
+                                <hr class="flex-grow-1 border-secondary opacity-25 m-0">
+                                <span class="small text-muted" style="font-size: 11px;">Hoặc tiếp tục nhanh bằng</span>
+                                <hr class="flex-grow-1 border-secondary opacity-25 m-0">
+                            </div>
+                            <!-- Nút Đăng nhập Google OAuth 2.0 duy nhất (Đã loại bỏ hoàn toàn Facebook) -->
+                            <div id="googleSignInBtnContainer" class="d-flex justify-content-center mb-2"></div>
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" id="btnCustomGoogleLogin" class="social-login-btn w-100 py-2" onclick="triggerSocialLoginFlow('google')">
+                                    <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                                    <span>Tiếp tục nhanh bằng tài khoản Google</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: ĐĂNG KÝ KHÁCH MUA HÀNG (TÍCH HỢP ĐẦY ĐỦ ĐỒNG Ý ĐIỀU KHOẢN & XEM NHANH) -->
+                        <div id="authPane_register" class="d-none">
+                            <form id="registerForm" onsubmit="handleRegisterSubmit(event)">
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">👤 Tên đăng nhập *</label>
+                                        <input type="text" id="regUsername" class="form-control form-control-sm" placeholder="VD: minhanh99" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">🏷️ Họ và tên *</label>
+                                        <input type="text" id="regFullName" class="form-control form-control-sm" placeholder="VD: Nguyễn Minh Anh" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">📧 Email nhận thông báo *</label>
+                                        <input type="email" id="regEmail" class="form-control form-control-sm" placeholder="email@example.com" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">📞 Số điện thoại *</label>
+                                        <input type="tel" id="regPhone" class="form-control form-control-sm" placeholder="0988 777 666" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <label class="form-label small fw-bold m-0">🔒 Mật khẩu bảo mật *</label>
+                                            <small id="regPwStrengthText" class="text-muted" style="font-size: 10.5px;">Độ an toàn mật khẩu</small>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <input type="password" id="regPassword" class="form-control" placeholder="Tối thiểu 4 ký tự" oninput="evaluatePasswordStrength(this.value, 'regPwStrengthBar', 'regPwStrengthText')" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+                                        </div>
+                                        <div class="progress mt-1" style="height: 4px; background: rgba(255,255,255,0.1);">
+                                            <div id="regPwStrengthBar" class="progress-bar bg-secondary" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Thiết lập câu hỏi bảo mật khôi phục mật khẩu -->
+                                    <div class="col-12">
+                                        <div class="auth-security-subbox mt-1">
+                                            <label class="form-label small fw-bold text-nvidia mb-1">🛡️ Câu hỏi bảo mật (Hỗ trợ khôi phục mật khẩu)</label>
+                                            <div class="row g-2">
+                                                <div class="col-sm-7">
+                                                    <select id="regSecurityQuestion" class="form-select form-select-sm">
+                                                        <option value="Thương hiệu yêu thích nhất của bạn là gì?">Thương hiệu yêu thích nhất?</option>
+                                                        <option value="Tên thú cưng đầu tiên của bạn là gì?">Tên thú cưng đầu tiên?</option>
+                                                        <option value="Thành phố nơi bạn sinh ra là ở đâu?">Thành phố nơi bạn sinh ra?</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-sm-5">
+                                                    <input type="text" id="regSecurityAnswer" class="form-control form-control-sm" placeholder="Câu trả lời..." required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- KHUNG ĐỒNG Ý ĐIỀU KHOẢN PHÁP LÝ TRỰC QUAN & ĐỌC NHANH TẠI CHỖ -->
+                                    <div class="col-12">
+                                        <div class="auth-terms-consent-box mt-1" id="regTermsConsentContainer">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1 pb-1 border-bottom border-secondary border-opacity-25">
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="badge bg-dark border border-success text-nvidia" style="font-size:9.5px;">🛡️ Bảo lãnh Escrow 100%</span>
+                                                    <span class="badge bg-dark border border-warning text-warning" style="font-size:9.5px;">🚚 Đền bù trễ SLA 50K</span>
+                                                    <span class="badge bg-dark border border-info text-info" style="font-size:9.5px;">🔒 Mã hóa SHA-256</span>
+                                                </div>
+                                                <button type="button" class="btn btn-link btn-sm p-0 text-info fw-bold text-decoration-none" style="font-size:11px;" onclick="toggleInlineTermsDrawer()">
+                                                    📖 Xem nhanh Điều khoản ▾
+                                                </button>
+                                            </div>
+
+                                            <div class="form-check m-0 d-flex align-items-start gap-2">
+                                                <input class="form-check-input flex-shrink-0" type="checkbox" id="regAgreeTermsCheck" onchange="onToggleRegisterTermsCheckbox(this)" required>
+                                                <label class="form-check-label small text-light" for="regAgreeTermsCheck" style="font-size: 11.5px; line-height: 1.42; cursor: pointer;">
+                                                    Tôi xác nhận đã đọc và đồng ý tuân thủ <a href="javascript:void(0)" class="text-nvidia fw-bold text-decoration-none" onclick="openQuickTermsPreviewModal()">Điều khoản Pháp lý &amp; 10 SOP</a> cùng <a href="/services/legal/terms.html" target="_blank" class="text-info fw-bold text-decoration-none">Chính sách Bảo vệ Người mua ↗</a> của sàn Nivida. *
+                                                </label>
+                                            </div>
+
+                                            <!-- Ngăn kéo xem nhanh điều khoản ngay bên trong Form -->
+                                            <div id="inlineTermsAccordionBox" class="auth-inline-terms-drawer d-none">
+                                                <div class="mb-1"><strong class="text-nvidia">• Điều 1 (Bảo lãnh Escrow):</strong> Tiền thanh toán được giữ an toàn tại Quỹ Đảm Bảo, chỉ giải ngân cho Shop khi bạn xác nhận đã nhận hàng đúng mô tả.</div>
+                                                <div class="mb-1"><strong class="text-warning">• Điều 2 (Cam kết SLA NVX 2H):</strong> Tự động tặng mã <code>HOATOC50K</code> (Giảm 50.000đ) vào Ví nếu đơn hàng giao trễ cam kết.</div>
+                                                <div class="mb-1"><strong class="text-info">• Điều 3 (Minh bạch 6 tiêu chí):</strong> Lưu vết lịch sử giá &amp; bảo hành điện tử bất biến, chống tăng giá ảo 100%.</div>
+                                                <div class="text-end mt-1">
+                                                    <button type="button" class="btn btn-nvidia btn-sm py-0 px-2 fw-bold" style="font-size:10.5px;" onclick="acceptTermsFromInlineDrawer()">☑️ Tôi Đồng Ý Các Điều Khoản Trên</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 pt-1">
+                                        <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2 shadow-sm">✨ Hoàn Tất Đăng Ký &amp; Nhận 20.000 Xu</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- TAB 3: ĐỔI / QUÊN MẬT KHẨU -->
+                        <div id="authPane_recovery" class="d-none">
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold mb-1">Email hoặc Tên đăng nhập của bạn *</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="recIdentifierInput" class="form-control" placeholder="Nhập Email hoặc Tên đăng nhập..." value="">
+                                    <button type="button" class="btn btn-outline-info fw-bold" onclick="loadUserSecurityQuestionForRecovery()">Kiểm tra</button>
+                                </div>
+                            </div>
+
+                            <div class="btn-group w-100 btn-group-sm mb-2" role="group">
+                                <button type="button" id="recMethodBtn_otp" class="btn btn-nvidia fw-bold" onclick="selectRecoveryMethod('otp')">📲 Mã xác thực 6 số</button>
+                                <button type="button" id="recMethodBtn_question" class="btn btn-outline-info fw-bold" onclick="selectRecoveryMethod('security_question')">❓ Câu hỏi bảo mật</button>
+                            </div>
+
+                            <form id="recoveryResetForm" onsubmit="submitPasswordResetAction(event)">
+                                <div id="recBox_otp" class="auth-security-subbox mb-2">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="small fw-semibold text-light">Nhận mã xác thực 6 chữ số:</span>
+                                        <button type="button" class="btn btn-warning btn-sm py-0 fw-bold text-dark" onclick="requestSendOtpCode()">Lấy mã</button>
+                                    </div>
+                                    <div id="smartOtpDisplayBanner" class="p-2 rounded border border-success mb-1 d-none small"></div>
+                                    <input type="text" id="recOtpCodeInput" class="form-control form-control-sm font-monospace text-center fw-bold" maxlength="6" placeholder="Nhập 6 chữ số...">
+                                </div>
+
+                                <div id="recBox_security_question" class="auth-security-subbox mb-2 d-none">
+                                    <div class="small mb-1 text-light">
+                                        <strong>Câu hỏi:</strong> <span id="recLoadedQuestionText" class="text-nvidia fw-bold">Thương hiệu yêu thích nhất của bạn là gì?</span>
+                                    </div>
+                                    <input type="text" id="recSecurityAnswerInput" class="form-control form-control-sm" placeholder="Nhập câu trả lời của bạn...">
+                                </div>
+
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6">
+                                        <input type="password" id="recNewPasswordInput" class="form-control form-control-sm" placeholder="Mật khẩu mới" required>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="password" id="recConfirmPasswordInput" class="form-control form-control-sm" placeholder="Nhập lại mật khẩu" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-nvidia w-100 btn-sm fw-bold py-2">Đặt Lại Mật Khẩu</button>
+                                <button type="button" class="btn btn-link btn-sm w-100 text-info text-decoration-none mt-1" onclick="switchAuthTab('login')">&larr; Quay lại Đăng nhập</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="seller-portal-callout mt-3 d-flex justify-content-between align-items-center gap-2">
+                        <div class="small">
+                            <div class="fw-bold text-nvidia">🏪 Bạn là Đối tác / Chủ Gian Hàng?</div>
+                            <span class="text-muted" style="font-size: 11.5px;">Đăng nhập hoặc mở gian hàng tại cổng riêng</span>
+                        </div>
+                        <a href="/services/auth/seller-auth.html" class="btn btn-outline-info btn-sm fw-bold text-nowrap">Kênh Người Bán &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL XEM NHANH ĐIỀU KHOẢN NGAY TẠI TRANG ĐĂNG KÝ (KHÔNG LÀM MẤT DỮ LIỆU ĐANG GÕ) -->
+    <div id="quickTermsPreviewModal" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(6, 10, 19, 0.82); z-index: 1095;">
+        <div class="p-4 rounded-4 shadow-lg" style="max-width: 620px; width: 94%; max-height: 82vh; overflow-y: auto; background: #090d16; color: #f8fafc; border: 2px solid #76b900;">
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
+                <div>
+                    <span class="badge bg-nvidia text-dark fw-bold">TÓM TẮT QUYỀN LỢI &amp; ĐIỀU KHOẢN THÀNH VIÊN</span>
+                    <h5 class="fw-bold m-0 mt-1 text-white">📜 Cam Kết Bảo Vệ Người Mua &amp; Quy Chuẩn Sàn Nivida</h5>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-light" onclick="document.getElementById('quickTermsPreviewModal').classList.add('d-none')">✕</button>
+            </div>
+            <div class="small d-flex flex-column gap-2 mb-3" style="color: #cbd5e1; line-height: 1.55;">
+                <div class="p-2 rounded border border-secondary" style="background: rgba(30,41,59,0.5);">
+                    <strong class="text-nvidia">1. Bảo vệ dòng tiền 100% qua Quỹ Nvidia Escrow (DIEU-01):</strong>
+                    <div>Khoản thanh toán của bạn được phong tỏa an toàn và chỉ giải ngân cho Gian hàng sau khi bạn xác nhận đã nhận hàng nguyên vẹn.</div>
+                </div>
+                <div class="p-2 rounded border border-secondary" style="background: rgba(30,41,59,0.5);">
+                    <strong class="text-warning">2. Cam kết Giao hàng đúng hẹn SLA &amp; Đền bù tự động (DIEU-02):</strong>
+                    <div>Nếu đơn hàng giao trễ so với thời gian cam kết, hệ thống tự động tặng mã Voucher đền bù <code>HOATOC50K</code> (Giảm 50.000đ) vào Ví của bạn.</div>
+                </div>
+                <div class="p-2 rounded border border-secondary" style="background: rgba(30,41,59,0.5);">
+                    <strong class="text-info">3. Minh bạch 6 tiêu chí &amp; Chống tăng giá ảo (DIEU-03):</strong>
+                    <div>Mọi sản phẩm đều niêm yết rõ Đơn vị tính, Hạn bảo hành điện tử và lưu vết lịch sử chỉnh sửa giá/chính sách bất biến trong CSDL.</div>
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary">
+                <a href="/services/legal/terms.html" target="_blank" class="small text-info text-decoration-none fw-bold">📖 Xem toàn bộ văn bản pháp lý ↗</a>
+                <button type="button" class="btn btn-nvidia btn-sm fw-bold px-3" onclick="const chk=document.getElementById('regAgreeTermsCheck'); if(chk) chk.checked=true; document.getElementById('quickTermsPreviewModal').classList.add('d-none');">
+                    ☑️ Tôi Đã Hiểu &amp; Đồng Ý
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/auth/auth.js"></script>
+</body>
+</html>

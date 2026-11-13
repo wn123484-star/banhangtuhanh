@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ Hàng Của Bạn (Chuẩn Hóa Thiết Kế & Nhãn Mèo AI) - Nivida</title>
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/cart_checkout/checkout.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="container py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h3 class="fw-bold text-nvidia m-0"><span class="nv-icon-slot" data-icon-key="cart" data-emoji="🛒" data-size="24">🛒</span> GIỎ HÀNG CỦA BẠN</h3>
+                <small class="text-muted">Các sản phẩm do Trợ Lý Mèo AI tìm và thêm vào giỏ sẽ được gắn huy hiệu <span class="badge rounded-pill" style="background:rgb(118,185,0); color:rgb(15,23,42);">🐱 Mèo AI Đề Xuất</span></small>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/services/compare/compare.html" class="btn btn-outline-info btn-sm fw-bold">📊 Đưa Giỏ Hàng Vào So Sánh</a>
+                <a href="/services/home/index.html" class="btn btn-outline-nvidia btn-sm">+ Tiếp Tục Mua Sắm</a>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="bg-surface border p-3 shadow-sm" id="cartListContainer"></div>
+            </div>
+            <div class="col-lg-4">
+                <div class="bg-surface border p-3 shadow-sm cart-summary-sticky">
+                    <h5 class="fw-bold border-bottom pb-2">Tóm Tắt Đơn Hàng</h5>
+                    <div class="d-flex justify-content-between my-2 small">
+                        <span>Tổng số món trong giỏ:</span>
+                        <strong id="cartTotalItemsCount">0 món</strong>
+                    </div>
+                    <div class="d-flex justify-content-between my-2 small">
+                        <span>Món do Mèo AI đề xuất:</span>
+                        <strong class="text-nvidia" id="cartCatSuggestedCount">0 món</strong>
+                    </div>
+                    <div class="d-flex justify-content-between my-3 border-top pt-2">
+                        <span>Tạm tính:</span>
+                        <strong class="fs-5 text-nvidia" id="cartSubtotal">0 Xu</strong>
+                    </div>
+                    <a href="/services/cart_checkout/checkout.html" id="proceedCheckoutBtn" class="btn btn-nvidia w-100 py-2 fw-bold">TIẾN HÀNH THANH TOÁN →</a>
+                </div>
+            </div>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script>
+        function renderCartPage() {
+            try {
+                const cart = getCart();
+                const box = document.getElementById('cartListContainer');
+                const btn = document.getElementById('proceedCheckoutBtn');
+                const totalCntEl = document.getElementById('cartTotalItemsCount');
+                const catCntEl = document.getElementById('cartCatSuggestedCount');
+
+                if (!cart.length) {
+                    box.innerHTML = `
+                        <div class="text-center py-5 text-muted">
+                            <div class="fs-1 mb-2">🛒</div>
+                            <h6 class="fw-bold">Giỏ hàng của bạn đang trống</h6>
+                            <p class="small mb-3">Bạn có thể bấm vào Trợ Lý Mèo AI ở góc dưới trái và gõ lệnh (VD: "Tìm bàn phím cơ", "Mua chuột gaming") để Mèo tự động tìm và thêm vào giỏ nhé!</p>
+                            <a href="/services/home/index.html" class="btn btn-nvidia btn-sm px-4">Khám phá sản phẩm ngay</a>
+                        </div>`;
+                    document.getElementById('cartSubtotal').textContent = '0 Xu';
+                    if (totalCntEl) totalCntEl.textContent = '0 món';
+                    if (catCntEl) catCntEl.textContent = '0 món';
+                    btn.classList.add('disabled');
+                    return;
+                }
+
+                btn.classList.remove('disabled');
+                let total = 0;
+                let totalQty = 0;
+                let catSuggestedQty = 0;
+
+                box.innerHTML = cart.map((item, idx) => {
+                    const line = Number(item.price || 0) * Number(item.quantity || 1);
+                    total += line;
+                    totalQty += Number(item.quantity || 1);
+                    const isCat = Boolean(item.cat_suggested);
+                    if (isCat) catSuggestedQty += Number(item.quantity || 1);
+
+                    const catBadgeHtml = isCat
+                        ? `<span class="badge rounded-pill ms-1" style="background:linear-gradient(135deg, rgb(118,185,0), rgb(16,185,129)); color:rgb(15,23,42); font-weight:800; font-size:0.7rem;">
+                               ${item.recommend_label || '🐱 Mèo AI Đề Xuất'}
+                           </span>`
+                        : '';
+
+                    return `
+                        <div class="d-flex justify-content-between align-items-center border-bottom cart-item-row gap-2 flex-wrap"
+                             style="${isCat ? 'background:rgba(118,185,0,0.06); border-left:4px solid rgb(118,185,0); padding-left:12px; border-radius:6px;' : ''}">
+                            <div style="max-width: 60%;">
+                                <div class="d-flex align-items-center flex-wrap gap-1 mb-1">
+                                    <a href="/services/product/product-detail.html?id=${item.id}" class="fw-bold text-decoration-none text-reset">${item.name}</a>
+                                    ${catBadgeHtml}
+                                </div>
+                                <div class="text-nvidia small fw-bold">
+                                    ${formatVND(item.price)} <small class="text-muted">/${item.unit || 'Chiếc'}</small>
+                                    <span class="ms-2 badge bg-dark border border-secondary">${item.warranty_policy || 'Bảo hành tại Shop'}</span>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="number" min="1" value="${item.quantity}" class="form-control form-control-sm" style="width:72px; min-height:34px;" onchange="updateQty(${idx}, this.value)">
+                                <strong class="text-nvidia" style="min-width:110px; text-align:right;">${formatVND(line)}</strong>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${idx})">✕</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('cartSubtotal').textContent = formatVND(total);
+                if (totalCntEl) totalCntEl.textContent = `${totalQty} món`;
+                if (catCntEl) catCntEl.textContent = `${catSuggestedQty} món`;
+                if (typeof refreshAllWebIconsOnPage === 'function') refreshAllWebIconsOnPage();
+            } catch (e) {}
+        }
+
+        function updateQty(idx, val) {
+            const cart = getCart();
+            if (cart[idx]) {
+                cart[idx].quantity = Math.max(1, Number(val) || 1);
+                saveCart(cart);
+                renderCartPage();
+            }
+        }
+
+        function removeItem(idx) {
+            const cart = getCart();
+            cart.splice(idx, 1);
+            saveCart(cart);
+            renderCartPage();
+        }
+
+        document.addEventListener('DOMContentLoaded', renderCartPage);
+        window.addEventListener('nivida_cart_updated', renderCartPage);
+    </script>
+</body>
+</html>

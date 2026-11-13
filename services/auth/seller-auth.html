@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh Người Bán &amp; Đầu Tư Kinh Doanh Nivida — Mở Gian Hàng Chính Hãng</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/core/global.css">
+        <link rel="stylesheet" href="/services/auth/auth.css">
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+    </head>
+<body class="auth-panoramic-page">
+    <!-- CANVAS TOÀN CẢNH 3D TÀI CHÍNH, BỤC DOANH THU, KIỆN HÀNG & TỜ TIỀN RƠI -->
+    <canvas id="sellerSceneryCanvas"></canvas>
+
+    <div id="header-placeholder"></div>
+
+    <main class="container auth-ecommerce-section">
+        <div class="row g-4 align-items-center w-100 m-0">
+            <!-- KHU VỰC TRÁI TRONG SUỐT (7 CỘT TRÊN PC, XẾP DƯỚI TRÊN MOBILE) -->
+            <div class="col-lg-7 order-2 order-lg-1 d-flex">
+                <div class="auth-art-showcase w-100">
+                    <div class="auth-art-overlay-top">
+                        <div class="auth-hero-badge-pill mb-2" style="border-color: #facc15; color: #fde047;">
+                            <span>📈 TRUNG TÂM TÀI CHÍNH &amp; ĐỐI TÁC BÁN HÀNG NIVIDA</span>
+                        </div>
+                        <h2 class="fw-bold text-white mb-2" style="text-shadow: 0 4px 18px rgba(0,0,0,0.92);">Bứt Phá Doanh Thu — Dòng Tiền Minh Bạch</h2>
+                        <p class="small text-light opacity-90 mb-0" style="max-width: 500px; line-height: 1.55; text-shadow: 0 2px 10px rgba(0,0,0,0.92);">
+                            Hệ thống đối soát tài chính tự động, giải ngân nhanh 24/7 qua Ví Nivida Pay, biểu đồ phân tích xu hướng thị trường và bảo lãnh dòng tiền 100%.
+                        </p>
+                    </div>
+
+                    <div class="auth-art-overlay-bottom mt-4">
+                        <div class="row g-3">
+                            <div class="col-md-4 col-sm-6">
+                                <div class="auth-art-glass-pill h-100">
+                                    <div class="auth-pill-icon-box">💹</div>
+                                    <div class="fw-bold text-nvidia small">Tăng Trưởng Bền Vững</div>
+                                    <div class="small text-light opacity-85 mt-1" style="font-size: 12px;">0đ phí mở gian hàng &amp; công cụ dự báo xu hướng mua sắm</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-6">
+                                <div class="auth-art-glass-pill h-100">
+                                    <div class="auth-pill-icon-box">🏦</div>
+                                    <div class="fw-bold text-warning small">Thanh Khoản Tức Thì</div>
+                                    <div class="small text-light opacity-85 mt-1" style="font-size: 12px;">Giải ngân tự động 100% về tài khoản ngay khi giao xong</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-sm-12">
+                                <div class="auth-art-glass-pill h-100">
+                                    <div class="auth-pill-icon-box">📦</div>
+                                    <div class="fw-bold text-info small">Vận Hành Thông Minh</div>
+                                    <div class="small text-light opacity-85 mt-1" style="font-size: 12px;">Khởi tạo mã vận đơn &amp; in nhãn QR hàng loạt chỉ 1 chạm</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI (5 CỘT TRÊN PC): HỘP ĐĂNG NHẬP & MỞ SHOP ĐỒNG BỘ 100% VỚI TRANG USER -->
+            <div class="col-lg-5 order-1 order-lg-2 d-flex">
+                <div class="auth-stationary-card">
+                    <div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2 mb-3">
+                            <div>
+                                <span class="badge bg-warning text-dark fw-bold mb-1" style="font-size: 10.5px;">KÊNH NGƯỜI BÁN NIVIDA</span>
+                                <h4 class="fw-bold m-0 fs-5" id="sellerAuthTitle">Đăng Nhập Gian Hàng</h4>
+                            </div>
+                            <div class="auth-segmented-tabs" role="group">
+                                <button type="button" id="selTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchSellerAuthTab('login')">Đăng nhập</button>
+                                <button type="button" id="selTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchSellerAuthTab('register')">Mở Shop</button>
+                            </div>
+                        </div>
+
+                        <div id="sellerAuthAlert" class="alert d-none py-2 small mb-2"></div>
+
+                        <!-- TAB 1: ĐĂNG NHẬP GIAN HÀNG + ĐỦ 3 NÚT GOOGLE / FACEBOOK / APPLE CÓ ICON SVG -->
+                        <div id="selPane_login">
+                            <form onsubmit="submitSellerLogin(event)">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold mb-1">🏪 Email / Số điện thoại / Tên tài khoản Shop</label>
+                                    <input type="text" id="selLoginId" class="form-control" placeholder="Nhập tài khoản Người bán..." required>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label small fw-bold m-0">🔒 Mật khẩu Gian hàng</label>
+                                        <a href="/services/auth/auth.html?tab=recovery" class="small text-nvidia text-decoration-none fw-semibold">Quên mật khẩu Shop?</a>
+                                    </div>
+                                    <div class="input-group">
+                                        <input type="password" id="selLoginPw" class="form-control" placeholder="Nhập mật khẩu..." required>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="toggleSellerPwVisibility('selLoginPw', this)">👁️</button>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2 mb-2 shadow-sm">Vào Bảng Điều Khiển Gian Hàng</button>
+                            </form>
+
+                            <div class="d-flex align-items-center gap-2 my-2">
+                                <hr class="flex-grow-1 border-secondary opacity-25 m-0">
+                                <span class="small text-muted" style="font-size: 11px;">Hoặc đăng nhập Đối tác qua</span>
+                                <hr class="flex-grow-1 border-secondary opacity-25 m-0">
+                            </div>
+                            <!-- Nút Google OAuth 2.0 chính chủ dành cho Đối tác / Kênh Người Bán -->
+                            <div id="sellerGoogleSignInBtnContainer" class="d-flex justify-content-center mb-2"></div>
+                            <div class="d-flex gap-2 mb-2">
+                                <button type="button" id="btnSellerCustomGoogleLogin" class="social-login-btn w-100 py-2" onclick="triggerSellerSocialAuth('google')">
+                                    <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                                    <span>Đăng nhập Kênh Người Bán bằng Google</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: ĐĂNG KÝ MỞ GIAN HÀNG ĐỒNG BỘ ICON & KHUNG XEM NHANH ĐIỀU KHOẢN -->
+                        <div id="selPane_register" class="d-none">
+                            <form onsubmit="submitSellerRegister(event)">
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <label class="form-label small fw-bold mb-1">🏪 Tên Gian Hàng Hiển Thị Trên Sàn *</label>
+                                        <input type="text" id="selStoreName" class="form-control form-control-sm" placeholder="VD: Minh Anh Official Store" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">👤 Tài khoản đăng nhập *</label>
+                                        <input type="text" id="selRegUsername" class="form-control form-control-sm" placeholder="VD: shopminhanh" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">🏷️ Họ tên Chủ Gian Hàng *</label>
+                                        <input type="text" id="selRegOwner" class="form-control form-control-sm" placeholder="VD: Nguyễn Minh Anh" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">📧 Email đối soát tài chính *</label>
+                                        <input type="email" id="selRegEmail" class="form-control form-control-sm" placeholder="shop@domain.com" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">📞 Số điện thoại kho hàng *</label>
+                                        <input type="tel" id="selRegPhone" class="form-control form-control-sm" placeholder="0988 777 666" required>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">🔒 Mật khẩu quản lý Shop *</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="password" id="selRegPassword" class="form-control" placeholder="Tối thiểu 4 ký tự" required>
+                                            <button type="button" class="btn btn-outline-secondary" onclick="toggleSellerPwVisibility('selRegPassword', this)">👁️</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label small fw-bold mb-1">🛡️ Câu trả lời bảo mật *</label>
+                                        <input type="text" id="selRegAnswer" class="form-control form-control-sm" placeholder="Thương hiệu yêu thích..." required>
+                                    </div>
+
+                                    <!-- KHUNG ĐỒNG Ý ĐIỀU KHOẢN ĐỐI TÁC BÁN HÀNG ĐỒNG BỘ -->
+                                    <div class="col-12">
+                                        <div class="auth-terms-consent-box mt-1" id="selTermsConsentBox">
+                                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-1 pb-1 border-bottom border-secondary border-opacity-25">
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    <span class="badge bg-dark border border-success text-nvidia" style="font-size:9.5px;">☑️ Minh bạch 6 tiêu chí</span>
+                                                    <span class="badge bg-dark border border-warning text-warning" style="font-size:9.5px;">🚚 Cam kết SLA 2H</span>
+                                                    <span class="badge bg-dark border border-info text-info" style="font-size:9.5px;">🏦 Đối soát Escrow</span>
+                                                </div>
+                                                <button type="button" class="btn btn-link btn-sm p-0 text-info fw-bold text-decoration-none" style="font-size:11px;" onclick="document.getElementById('selInlineTermsDrawer')?.classList.toggle('d-none')">
+                                                    📖 Xem nhanh Điều khoản ▾
+                                                </button>
+                                            </div>
+
+                                            <div class="form-check m-0 d-flex align-items-start gap-2">
+                                                <input class="form-check-input flex-shrink-0" type="checkbox" id="selRegAgreeTermsCheck" onchange="document.getElementById('selTermsConsentBox')?.classList.toggle('terms-accepted-active', this.checked)" required>
+                                                <label class="form-check-label small text-light" for="selRegAgreeTermsCheck" style="font-size: 11.5px; line-height: 1.42; cursor: pointer;">
+                                                    Gian hàng cam kết tuân thủ <a href="/services/legal/terms.html" target="_blank" class="text-nvidia fw-bold text-decoration-none">Điều khoản Đối tác Bán hàng ↗</a>, niêm yết trung thực 6 tiêu chí sản phẩm, giao đúng hạn SLA &amp; đồng ý cơ chế bảo lãnh dòng tiền Escrow. *
+                                                </label>
+                                            </div>
+
+                                            <div id="selInlineTermsDrawer" class="auth-inline-terms-drawer d-none">
+                                                <div class="mb-1"><strong class="text-nvidia">• Quy định 1 (Minh bạch thông số):</strong> Niêm yết rõ Đơn vị tính, Hạn bảo hành và không tự ý sửa đổi chính sách sau khi khách đặt đơn.</div>
+                                                <div class="mb-1"><strong class="text-warning">• Quy định 2 (Cam kết bàn giao NVX):</strong> Bàn giao kiện hàng đúng hạn SLA; mọi lịch sử giá đều được lưu vết kiểm toán tự động.</div>
+                                                <div class="text-end mt-1">
+                                                    <button type="button" class="btn btn-nvidia btn-sm py-0 px-2 fw-bold" style="font-size:10.5px;" onclick="const c=document.getElementById('selRegAgreeTermsCheck'); if(c){c.checked=true; document.getElementById('selTermsConsentBox')?.classList.add('terms-accepted-active');} document.getElementById('selInlineTermsDrawer')?.classList.add('d-none');">☑️ Gian Hàng Đồng Ý</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 pt-1">
+                                        <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2 shadow-sm">🚀 Xác Nhận Đăng Ký Mở Gian Hàng</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="seller-portal-callout mt-3 d-flex justify-content-between align-items-center gap-2">
+                        <div class="small">
+                            <div class="fw-bold text-nvidia">🛍️ Bạn muốn mua sắm cá nhân?</div>
+                            <span class="text-muted" style="font-size: 11.5px;">Chuyển sang cổng dành cho Khách mua hàng</span>
+                        </div>
+                        <a href="/services/auth/auth.html" class="btn btn-outline-light btn-sm fw-bold text-nowrap">&larr; Trang Khách Mua</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script>
+        const SELLER_FINANCE_SCENES = ['podium_cargo_bills', 'bull_market_gold', 'global_logistics_hub'];
+        let __sellerSceneMode = 'podium_cargo_bills';
+
+        function selectNextSellerSceneOnReload() {
+            const lastIdx = parseInt(localStorage.getItem('nvx_seller_scene_idx') || '-1', 10);
+            const nextIdx = (lastIdx + 1) % SELLER_FINANCE_SCENES.length;
+            localStorage.setItem('nvx_seller_scene_idx', String(nextIdx));
+            __sellerSceneMode = SELLER_FINANCE_SCENES[nextIdx];
+        }
+
+        function toggleSellerPwVisibility(inputId, btnEl) {
+            const inp = document.getElementById(inputId);
+            if (!inp) return;
+            const isPw = inp.type === 'password';
+            inp.type = isPw ? 'text' : 'password';
+            if (btnEl) btnEl.textContent = isPw ? '🙈' : '👁️';
+        }
+
+        function switchSellerAuthTab(tab) {
+            document.getElementById('selPane_login')?.classList.toggle('d-none', tab !== 'login');
+            document.getElementById('selPane_register')?.classList.toggle('d-none', tab !== 'register');
+            document.getElementById('selTabBtn_login').className = tab === 'login' ? 'btn btn-nvidia fw-bold' : 'btn btn-outline-secondary fw-bold text-light';
+            document.getElementById('selTabBtn_register').className = tab === 'register' ? 'btn btn-nvidia fw-bold' : 'btn btn-outline-secondary fw-bold text-light';
+            document.getElementById('sellerAuthTitle').textContent = tab === 'login' ? 'Đăng Nhập Gian Hàng' : 'Đăng Ký Mở Gian Hàng Mới';
+        }
+
+        function showSellerBanner(msg, isErr = false) {
+            const el = document.getElementById('sellerAuthAlert');
+            if (!el) return;
+            el.className = `alert alert-${isErr ? 'danger' : 'success'} py-2 small mb-2`;
+            el.textContent = msg;
+            el.classList.remove('d-none');
+        }
+
+        async function submitSellerLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('selLoginId').value.trim();
+            const password = document.getElementById('selLoginPw').value.trim();
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showSellerBanner(data.error || 'Sai thông tin đăng nhập!', true);
+                return;
+            }
+            setAuthUser(data.user);
+            showSellerBanner(data.message, false);
+            setTimeout(() => { window.location.href = '/services/seller/seller-dashboard.html'; }, 450);
+        }
+
+        async function submitSellerRegister(e) {
+            e.preventDefault();
+            const chk = document.getElementById('selRegAgreeTermsCheck');
+            if (chk && !chk.checked) {
+                showSellerBanner('⚖️ Vui lòng tích chọn đồng ý Điều khoản Đối tác Bán hàng trước khi mở Shop!', true);
+                return;
+            }
+            const payload = {
+                store_name: document.getElementById('selStoreName').value.trim(),
+                company_name: document.getElementById('selStoreName').value.trim(),
+                username: document.getElementById('selRegUsername').value.trim(),
+                full_name: document.getElementById('selRegOwner').value.trim(),
+                email: document.getElementById('selRegEmail').value.trim(),
+                phone: document.getElementById('selRegPhone').value.trim(),
+                password: document.getElementById('selRegPassword').value.trim(),
+                security_answer: document.getElementById('selRegAnswer').value.trim(),
+                agreed_terms: true,
+                role: 'seller'
+            };
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showSellerBanner(data.error || 'Không thể tạo gian hàng!', true);
+                return;
+            }
+            const newUser = data.user || {};
+            setAuthUser(newUser);
+            fetch('/api/legal/accept', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: newUser.id || 1,
+                    user_name: newUser.store_name || newUser.full_name || payload.store_name,
+                    role: 'seller'
+                })
+            }).catch(() => {});
+
+            showSellerBanner(data.message, false);
+            setTimeout(() => { window.location.href = '/services/seller/seller-dashboard.html'; }, 550);
+        }
+
+        let __sellerGoogleClientId = '';
+
+        function isSellerOriginAllowedForGoogleGsi() {
+            const host = (window.location.hostname || '').toLowerCase();
+            return (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud');
+        }
+
+        async function handleSellerGoogleCredentialResponse(response) {
+            if (!response || !response.credential) return;
+            try {
+                const res = await fetch('/api/auth/social-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        provider: 'google',
+                        credential: response.credential,
+                        role: 'seller'
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showSellerBanner(data.error || 'Không thể đăng nhập Gian hàng bằng Google!', true);
+                    return;
+                }
+                setAuthUser(data.user);
+                showSellerBanner(data.message || 'Đăng nhập Kênh Người Bán thành công!', false);
+                if (typeof notifyToast === 'function') notifyToast(data.message, 'success');
+                setTimeout(() => { window.location.href = '/services/seller/seller-dashboard.html'; }, 480);
+            } catch (err) {
+                showSellerBanner('Lỗi kết nối máy chủ khi xác thực Google!', true);
+            }
+        }
+        window.handleSellerGoogleCredentialResponse = handleSellerGoogleCredentialResponse;
+
+        async function initSellerGoogleOAuthClient() {
+            const container = document.getElementById('sellerGoogleSignInBtnContainer');
+            const customBtn = document.getElementById('btnSellerCustomGoogleLogin');
+            try {
+                const res = await fetch('/api/auth/google-config');
+                if (!res.ok) return;
+                const data = await res.json();
+                __sellerGoogleClientId = data.google_client_id || '';
+
+                if (data.is_configured && isSellerOriginAllowedForGoogleGsi()) {
+                    let retries = 0;
+                    const tryRenderSellerGsi = () => {
+                        if (window.google && window.google.accounts && window.google.accounts.id) {
+                            window.google.accounts.id.initialize({
+                                client_id: __sellerGoogleClientId,
+                                callback: handleSellerGoogleCredentialResponse
+                            });
+                            if (container) {
+                                window.google.accounts.id.renderButton(container, {
+                                    theme: 'filled_black',
+                                    size: 'large',
+                                    shape: 'rectangular',
+                                    width: 390,
+                                    text: 'continue_with'
+                                });
+                                if (customBtn) customBtn.classList.add('d-none');
+                            }
+                        } else if (retries < 15) {
+                            retries++;
+                            setTimeout(tryRenderSellerGsi, 200);
+                        }
+                    };
+                    tryRenderSellerGsi();
+                } else if (container) {
+                    container.innerHTML = '';
+                    if (customBtn) customBtn.classList.remove('d-none');
+                }
+            } catch (e) {}
+        }
+
+        async function triggerSellerSocialAuth(provider = 'google') {
+            if (__sellerGoogleClientId && isSellerOriginAllowedForGoogleGsi() && window.google && window.google.accounts && window.google.accounts.id) {
+                window.google.accounts.id.prompt();
+                return;
+            }
+            const email = prompt('Đăng nhập Đối tác Bán hàng qua Google\nBước 1: Nhập Email Google của Gian hàng:', 'hungnguyendva@gmail.com');
+            if (!email || !email.includes('@')) return;
+            const defName = email.toLowerCase().startsWith('hungnguyen') ? 'William' : email.split('@')[0].replace('.', ' ').toUpperCase();
+            const fullName = prompt('Bước 2: Nhập Tên hiển thị Chủ Gian hàng (VD: William):', defName) || defName;
+
+            const res = await fetch('/api/auth/social-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    provider: 'google',
+                    email: email.trim(),
+                    full_name: fullName.trim(),
+                    role: 'seller'
+                })
+            });
+            const data = await res.json();
+            if (res.ok && data.user) {
+                setAuthUser(data.user);
+                showSellerBanner(data.message, false);
+                setTimeout(() => { window.location.href = '/services/seller/seller-dashboard.html'; }, 480);
+            } else {
+                showSellerBanner(data.error || 'Không thể đăng nhập Gian hàng!', true);
+            }
+        }
+
+        function initSellerPanoramicCanvas() {
+            const canvas = document.getElementById('sellerSceneryCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            };
+            resize();
+            window.addEventListener('resize', resize);
+
+            const banknotes = Array.from({ length: 22 }, (_, i) => ({
+                x: Math.random() * 1100,
+                y: Math.random() * 800,
+                w: 44 + (i % 3) * 6,
+                h: 22 + (i % 3) * 3,
+                vx: (Math.random() - 0.3) * 0.65,
+                vy: -0.45 - Math.random() * 0.55,
+                tilt: (Math.random() - 0.5) * 0.7,
+                vTilt: (Math.random() - 0.5) * 0.012,
+                flutter: Math.random() * Math.PI * 2,
+                vFlutter: 0.045 + Math.random() * 0.03,
+                isPolymer500k: i % 2 === 0
+            }));
+
+            const candles = Array.from({ length: 20 }, (_, i) => {
+                const base = 16 + i * 3.4 + Math.sin(i * 0.7) * 7;
+                const isBull = (i % 4 !== 1);
+                const open = isBull ? base : base + 6;
+                const close = isBull ? base + 8 + (i % 3) * 3 : base + 1;
+                return {
+                    open,
+                    close,
+                    high: Math.max(open, close) + 4,
+                    low: Math.min(open, close) - 3,
+                    vol: 14 + (i % 5) * 8,
+                    phase: i * 0.4
+                };
+            });
+
+            function drawCrisp3DBanknote(b) {
+                ctx.save();
+                ctx.translate(b.x, b.y);
+                ctx.rotate(b.tilt);
+                const wave = Math.sin(b.flutter) * 4.5;
+                const scaleY = 0.65 + 0.35 * Math.abs(Math.cos(b.flutter * 0.7));
+                ctx.scale(1, scaleY);
+
+                const hw = b.w * 0.5;
+                const hh = b.h * 0.5;
+                const bg = ctx.createLinearGradient(-hw, -hh, hw, hh);
+                if (b.isPolymer500k) {
+                    bg.addColorStop(0, '#0d9488');
+                    bg.addColorStop(0.5, '#2dd4bf');
+                    bg.addColorStop(1, '#0f766e');
+                } else {
+                    bg.addColorStop(0, '#15803d');
+                    bg.addColorStop(0.5, '#4ade80');
+                    bg.addColorStop(1, '#166534');
+                }
+
+                ctx.fillStyle = bg;
+                ctx.strokeStyle = '#fef08a';
+                ctx.lineWidth = 1.3;
+                ctx.beginPath();
+                ctx.moveTo(-hw, -hh);
+                ctx.quadraticCurveTo(0, -hh + wave, hw, -hh);
+                ctx.lineTo(hw, hh);
+                ctx.quadraticCurveTo(0, hh + wave, -hw, hh);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(254, 249, 195, 0.55)';
+                ctx.lineWidth = 0.8;
+                ctx.strokeRect(-hw + 3.5, -hh + 3, b.w - 7, b.h - 6);
+
+                ctx.fillStyle = 'rgba(250, 204, 21, 0.85)';
+                ctx.beginPath();
+                ctx.ellipse(0, wave * 0.35, 5.5, 4.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#042f2e';
+                ctx.font = 'bold 7.5px monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(b.isPolymer500k ? '500K' : '$100', 0, wave * 0.35 + 0.5);
+                ctx.restore();
+            }
+
+            function drawIsometricPodiumColumn(cx, bottomY, radiusX, height, topCol, leftCol, rightCol, borderCol) {
+                const ry = radiusX * 0.48;
+                const topY = bottomY - height;
+                ctx.save();
+                ctx.fillStyle = leftCol;
+                ctx.strokeStyle = borderCol;
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(cx - radiusX, topY);
+                ctx.lineTo(cx, topY + ry);
+                ctx.lineTo(cx, bottomY + ry);
+                ctx.lineTo(cx - radiusX, bottomY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = rightCol;
+                ctx.beginPath();
+                ctx.moveTo(cx, topY + ry);
+                ctx.lineTo(cx + radiusX, topY);
+                ctx.lineTo(cx + radiusX, bottomY);
+                ctx.lineTo(cx, bottomY + ry);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = topCol;
+                ctx.beginPath();
+                ctx.moveTo(cx, topY - ry);
+                ctx.lineTo(cx + radiusX, topY);
+                ctx.lineTo(cx, topY + ry);
+                ctx.lineTo(cx - radiusX, topY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawIsometricCargoBox(cx, baseY, sz) {
+                const rx = sz;
+                const ry = sz * 0.5;
+                const h = sz * 1.05;
+                const topY = baseY - h;
+
+                ctx.save();
+                ctx.fillStyle = '#d97706';
+                ctx.strokeStyle = '#fef08a';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(cx - rx, topY);
+                ctx.lineTo(cx, topY + ry);
+                ctx.lineTo(cx, baseY + ry);
+                ctx.lineTo(cx - rx, baseY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#b45309';
+                ctx.beginPath();
+                ctx.moveTo(cx, topY + ry);
+                ctx.lineTo(cx + rx, topY);
+                ctx.lineTo(cx + rx, baseY);
+                ctx.lineTo(cx, baseY + ry);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#f59e0b';
+                ctx.beginPath();
+                ctx.moveTo(cx, topY - ry);
+                ctx.lineTo(cx + rx, topY);
+                ctx.lineTo(cx, topY + ry);
+                ctx.lineTo(cx - rx, topY);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.strokeStyle = '#fef9c3';
+                ctx.lineWidth = 3.2;
+                ctx.beginPath();
+                ctx.moveTo(cx - rx * 0.5, topY - ry * 0.5);
+                ctx.lineTo(cx + rx * 0.5, topY + ry * 0.5);
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(cx - rx * 0.65, topY + h * 0.35, rx * 0.42, h * 0.28);
+                ctx.restore();
+            }
+
+            function drawIsometricGoldBar(cx, cy, wBar) {
+                const hBar = wBar * 0.38;
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.fillStyle = '#eab308';
+                ctx.strokeStyle = '#fef9c3';
+                ctx.lineWidth = 0.9;
+                ctx.beginPath();
+                ctx.moveTo(-wBar, 0);
+                ctx.lineTo(0, hBar);
+                ctx.lineTo(0, hBar + 8);
+                ctx.lineTo(-wBar * 0.85, 6);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#ca8a04';
+                ctx.beginPath();
+                ctx.moveTo(0, hBar);
+                ctx.lineTo(wBar, 0);
+                ctx.lineTo(wBar * 0.85, 6);
+                ctx.lineTo(0, hBar + 8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.moveTo(0, -hBar);
+                ctx.lineTo(wBar, 0);
+                ctx.lineTo(0, hBar);
+                ctx.lineTo(-wBar, 0);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function renderSellerScene1PodiumCargo(w, h, horizonY, t) {
+                const podiums = [
+                    { xPct: 0.09, rx: 36, baseH: 95, item: 'box', label: 'KHO HÀNG' },
+                    { xPct: 0.18, rx: 40, baseH: 145, item: 'gold', label: 'VỐN 0Đ' },
+                    { xPct: 0.28, rx: 46, baseH: 205, item: 'box_big', label: 'TOP DOANH THU' },
+                    { xPct: 0.38, rx: 40, baseH: 160, item: 'gold', label: 'ESCROW 100%' },
+                    { xPct: 0.47, rx: 36, baseH: 115, item: 'box', label: 'NVX 2H' }
+                ];
+
+                podiums.forEach((pd, idx) => {
+                    const cx = w * pd.xPct;
+                    const dynH = pd.baseH + Math.sin(t * 1.8 + idx) * 8;
+                    const isCenter = idx === 2;
+
+                    drawIsometricPodiumColumn(
+                        cx,
+                        horizonY,
+                        pd.rx,
+                        dynH,
+                        isCenter ? '#84cc16' : '#10b981',
+                        isCenter ? '#3f6212' : '#047857',
+                        isCenter ? '#365314' : '#065f46',
+                        isCenter ? '#fef08a' : '#6ee7b7'
+                    );
+
+                    const topCenterY = horizonY - dynH;
+                    const floatOffset = Math.sin(t * 2.4 + idx) * 5;
+
+                    if (pd.item === 'box_big') drawIsometricCargoBox(cx, topCenterY - 8 + floatOffset, 28);
+                    else if (pd.item === 'box') drawIsometricCargoBox(cx, topCenterY - 6 + floatOffset, 21);
+                    else {
+                        drawIsometricGoldBar(cx, topCenterY - 12 + floatOffset, 22);
+                        drawIsometricGoldBar(cx, topCenterY - 22 + floatOffset, 18);
+                    }
+
+                    ctx.fillStyle = '#fef9c3';
+                    ctx.font = 'bold 10px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(pd.label, cx, horizonY + 26);
+                });
+            }
+
+            function renderSellerScene2BullChart(w, h, horizonY, t) {
+                const chartLeft = w * 0.05;
+                const chartW = w * 0.48;
+                const stepX = chartW / candles.length;
+                const trendPts = [];
+
+                candles.forEach((c, idx) => {
+                    const cx = chartLeft + idx * stepX + stepX * 0.5;
+                    const wave = Math.sin(t * 2.2 + c.phase) * 3.5;
+                    const openY = horizonY - 55 - (c.open + wave) * 3.5;
+                    const closeY = horizonY - 55 - (c.close + wave) * 3.5;
+                    const highY = horizonY - 55 - (c.high + wave) * 3.5;
+                    const lowY = horizonY - 55 - (c.low + wave) * 3.5;
+                    const isGreen = closeY <= openY;
+
+                    ctx.strokeStyle = isGreen ? '#4ade80' : '#f87171';
+                    ctx.lineWidth = 1.6;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, highY);
+                    ctx.lineTo(cx, lowY);
+                    ctx.stroke();
+
+                    ctx.fillStyle = isGreen ? '#22c55e' : '#ef4444';
+                    const bodyTop = Math.min(openY, closeY);
+                    const bodyH = Math.max(5, Math.abs(closeY - openY));
+                    ctx.fillRect(cx - stepX * 0.32, bodyTop, stepX * 0.64, bodyH);
+
+                    trendPts.push({ x: cx, y: (openY + closeY) * 0.5 - 12 });
+                });
+
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                trendPts.forEach((pt, i) => {
+                    if (i === 0) ctx.moveTo(pt.x, pt.y);
+                    else ctx.lineTo(pt.x, pt.y);
+                });
+                ctx.stroke();
+
+                drawIsometricPodiumColumn(w * 0.16, horizonY, 34, 65, '#10b981', '#047857', '#065f46', '#6ee7b7');
+                drawIsometricCargoBox(w * 0.16, horizonY - 70, 22);
+
+                drawIsometricPodiumColumn(w * 0.32, horizonY, 38, 85, '#84cc16', '#3f6212', '#365314', '#fef08a');
+                drawIsometricGoldBar(w * 0.32, horizonY - 95, 24);
+                drawIsometricGoldBar(w * 0.32, horizonY - 107, 19);
+            }
+
+            function renderSellerScene3GlobalLogistics(w, h, horizonY, t) {
+                const cx = w * 0.28;
+                const cy = h * 0.44;
+                const rad = Math.min(w, h) * 0.16;
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.save();
+                ctx.rotate(-0.25);
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, rad * 1.48, rad * 0.36, 0, Math.PI, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.fillStyle = '#07162c';
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.arc(0, 0, rad, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+                ctx.lineWidth = 1.1;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (t * 0.35 + (i * Math.PI) / 6) % Math.PI;
+                    const rx = Math.abs(Math.cos(angle)) * rad;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, rx, rad, 0, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+
+                ctx.save();
+                ctx.rotate(-0.25);
+                ctx.strokeStyle = 'rgba(250, 204, 21, 0.92)';
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, rad * 1.48, rad * 0.36, 0, 0, Math.PI);
+                ctx.stroke();
+                ctx.restore();
+                ctx.restore();
+
+                drawIsometricCargoBox(cx - rad * 1.15, cy + 45 + Math.sin(t * 2) * 6, 20);
+                drawIsometricCargoBox(cx + rad * 1.15, cy - 25 + Math.cos(t * 2) * 6, 20);
+            }
+
+            let t = 0;
+            function loop() {
+                t += 0.016;
+                const w = canvas.width, h = canvas.height;
+                const horizonY = h * 0.78;
+
+                const g = ctx.createLinearGradient(0, 0, 0, h);
+                g.addColorStop(0, '#030816');
+                g.addColorStop(0.55, '#071c18');
+                g.addColorStop(1, '#040d0c');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, w, h);
+
+                ctx.strokeStyle = 'rgba(118, 185, 0, 0.14)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 12; i++) {
+                    const x = (i / 11) * w;
+                    ctx.beginPath();
+                    ctx.moveTo(w * 0.28, horizonY - 40);
+                    ctx.lineTo(x, h);
+                    ctx.stroke();
+                }
+
+                if (__sellerSceneMode === 'podium_cargo_bills') {
+                    renderSellerScene1PodiumCargo(w, h, horizonY, t);
+                } else if (__sellerSceneMode === 'bull_market_gold') {
+                    renderSellerScene2BullChart(w, h, horizonY, t);
+                } else {
+                    renderSellerScene3GlobalLogistics(w, h, horizonY, t);
+                }
+
+                for (const b of banknotes) {
+                    b.y += b.vy;
+                    b.x += b.vx + Math.sin(b.flutter * 0.5) * 0.35;
+                    b.tilt += b.vTilt;
+                    b.flutter += b.vFlutter;
+                    if (b.y < -30) {
+                        b.y = h + 25;
+                        b.x = Math.random() * (w * 0.68);
+                    }
+                    drawCrisp3DBanknote(b);
+                }
+
+                requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            selectNextSellerSceneOnReload();
+            initSellerPanoramicCanvas();
+            initSellerGoogleOAuthClient();
+        });
+    </script>
+</body>
+</html>

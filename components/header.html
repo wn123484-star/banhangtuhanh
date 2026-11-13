@@ -1,0 +1,79 @@
+<header class="nividax-header-wrap">
+    <div class="nividax-topbar">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <a href="/services/seller/seller-dashboard.html">🏪 Kênh Người Bán</a>
+                <a href="/services/pc_builder/pc-builder.html">🛠 Build Setup AI</a>
+                <a href="/services/compare/compare.html">📊 So Sánh SP</a>
+                <a href="/services/vouchers_deals/vouchers.html">🎟 Kho Voucher</a>
+                <a href="/services/minigame/farm.html" class="text-nvidia fw-bold">🌱 Nông Trại Voucher</a>
+                <a href="/services/minigame/minigame.html" class="text-warning fw-bold">🎡 Vòng Quay 20.10</a>
+            </div>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <a href="/services/admin_dispute/admin-center.html" id="topAdminCenterLink" class="badge bg-danger text-white text-decoration-none px-2 py-1">⚖️ Trọng Tài AI &amp; SOP</a>
+                <a href="/services/order_tracking/tracking.html">🚚 Tra Cứu Đơn &amp; Bảo Hành</a>
+                <a href="/services/legal/terms.html">📜 Pháp Lý &amp; Điều Khoản</a>
+                <button type="button" class="btn btn-sm btn-outline-light py-0 px-2" style="font-size:0.72rem;" onclick="toggleQuickThemeMode()" id="headerThemeBtn">🌓 Sáng/Tối</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-2">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <a href="/services/home/index.html" class="d-flex align-items-center gap-2 text-decoration-none text-white">
+                <span class="nividax-logo-badge">N</span>
+                <div>
+                    <strong class="fs-5 d-block lh-1 text-nvidia">NividaX</strong>
+                    <small class="text-secondary" style="font-size:0.68rem;">Đời Sống &amp; Công Nghệ</small>
+                </div>
+            </a>
+
+            <form onsubmit="submitGlobalSearch(event)" class="flex-fill" style="max-width: 520px;">
+                <div class="input-group input-group-sm">
+                    <input type="search" id="globalSearchInput" class="form-control" placeholder="Tìm Đồng hồ, Balo, Đèn Decor, Tai nghe, GPU...">
+                    <button type="submit" class="btn btn-nvidia px-3">🔍 Tìm</button>
+                </div>
+            </form>
+
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <button type="button" id="headerCompactCheckinBtn" class="btn-checkin-sparkle d-none" onclick="triggerHeaderCheckin()" title="Điểm danh nhận Xu &amp; Lượt quay">
+                    <span class="sparkle-dot"></span>
+                    <span id="headerCheckinLabel">✨ Điểm danh</span>
+                </button>
+
+                <a href="/services/settings/settings.html" id="headerXuBalanceBadge" class="header-xu-pill d-none" title="Số dư Xu sở hữu (Bấm để quản lý Ví Xu)">
+                    <span>🪙</span>
+                    <span id="headerXuAmountText">0 Xu</span>
+                </a>
+
+                <div id="headerAuthArea" class="d-flex align-items-center gap-2">
+                    <a href="/services/auth/auth.html" class="btn btn-outline-light btn-sm">Đăng nhập</a>
+                    <a href="/services/auth/auth.html?tab=register" class="btn btn-nvidia btn-sm">+100K Xu</a>
+                </div>
+
+                <a href="/services/cart_checkout/cart.html" class="btn btn-nvidia btn-sm px-3 position-relative">
+                    🛒 Giỏ <span class="badge bg-dark ms-1" id="headerCartCount">0</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="nividax-catbar">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-1">
+            <div class="d-flex flex-wrap gap-1">
+                <a href="/services/home/index.html">Tất cả</a>
+                <a href="/services/home/index.html?category=watch">⌚ Đồng hồ</a>
+                <a href="/services/home/index.html?category=bag">🎒 Balo &amp; Túi</a>
+                <a href="/services/home/index.html?category=speaker">🔊 Đèn &amp; Loa Decor</a>
+                <a href="/services/home/index.html?category=headphones">🎧 Tai nghe</a>
+                <a href="/services/home/index.html?category=keyboard">⌨️ Bàn phím</a>
+                <a href="/services/home/index.html?category=mouse">🖱 Chuột</a>
+                <a href="/services/home/index.html?category=gpu">🖥 Linh kiện &amp; GPU</a>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/services/minigame/farm.html" class="text-nvidia fw-semibold">🌱 Trồng Cây Săn Voucher 0 Xu</a>
+                <a href="/services/minigame/minigame.html" class="text-warning fw-semibold">🎡 Quay Thưởng 50K Xu</a>
+            </div>
+        </div>
+    </div>
+</header>

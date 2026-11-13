@@ -1,0 +1,28 @@
+{
+  "active_set": "default",
+  "use_category_icons_for_products": true,
+  "sets": {
+    "default": {
+      "name": "Bộ Mặc Định (Hệ Thống)",
+      "slots": {
+        "nav_bank": "default/nav_bank_1794576781923.png",
+        "nav_ai_cat": "default/nav_ai_cat_1794576781959.png",
+        "cat_mainboard": "default/cat_mainboard_1794576782001.png",
+        "cat_headphones": "default/cat_headphones_1794576782041.png"
+      }
+    },
+    "set_1": {
+      "name": "Bộ Icon Số 1 (Tùy Chỉnh 1)",
+      "slots": {}
+    },
+    "set_2": {
+      "name": "Bộ Icon Số 2 (Tùy Chỉnh 2)",
+      "slots": {}
+    },
+    "set_3": {
+      "name": "Bộ Icon Số 3 (Tùy Chỉnh 3)",
+      "slots": {}
+    }
+  },
+  "updated_at": 1794576782083
+}

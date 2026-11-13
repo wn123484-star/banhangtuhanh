@@ -1,0 +1,62 @@
+[
+  {
+    "event_code": "TECH_PC_EXPO_2026",
+    "event_name": "Siêu Hội Build PC, Card Đồ Họa RTX & Workstation AI 2026",
+    "date_label": "Tháng 11",
+    "theme_color": "rgb(118, 185, 0)",
+    "description": "Trợ giá trực tiếp GPU GeForce RTX 40-Series, CPU Core Ultra / Ryzen X3D, Màn hình OLED 240Hz và Linh kiện chính hãng.",
+    "voucher_code": "NVIDIAMALL100K",
+    "discount_percent": 18,
+    "is_active": 1
+  },
+  {
+    "event_code": "EVENT_20_11",
+    "event_name": "Tri Ân Thầy Cô 20/11 — Trợ Giá Laptop, Màn Hình & Thiết Bị Học Tập",
+    "date_label": "20/11",
+    "theme_color": "rgb(14, 165, 233)",
+    "description": "Ưu đãi đặc biệt cho Sinh viên & Giảng viên khi nâng cấp Laptop lập trình, Đèn học chống cận, Balo chống sốc và Phụ kiện USB-C.",
+    "voucher_code": "TRIAN2011",
+    "discount_percent": 15,
+    "is_active": 1
+  },
+  {
+    "event_code": "ESPORT_GEAR_WEEK",
+    "event_name": "Tuần Lễ Gaming Gear Esport CS2 — Chuột 8000Hz & Phím Rapid Trigger",
+    "date_label": "Esport Week",
+    "theme_color": "rgb(245, 158, 11)",
+    "description": "Giảm sâu Chuột không dây siêu nhẹ 8000Hz Polling Rate, Bàn phím từ tính HE Rapid Trigger và Tai nghe Esport không độ trễ.",
+    "voucher_code": "GEAR50K",
+    "discount_percent": 20,
+    "is_active": 0
+  },
+  {
+    "event_code": "BLACK_FRIDAY_CYBER",
+    "event_name": "Black Friday & Cyber Monday — Săn Deal Công Nghệ Giảm Tới 35%",
+    "date_label": "29/11",
+    "theme_color": "rgb(168, 85, 247)",
+    "description": "Đại tiệc săn sale lớn nhất năm cho toàn bộ 24 Gian hàng Flagship Mall trên Nivida Store.",
+    "voucher_code": "BLACKFRIDAY250K",
+    "discount_percent": 30,
+    "is_active": 0
+  },
+  {
+    "event_code": "SMART_LIVING_HEALTH",
+    "event_name": "Ngày Hội Sức Khỏe Thể Thao & Góc Setup Minimalist Không Dây",
+    "date_label": "Lifestyle",
+    "theme_color": "rgb(16, 185, 129)",
+    "description": "Đồng hồ chạy bộ Garmin GPS, Máy massage cổ vai gáy, Ghế công thái học và Trạm sạc GaN Type-C gọn gàng.",
+    "voucher_code": "HOATOC50K",
+    "discount_percent": 15,
+    "is_active": 0
+  },
+  {
+    "event_code": "YEAR_END_FESTIVAL",
+    "event_name": "Lễ Hội Cuối Năm & Đón Năm Mới — Nâng Cấp Dàn Máy Toàn Diện",
+    "date_label": "12/12",
+    "theme_color": "rgb(239, 68, 68)",
+    "description": "Tặng kèm gói bảo hành VIP 36 tháng và nhân đôi Xu thưởng Nông trại Voucher.",
+    "voucher_code": "SIEUSALE1111",
+    "discount_percent": 22,
+    "is_active": 0
+  }
+]

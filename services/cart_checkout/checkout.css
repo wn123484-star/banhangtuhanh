@@ -1,0 +1,63 @@
+[id="cartListContainer"] {
+    min-height: 360px;
+    padding: 20px !important;
+    border-radius: var(--card-radius);
+}
+
+.cart-item-row {
+    min-height: 84px;
+    padding: 14px 10px;
+}
+
+.cart-summary-sticky,
+.checkout-summary-sticky {
+    min-height: 250px;
+    padding: 22px !important;
+    border-radius: var(--card-radius);
+    position: sticky;
+    top: 148px;
+}
+
+[id="checkoutOrderForm"] .form-control,
+[id="checkoutOrderForm"] .form-select,
+[id="chkVoucherSelect"] {
+    min-height: 40px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+[id="btnPlaceOrder"],
+[id="proceedCheckoutBtn"] {
+    min-height: 46px;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[id="checkoutItemsPreview"] {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.mobile-app-sim-active main.container {
+    max-width: 430px !important;
+    margin: 12px auto !important;
+    border: 8px solid rgb(15, 23, 42);
+    border-radius: 36px;
+    padding: 16px !important;
+    background: rgb(248, 250, 252);
+    color: rgb(15, 23, 42);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.35);
+}
+@media (max-width: 768px) {
+    #checkoutOrderForm .form-control,
+    #checkoutOrderForm .form-select,
+    #checkoutOrderForm .btn {
+        min-height: 42px;
+        font-size: 14px;
+    }
+    #bankTransferSimBox {
+        padding: 14px !important;
+    }
+}

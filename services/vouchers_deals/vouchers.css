@@ -1,0 +1,8 @@
+[id="voucherListGrid"] .bg-surface {
+    min-height: 116px;
+    padding: 16px !important;
+    border-radius: var(--card-radius);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}

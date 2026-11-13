@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ngân Hàng Số NVIDIA PAY — Camera Quét QR Thật, Kiểm Tra Hóa Đơn &amp; Chống Trừ Tiền Lặp</title>
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <style>
+        .nv-bank-card-visual {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #365314 100%);
+            border: 2px solid #76b900;
+            border-radius: 20px;
+            padding: 24px;
+            color: #ffffff;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+            position: relative;
+            overflow: hidden;
+        }
+        .nv-bank-chip {
+            width: 46px;
+            height: 34px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #facc15 0%, #ca8a04 100%);
+            border: 1px solid #fef08a;
+        }
+        .camera-scanner-viewport {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            height: 240px;
+            margin: 0 auto;
+            background: #050811;
+            border: 2px solid #76b900;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .camera-scan-laser {
+            position: absolute;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #76b900;
+            box-shadow: 0 0 12px #76b900;
+            animation: laserSweep 2.2s infinite ease-in-out;
+        }
+        @keyframes laserSweep {
+            0% { top: 12%; }
+            50% { top: 88%; }
+            100% { top: 12%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <div>
+                <span class="badge bg-nvidia mb-1">REAL CAMERA QR SCANNER &amp; ATOMIC IDEMPOTENCY GUARD V8.5</span>
+                <h3 class="fw-bold m-0">🏦 Ngân Hàng Số NVIDIA PAY — Quét QR Nhận Diện Hóa Đơn &amp; Bảo Vệ Số Dư</h3>
+                <small class="text-muted">Chỉ mở phiếu thanh toán khi giải mã đúng mã QR hóa đơn thật • Khóa nguyên tử chống bấm lặp trừ tiền nhiều lần</small>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/services/cart_checkout/checkout.html" class="btn btn-nvidia btn-sm fw-bold">🛒 Sang Trang Thanh Toán Lấy Mã QR</a>
+                <a href="/services/home/index.html" class="btn btn-outline-secondary btn-sm">🏠 Về Trang Chủ</a>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="nv-bank-card-visual mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <div class="small text-uppercase text-nvidia fw-bold">NVIDIA TECH-BANK • DIGITAL ESCROW</div>
+                            <div class="small text-light opacity-75">Tài khoản thanh toán bảo lãnh 24/7</div>
+                        </div>
+                        <div class="nv-bank-chip"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="small text-light opacity-75">Số dư khả dụng hiện tại:</div>
+                        <div class="display-6 fw-bold text-nvidia" id="bankPageBalanceText">0 ₫</div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 pt-2 border-top border-secondary">
+                        <div>
+                            <div class="small text-light opacity-75">Số tài khoản (NAPAS 247):</div>
+                            <div class="fs-5 fw-bold font-monospace" id="bankPageAccountNo">8888 9999 2026</div>
+                            <div class="small text-warning fw-semibold" id="bankPageHolderName">KHACH HANG NVIDIA</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success mb-1">🛡️ Chống Trừ Lặp 100%</span>
+                            <div class="small text-light">Ví Xu: <strong id="bankPageCoinsText" class="text-warning">0 Xu</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nv-adaptive-card p-4 shadow-sm mb-3">
+                    <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">➕ Nạp Tiền Vào Số Dư Khả Dụng</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="quickFillTopup(1000000)">+1.000.000đ</button>
+                        <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="quickFillTopup(5000000)">+5.000.000đ</button>
+                        <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="quickFillTopup(20000000)">+20.000.000đ</button>
+                        <button type="button" class="btn btn-outline-warning btn-sm fw-bold" onclick="quickFillTopup(50000000)">+50.000.000đ</button>
+                        <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="quickFillTopup(100000000)">+100.000.000đ</button>
+                    </div>
+
+                    <form onsubmit="submitBankTopup(event)" class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-bold">Số tiền muốn nạp (VNĐ) *</label>
+                            <input type="number" id="bankTopupAmountInput" class="form-control fw-bold text-nvidia fs-5" value="10000000" min="1000" step="1000" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Ghi chú nguồn nạp</label>
+                            <input type="text" id="bankTopupNoteInput" class="form-control" value="Nạp tiền ngân hàng NVIDIA PAY">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">⚡ Nạp Tiền</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="nv-adaptive-card p-4 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-nvidia m-0">🔐 Đổi Mã PIN Bảo Mật Giao Dịch</h6>
+                        <span class="badge bg-success">Mặc định: 123456</span>
+                    </div>
+                    <form onsubmit="saveNewPurchasePin(event)" class="d-flex gap-2">
+                        <input type="password" id="bankNewPinInput" class="form-control form-control-sm font-monospace text-center fw-bold" maxlength="6" placeholder="Nhập PIN mới (4-6 số)" required>
+                        <button type="submit" class="btn btn-warning text-dark btn-sm fw-bold text-nowrap px-3">🔑 Lưu Mã PIN</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="nv-adaptive-card p-4 shadow-sm h-100" style="border: 2px solid #76b900 !important;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-3">
+                        <div>
+                            <span class="badge bg-nvidia">TRẠM QUÉT MÃ QR HÓA ĐƠN ĐƠN HÀNG</span>
+                            <h5 class="fw-bold m-0 mt-1">📷 Bước 1: Quét Camera Hoặc Tải Ảnh Mã QR Hóa Đơn</h5>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button type="button" id="btnStartCameraQr" class="btn btn-nvidia btn-sm fw-bold" onclick="startRealCameraQrScanner()">🎥 Bật Camera Quét QR</button>
+                            <button type="button" id="btnStopCameraQr" class="btn btn-outline-danger btn-sm d-none" onclick="stopRealCameraQrScanner()">⏹️ Tắt Camera</button>
+                        </div>
+                    </div>
+
+                    <div id="cameraScannerContainer" class="mb-3 d-none">
+                        <div class="camera-scanner-viewport">
+                            <video id="realCameraQrVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;"></video>
+                            <div class="camera-scan-laser"></div>
+                        </div>
+                        <div class="text-center small text-nvidia fw-bold mt-2" id="cameraLiveScanHint">🔍 Đưa mã QR hóa đơn vào khung hình Camera để giải mã...</div>
+                    </div>
+                    <canvas id="realCameraQrCanvas" class="d-none"></canvas>
+
+                    <div class="p-3 rounded-3 border mb-3" style="background: rgba(15, 23, 42, 0.55);">
+                        <label class="form-label small fw-bold text-info mb-1">🖼️ Hoặc chọn tệp ảnh chứa Mã QR Hóa Đơn tải từ trang Thanh toán:</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <input type="file" id="qrImageFileInput" class="form-control form-control-sm" accept="image/*" onchange="decodeQrFromUploadedImage(this)">
+                            <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" onclick="resetScannedQrInvoiceState()">🔄 Làm Mới</button>
+                        </div>
+                    </div>
+
+                    <div id="qrInvoiceEmptyPlaceholder" class="p-4 rounded-3 border border-secondary border-opacity-50 text-center my-2">
+                        <div class="fs-2 mb-1">📷</div>
+                        <div class="fw-bold text-warning mb-1">Chưa nhận diện được mã QR hóa đơn nào</div>
+                        <p class="small text-muted mb-0">
+                            Hãy bấm <strong>"🎥 Bật Camera Quét QR"</strong> hoặc chọn đúng <strong>Ảnh Mã QR Hóa Đơn</strong> tải từ trang Thanh toán. Phiếu thông tin hóa đơn và nút Xác nhận chuyển khoản sẽ chỉ mở sau khi nhận diện mã QR hợp lệ!
+                        </p>
+                    </div>
+
+                    <div id="scannedInvoiceDetailPanel" class="p-3 rounded-4 border border-success mb-3 d-none" style="background: rgba(118, 185, 0, 0.08); border-width: 2px !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-2 mb-3">
+                            <div>
+                                <span class="badge bg-nvidia">🧾 MÀN HÌNH XEM GIÁ &amp; KIỂM TRA HÓA ĐƠN CHI TIẾT (BƯỚC 2)</span>
+                                <div class="small text-light opacity-75 mt-1">Kiểm tra kỹ danh sách sản phẩm &amp; số tiền trước khi bấm Xác nhận chuyển khoản</div>
+                            </div>
+                            <code id="scannedInvoiceTokenBadge" class="badge bg-dark border border-info text-info font-monospace px-2 py-1">NVXPAY-...</code>
+                        </div>
+
+                        <div id="scannedInvoiceSummaryBox" class="small mb-3"></div>
+
+                        <!-- TÙY CHỌN: TÔI TỰ THANH TOÁN HOẶC CHUYỂN KHOẢN HỘ -->
+                        <div class="p-3 rounded-3 border border-secondary border-opacity-50 mb-3" style="background: rgba(15, 23, 42, 0.82);">
+                            <label class="small fw-bold text-nvidia mb-2 d-block">🤝 Hình thức xác nhận thanh toán hóa đơn này:</label>
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-6">
+                                    <button type="button" id="btnModeSelfPay" class="btn btn-sm btn-nvidia w-100 fw-bold py-2" onclick="switchQrPaymentBehalfMode(false)">
+                                        👤 Tôi Tự Thanh Toán Đơn Này
+                                    </button>
+                                </div>
+                                <div class="col-sm-6">
+                                    <button type="button" id="btnModeBehalfPay" class="btn btn-sm btn-outline-info w-100 fw-bold py-2" onclick="switchQrPaymentBehalfMode(true)">
+                                        🤝 Chuyển Khoản Hộ Bạn Bè / Người Thân
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="qrPayOnBehalfFieldsBox" class="mt-2 pt-2 border-top border-secondary border-opacity-25 d-none">
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <label class="small fw-bold text-info mb-1">Họ tên người chuyển khoản hộ *</label>
+                                        <input type="text" id="qrBehalfPayerNameInput" class="form-control form-control-sm" placeholder="VD: Trần Minh Hoàng (Bạn thân)" value="Trần Minh Hoàng (Chuyển khoản hộ)">
+                                    </div>
+                                    <div class="col-md-7">
+                                        <label class="small fw-bold text-info mb-1">Lời nhắn gửi kèm người mua</label>
+                                        <input type="text" id="qrBehalfMessageInput" class="form-control form-control-sm" placeholder="VD: Mình thanh toán hộ đơn GPU mới nhé!" value="Mình đã chuyển khoản hộ hóa đơn công nghệ này cho bạn nhé!">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col-md-6">
+                                <label class="small fw-bold mb-1">Tổng số tiền cần trả (VNĐ)</label>
+                                <input type="number" id="qrTransferAmountInput" class="form-control form-control-sm fw-bold text-warning fs-6" value="0" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="small fw-bold mb-1">Mã PIN Bảo mật 6 số (Mặc định: 123456) *</label>
+                                <input type="password" id="qrTransferPinInput" class="form-control form-control-sm font-monospace text-center fw-bold" maxlength="6" value="123456">
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2">
+                            <button type="button" id="btnExecuteQrPay" class="btn btn-nvidia w-100 fw-bold py-2 fs-6 shadow" disabled onclick="executeRealQrTransferRequest()">
+                                ✅ Xác Nhận Chuyển Khoản Số Tiền Này
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm fw-bold py-1" onclick="copyCurrentInvoiceBehalfLink()">
+                                🔗 Copy Link Nhờ Bạn Bè / Người Thân Chuyển Khoản Hộ Hóa Đơn Này
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="bankTransferResultAlert" class="p-3 rounded-3 border small d-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nv-adaptive-card p-4 shadow-sm">
+            <h5 class="fw-bold text-nvidia mb-3">📜 Sao Kê Biến Động Số Dư Khả Dụng &amp; Lịch Sử Quét QR</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 small">
+                    <thead>
+                        <tr>
+                            <th>Mã Giao Dịch</th>
+                            <th>Loại GD</th>
+                            <th>Nội Dung Chi Tiết</th>
+                            <th class="text-end">Số Tiền Biến Động</th>
+                            <th class="text-end">Số Dư Khả Dụng Sau GD</th>
+                            <th class="text-end">Thời Gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bankTransactionsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script>
+        let __bankCamStream = null;
+        let __bankCamScanTimer = null;
+        let __activeScannedQrToken = '';
+        let __activeScannedQrRawPayload = '';
+        let __activeScannedOrderId = 0;
+        let __isQrInvoiceVerified = false;
+        let __isQrTransferInFlight = false;
+        let __isCurrentQrPaidDone = false;
+        let __isPayOnBehalfMode = false;
+        let __currentWalletBalance = 50000000;
+
+        function getActiveUserId() {
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            if (u && u.id) return Number(u.id);
+            return 13;
+        }
+
+        function switchQrPaymentBehalfMode(isBehalf) {
+            __isPayOnBehalfMode = Boolean(isBehalf);
+            const selfBtn = document.getElementById('btnModeSelfPay');
+            const behalfBtn = document.getElementById('btnModeBehalfPay');
+            const behalfBox = document.getElementById('qrPayOnBehalfFieldsBox');
+
+            if (selfBtn) {
+                selfBtn.className = __isPayOnBehalfMode
+                    ? 'btn btn-sm btn-outline-light w-100 fw-bold py-2'
+                    : 'btn btn-sm btn-nvidia w-100 fw-bold py-2';
+            }
+            if (behalfBtn) {
+                behalfBtn.className = __isPayOnBehalfMode
+                    ? 'btn btn-sm btn-info text-dark w-100 fw-bold py-2'
+                    : 'btn btn-sm btn-outline-info w-100 fw-bold py-2';
+            }
+            if (behalfBox) {
+                behalfBox.classList.toggle('d-none', !__isPayOnBehalfMode);
+            }
+        }
+        window.switchQrPaymentBehalfMode = switchQrPaymentBehalfMode;
+
+        async function copyCurrentInvoiceBehalfLink() {
+            const tok = __activeScannedQrToken || new URLSearchParams(window.location.search).get('pay_token') || '';
+            if (!tok) {
+                if (typeof notifyToast === 'function') notifyToast('⚠️ Chưa có mã hóa đơn QR để sao chép link!', 'warning');
+                return;
+            }
+            const shareUrl = `${window.location.origin}/services/cart_checkout/bank.html?pay_token=${encodeURIComponent(tok)}&mode=behalf`;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                }
+            } catch (e) {}
+            switchQrPaymentBehalfMode(true);
+            if (typeof notifyToast === 'function') {
+                notifyToast('🤝 Đã copy Link Chuyển Khoản Hộ vào bộ nhớ tạm & bật chế độ Chuyển khoản hộ!', 'success');
+            }
+        }
+        window.copyCurrentInvoiceBehalfLink = copyCurrentInvoiceBehalfLink;
+
+        function quickFillTopup(amt) {
+            const inp = document.getElementById('bankTopupAmountInput');
+            if (inp) inp.value = amt;
+        }
+
+        function resetScannedQrInvoiceState(clearFileInput = true) {
+            __activeScannedQrToken = '';
+            __activeScannedQrRawPayload = '';
+            __isQrInvoiceVerified = false;
+            __isQrTransferInFlight = false;
+            __isCurrentQrPaidDone = false;
+
+            if (clearFileInput) {
+                const fInp = document.getElementById('qrImageFileInput');
+                if (fInp) fInp.value = '';
+            }
+            document.getElementById('qrInvoiceEmptyPlaceholder')?.classList.remove('d-none');
+            document.getElementById('scannedInvoiceDetailPanel')?.classList.add('d-none');
+            document.getElementById('bankTransferResultAlert')?.classList.add('d-none');
+
+            const payBtn = document.getElementById('btnExecuteQrPay');
+            if (payBtn) {
+                payBtn.disabled = true;
+                payBtn.className = 'btn btn-nvidia w-100 fw-bold py-2';
+                payBtn.textContent = '🔒 Vui Lòng Quét Mã QR Hóa Đơn Trước';
+            }
+        }
+
+        async function startRealCameraQrScanner() {
+            const wrap = document.getElementById('cameraScannerContainer');
+            const video = document.getElementById('realCameraQrVideo');
+            const startBtn = document.getElementById('btnStartCameraQr');
+            const stopBtn = document.getElementById('btnStopCameraQr');
+            const hint = document.getElementById('cameraLiveScanHint');
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                if (typeof notifyToast === 'function') notifyToast('Trình duyệt không hỗ trợ Camera API, vui lòng chọn ảnh QR bên dưới!', 'warning');
+                return;
+            }
+
+            try {
+                __bankCamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+                video.srcObject = __bankCamStream;
+                await video.play();
+                wrap?.classList.remove('d-none');
+                startBtn?.classList.add('d-none');
+                stopBtn?.classList.remove('d-none');
+                if (hint) hint.textContent = '🟢 Đã bật Camera! Hãy đưa đúng mã QR hóa đơn vào khung hình...';
+
+                const canvas = document.getElementById('realCameraQrCanvas');
+                const ctx = canvas.getContext('2d');
+
+                __bankCamScanTimer = setInterval(() => {
+                    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+                    canvas.width = video.videoWidth || 320;
+                    canvas.height = video.videoHeight || 240;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    if (typeof jsQR === 'function') {
+                        const code = jsQR(imgData.data, imgData.width, imgData.height);
+                        if (code && code.data && String(code.data).trim()) {
+                            stopRealCameraQrScanner();
+                            onQrPayloadDecoded(code.data);
+                        }
+                    }
+                }, 250);
+            } catch (err) {
+                if (typeof notifyToast === 'function') {
+                    notifyToast('⚠️ Không thể mở Camera (' + err.message + '). Bạn có thể tải ảnh mã QR hóa đơn ở khung bên dưới!', 'warning');
+                }
+            }
+        }
+
+        function stopRealCameraQrScanner() {
+            if (__bankCamScanTimer) {
+                clearInterval(__bankCamScanTimer);
+                __bankCamScanTimer = null;
+            }
+            if (__bankCamStream) {
+                __bankCamStream.getTracks().forEach(t => t.stop());
+                __bankCamStream = null;
+            }
+            document.getElementById('cameraScannerContainer')?.classList.add('d-none');
+            document.getElementById('btnStartCameraQr')?.classList.remove('d-none');
+            document.getElementById('btnStopCameraQr')?.classList.add('d-none');
+        }
+
+        function tryDecodeImageWithJsQrMultiPass(img) {
+            if (typeof jsQR !== 'function') return null;
+            const canvas = document.getElementById('realCameraQrCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = img.naturalWidth || img.width || 200;
+            const h = img.naturalHeight || img.height || 200;
+
+            const passes = [
+                { pad: 32, scale: 1 },
+                { pad: 0, scale: 1 },
+                { pad: 40, scale: 2 },
+                { pad: 24, scale: 0.75 }
+            ];
+
+            for (const p of passes) {
+                const dw = Math.round(w * p.scale);
+                const dh = Math.round(h * p.scale);
+                canvas.width = dw + p.pad * 2;
+                canvas.height = dh + p.pad * 2;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, p.pad, p.pad, dw, dh);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const res = jsQR(imgData.data, imgData.width, imgData.height);
+                if (res && res.data && String(res.data).trim()) {
+                    return String(res.data).trim();
+                }
+            }
+            return null;
+        }
+
+        function decodeQrFromUploadedImage(fileInput) {
+            if (!fileInput.files || !fileInput.files.length) return;
+            const file = fileInput.files[0];
+            const alertBox = document.getElementById('bankTransferResultAlert');
+
+            if (!file.type.startsWith('image/')) {
+                resetScannedQrInvoiceState(false);
+                if (alertBox) {
+                    alertBox.className = 'p-3 rounded-3 border border-danger small text-danger fw-bold';
+                    alertBox.innerHTML = '❌ Tệp bạn chọn không phải là hình ảnh! Vui lòng chọn đúng ảnh Mã QR Hóa Đơn (.PNG / .JPG).';
+                    alertBox.classList.remove('d-none');
+                }
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const img = new Image();
+                img.onload = function() {
+                    const decodedText = tryDecodeImageWithJsQrMultiPass(img);
+                    if (!decodedText) {
+                        resetScannedQrInvoiceState(false);
+                        if (alertBox) {
+                            alertBox.className = 'p-3 rounded-3 border border-danger small text-danger fw-bold';
+                            alertBox.innerHTML = `
+                                <div>❌ KHÔNG NHẬN DIỆN ĐƯỢC MÃ QR TRONG HÌNH ẢNH!</div>
+                                <div class="text-light fw-normal mt-1">Hình ảnh <code>${file.name.replace(/</g, '&lt;')}</code> không chứa mã QR hợp lệ hoặc bị mờ/cắt góc. Hệ thống đã chặn mở hóa đơn để bảo vệ an toàn giao dịch.</div>
+                            `;
+                            alertBox.classList.remove('d-none');
+                        }
+                        if (typeof notifyToast === 'function') {
+                            notifyToast('❌ Không tìm thấy mã QR trong ảnh vừa chọn!', 'warning');
+                        }
+                        return;
+                    }
+                    onQrPayloadDecoded(decodedText);
+                };
+                img.onerror = function() {
+                    resetScannedQrInvoiceState(false);
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function onQrPayloadDecoded(qrText) {
+            const raw = String(qrText || '').trim();
+            let parsedToken = '';
+
+            if (raw.includes('pay_token=')) {
+                parsedToken = raw.split('pay_token=')[1].split('&')[0].trim();
+            } else if (raw.includes('qr_token=')) {
+                parsedToken = raw.split('qr_token=')[1].split('&')[0].trim();
+            } else if (raw.includes('|')) {
+                const parts = raw.split('|');
+                parts.forEach(pt => {
+                    const up = pt.toUpperCase();
+                    if (up.startsWith('PAY_TOKEN:')) parsedToken = pt.slice(10).trim();
+                    else if (up.startsWith('TOKEN:')) parsedToken = pt.slice(6).trim();
+                });
+                if (!parsedToken && parts.length >= 4) {
+                    parsedToken = parts[3].trim();
+                }
+            } else {
+                parsedToken = raw;
+            }
+
+            const alertBox = document.getElementById('bankTransferResultAlert');
+            const detailPanel = document.getElementById('scannedInvoiceDetailPanel');
+            const emptyBox = document.getElementById('qrInvoiceEmptyPlaceholder');
+            const summaryBox = document.getElementById('scannedInvoiceSummaryBox');
+            const tokenBadge = document.getElementById('scannedInvoiceTokenBadge');
+            const submitBtn = document.getElementById('btnExecuteQrPay');
+
+            const cleanTok = parsedToken.toUpperCase();
+            if (!cleanTok) {
+                resetScannedQrInvoiceState(false);
+                return;
+            }
+
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ordFallback = urlParams.get('order_id') || '';
+                const res = await fetch(`/api/payment/qr-session/${encodeURIComponent(cleanTok)}?order_id=${encodeURIComponent(ordFallback)}&_t=${Date.now()}`, { cache: 'no-store' });
+                const info = await res.json();
+
+                if (!res.ok || info.ok === false) {
+                    resetScannedQrInvoiceState(false);
+                    if (alertBox) {
+                        alertBox.className = 'p-3 rounded-3 border border-danger small text-danger fw-bold';
+                        alertBox.innerHTML = info.error || `❌ Không tìm thấy hóa đơn hợp lệ cho mã QR [${cleanTok}]!`;
+                        alertBox.classList.remove('d-none');
+                    }
+                    if (typeof notifyToast === 'function') {
+                        notifyToast(info.error || 'Mã QR hóa đơn không tồn tại!', 'warning');
+                    }
+                    return;
+                }
+
+                __activeScannedQrToken = info.pay_token || cleanTok;
+                __activeScannedQrRawPayload = raw;
+                __activeScannedOrderId = Number(info.order_id || 0);
+                __isQrTransferInFlight = false;
+
+                const billAmt = Number(info.amount || 0);
+                const orderCode = info.order_code || `#NVD-${info.order_id || 101}`;
+                const buyerName = info.buyer_name || 'Khách mua hàng';
+                const buyerPhone = info.customer_phone || '0988123456';
+                const shipAddr = info.shipping_address || 'TP. Hồ Chí Minh';
+
+                document.getElementById('qrTransferAmountInput').value = billAmt;
+                if (tokenBadge) tokenBadge.textContent = `${orderCode} • ${__activeScannedQrToken}`;
+                if (emptyBox) emptyBox.classList.add('d-none');
+                if (detailPanel) detailPanel.classList.remove('d-none');
+                if (alertBox) alertBox.classList.add('d-none');
+
+                const invItems = Array.isArray(info.items) ? info.items : [];
+                const itemsHtml = invItems.length
+                    ? `<div class="mt-2 pt-2 border-top border-secondary border-opacity-25">` +
+                      `<div class="fw-bold text-nvidia mb-1">🛍️ Danh sách sản phẩm trong hóa đơn (${invItems.length} món):</div>` +
+                      `<div class="table-responsive"><table class="table table-sm table-dark table-bordered mb-0 small">` +
+                      `<thead><tr><th>Sản phẩm</th><th class="text-center">SL</th><th class="text-end">Đơn giá</th><th class="text-end">Thành tiền</th></tr></thead><tbody>` +
+                      invItems.map((it, idx) => {
+                          const q = Number(it.quantity || it.qty || 1);
+                          const p = Number(it.price || 0);
+                          const st = Number(it.subtotal || (p * q));
+                          return `<tr>` +
+                              `<td>${idx + 1}. <strong>${String(it.name || 'Sản phẩm').replace(/</g, '&lt;')}</strong></td>` +
+                              `<td class="text-center">x${q}</td>` +
+                              `<td class="text-end">${p.toLocaleString('vi-VN')} ₫</td>` +
+                              `<td class="text-end fw-bold text-nvidia">${st.toLocaleString('vi-VN')} ₫</td>` +
+                          `</tr>`;
+                      }).join('') +
+                      `</tbody></table></div></div>`
+                    : '';
+
+                if (info.is_paid || info.status === 'APPROVED' || info.status === 'PAID') {
+                    __isQrInvoiceVerified = false;
+                    __isCurrentQrPaidDone = true;
+                    const behalfTag = info.is_paid_on_behalf
+                        ? `<div class="text-info fw-bold mt-1">🤝 Được chuyển khoản hộ bởi: <strong>${info.payer_name || 'Bạn bè'}</strong> — Lời nhắn: <em>"${info.payer_message || ''}"</em></div>`
+                        : '';
+                    if (summaryBox) {
+                        summaryBox.innerHTML = `
+                            <div class="p-2 rounded border border-success text-nvidia fw-bold mb-2" style="background:rgba(118,185,0,0.15);">
+                                🛡️ HÓA ĐƠN ${orderCode} ĐÃ THANH TOÁN &amp; KHÓA QUỸ ESCROW (Mã GD: ${info.tx_code || 'APPROVED'})!
+                            </div>
+                            <div>• Mã đơn hàng: <strong class="text-info">${orderCode}</strong> (Vận đơn: <code>${info.tracking_code || 'NVX-101'}</code>)</div>
+                            <div>• Người mua hàng: <strong>${buyerName}</strong> (${buyerPhone})</div>
+                            <div>• Địa chỉ nhận: <strong>${shipAddr}</strong></div>
+                            <div>• Tổng số tiền đã thanh toán: <strong class="text-warning fs-6">${billAmt.toLocaleString('vi-VN')} ₫</strong></div>
+                            ${behalfTag}
+                            ${itemsHtml}
+                            <div class="mt-2"><a href="${info.next_step_url || '/services/order_tracking/tracking.html'}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Mở Trang Theo Dõi Vận Đơn NVX Express (${info.tracking_code || 'NVX'}) ➔</a></div>
+                        `;
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.className = 'btn btn-secondary w-100 fw-bold py-2';
+                        submitBtn.textContent = '🔒 Hóa Đơn Này Đã Được Xác Nhận Thanh Toán (ESCROW_LOCKED)';
+                    }
+                    return;
+                }
+
+                __isQrInvoiceVerified = true;
+                __isCurrentQrPaidDone = false;
+                if (summaryBox) {
+                    summaryBox.innerHTML = `
+                        <div class="p-2 rounded-3 border border-warning mb-2" style="background:rgba(245,158,11,0.12);">
+                            <span class="badge bg-warning text-dark me-1">AWAITING_PAYMENT</span>
+                            <strong class="text-warning">Đang chờ bạn kiểm tra hóa đơn và bấm nút Xác nhận chuyển khoản bên dưới!</strong>
+                        </div>
+                        <div class="row g-2 mb-1">
+                            <div class="col-sm-6">• Mã đơn hàng: <strong class="text-info fs-6">${orderCode}</strong> (Vận đơn: <code>${info.tracking_code || 'NVX'}</code>)</div>
+                            <div class="col-sm-6">• Người đặt mua: <strong class="text-light">${buyerName}</strong> (${buyerPhone})</div>
+                            <div class="col-12">• Địa chỉ giao hàng: <strong class="text-light">${shipAddr}</strong></div>
+                            <div class="col-sm-6">• Thụ hưởng: <strong>${info.recipient_name || 'QUỸ BẢO LÃNH ESCROW NIVIDA'}</strong></div>
+                            <div class="col-sm-6">• Tổng tiền cần thanh toán: <strong class="text-warning fs-5">${billAmt.toLocaleString('vi-VN')} ₫</strong></div>
+                        </div>
+                        ${itemsHtml}
+                    `;
+                }
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.className = 'btn btn-nvidia w-100 fw-bold py-2 fs-6 shadow';
+                    submitBtn.textContent = `✅ Xác Nhận Chuyển Khoản Số Tiền Này (${billAmt.toLocaleString('vi-VN')} ₫)`;
+                }
+                if (typeof notifyToast === 'function') {
+                    notifyToast(`🧾 Đã tải chi tiết Hóa đơn ${orderCode} (${billAmt.toLocaleString('vi-VN')} ₫)! Vui lòng kiểm tra và bấm Xác nhận.`, 'info');
+                }
+            } catch (e) {
+                resetScannedQrInvoiceState(false);
+            }
+        }
+
+        async function executeRealQrTransferRequest() {
+            const alertBox = document.getElementById('bankTransferResultAlert');
+            const submitBtn = document.getElementById('btnExecuteQrPay');
+
+            if (__isQrTransferInFlight) return;
+            if (__isCurrentQrPaidDone) {
+                if (typeof notifyToast === 'function') {
+                    notifyToast('🛡️ Hóa đơn QR này đã được xác nhận thanh toán! Hệ thống đã khóa chống trừ lặp.', 'warning');
+                }
+                return;
+            }
+            if (!__activeScannedQrToken || !__isQrInvoiceVerified) {
+                if (typeof notifyToast === 'function') {
+                    notifyToast('⚠️ Vui lòng mở link mã QR hóa đơn hoặc quét mã QR trước khi bấm xác nhận!', 'warning');
+                }
+                return;
+            }
+
+            const uid = getActiveUserId();
+            const amount = Number(document.getElementById('qrTransferAmountInput')?.value || 0);
+            const pin = document.getElementById('qrTransferPinInput')?.value.trim() || '123456';
+            const lockedToken = __activeScannedQrToken;
+            const payerName = (document.getElementById('qrBehalfPayerNameInput')?.value || '').trim();
+            const payerMsg = (document.getElementById('qrBehalfMessageInput')?.value || '').trim();
+
+            __isQrTransferInFlight = true;
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '⏳ Đang xác nhận chuyển khoản & khóa Quỹ Bảo Lãnh Escrow...';
+            }
+
+            try {
+                const res = await fetch('/api/payment/qr-session/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: uid,
+                        payer_id: uid,
+                        pay_token: lockedToken,
+                        qr_token: lockedToken,
+                        order_id: __activeScannedOrderId || '',
+                        amount: amount,
+                        purchase_pin: pin,
+                        is_paid_on_behalf: __isPayOnBehalfMode,
+                        payment_mode: __isPayOnBehalfMode ? 'behalf' : 'self',
+                        payer_name: __isPayOnBehalfMode ? (payerName || 'Bạn bè / Người thân chuyển khoản hộ') : '',
+                        payer_message: __isPayOnBehalfMode ? (payerMsg || 'Chúc mừng bạn nhận siêu phẩm công nghệ mới nhé!') : ''
+                    })
+                });
+                const data = await res.json();
+
+                if (alertBox) alertBox.classList.remove('d-none');
+
+                if (res.ok && data.ok) {
+                    __isCurrentQrPaidDone = true;
+                    __isQrInvoiceVerified = false;
+
+                    const oid = data.order_id || __activeScannedOrderId || 101;
+                    const tCode = data.tracking_code || `NVX-${oid}`;
+                    const trackUrl = data.next_step_url || `/services/order_tracking/tracking.html?id=${encodeURIComponent(oid)}&code=${encodeURIComponent(tCode)}`;
+
+                    localStorage.setItem('nvidia_cart', '[]');
+                    sessionStorage.removeItem('nvx_active_checkout_qr_token');
+                    localStorage.setItem('nvx_last_created_order_id', String(oid));
+                    localStorage.setItem('nvx_last_created_tracking_code', String(tCode));
+                    localStorage.setItem('nvx_qr_payment_confirmed', JSON.stringify({
+                        ts: Date.now(),
+                        pay_token: lockedToken,
+                        qr_token: lockedToken,
+                        tx_id: data.tx_code || lockedToken,
+                        order_id: oid,
+                        tracking_code: tCode,
+                        amount: data.paid_amount || amount,
+                        is_paid_on_behalf: Boolean(data.is_paid_on_behalf),
+                        payer_name: data.payer_name || '',
+                        payer_message: data.payer_message || '',
+                        next_step_url: trackUrl,
+                        status: 'APPROVED'
+                    }));
+
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.className = 'btn btn-success w-100 fw-bold py-2';
+                        submitBtn.textContent = `✅ Đã Xác Nhận Thanh Toán Đơn #NVD-${oid} (ESCROW_LOCKED)`;
+                    }
+
+                    const behalfHtml = data.is_paid_on_behalf
+                        ? `<div class="text-info">• Người chuyển khoản hộ: <strong>${data.payer_name}</strong> — Lời nhắn: <em>"${data.payer_message}"</em></div>`
+                        : '';
+
+                    if (alertBox) {
+                        alertBox.className = 'p-3 rounded-3 border border-success small text-nvidia fw-bold';
+                        alertBox.innerHTML = `
+                            <div>✅ ĐÃ XÁC NHẬN CHUYỂN KHOẢN &amp; KHÓA QUỸ BẢO LÃNH ESCROW (ĐƠN #NVD-${oid})</div>
+                            <div>• Mã giao dịch: <code>${data.tx_code}</code> • Số tiền: <strong>-${Number(data.paid_amount ?? amount).toLocaleString('vi-VN')} ₫</strong></div>
+                            ${behalfHtml}
+                            <div class="mt-2"><a href="${trackUrl}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Xem Hành Trình Vận Đơn NVX Express #NVD-${oid} (${tCode}) Ngay ➔</a></div>
+                        `;
+                    }
+
+                    if (typeof notifyToast === 'function') {
+                        notifyToast(data.message || 'Xác nhận chuyển khoản thành công!', 'success');
+                    }
+                    await loadBankWalletPage();
+                    setTimeout(() => {
+                        window.location.href = trackUrl;
+                    }, 1400);
+                } else {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = `✅ Xác Nhận Chuyển Khoản Số Tiền Này (${amount.toLocaleString('vi-VN')} ₫)`;
+                    }
+                    if (alertBox) {
+                        alertBox.className = 'p-3 rounded-3 border border-danger small text-danger fw-bold';
+                        alertBox.innerHTML = `<div>❌ Không thể xác nhận: ${data.error || 'Vui lòng kiểm tra lại!'}</div>`;
+                    }
+                }
+            } catch (e) {
+                if (submitBtn && !__isCurrentQrPaidDone) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = `✅ Xác Nhận Chuyển Khoản Số Tiền Này (${amount.toLocaleString('vi-VN')} ₫)`;
+                }
+            } finally {
+                __isQrTransferInFlight = false;
+            }
+        }
+
+        async function loadBankWalletPage() {
+            const uid = getActiveUserId();
+            if (!uid) return;
+            try {
+                const res = await fetch(`/api/settings/bank-wallet?user_id=${uid}`);
+                const data = await res.json();
+                document.getElementById('bankPageBalanceText').textContent = Number(data.bank_balance || 0).toLocaleString('vi-VN') + ' ₫';
+                document.getElementById('bankPageAccountNo').textContent = data.account_no || '8888 9999 2026';
+                document.getElementById('bankPageHolderName').textContent = data.account_holder || 'KHACH HANG NVIDIA';
+                document.getElementById('bankPageCoinsText').textContent = Number(data.coins || 0).toLocaleString('vi-VN') + ' Xu';
+                if (typeof window.syncActiveIconSetAcrossWebsite === 'function') {
+                    window.syncActiveIconSetAcrossWebsite();
+                }
+
+                const tbody = document.getElementById('bankTransactionsTableBody');
+                const txs = data.transactions || [];
+                if (tbody) {
+                    if (!txs.length) {
+                        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Chưa có biến động số dư nào.</td></tr>`;
+                    } else {
+                        tbody.innerHTML = txs.map(t => {
+                            const isPlus = Number(t.amount) >= 0;
+                            return `
+                                <tr>
+                                    <td class="font-monospace fw-bold">${t.tx_code}</td>
+                                    <td><span class="badge ${isPlus ? 'bg-success' : 'bg-info text-dark'}">${t.tx_type}</span></td>
+                                    <td>${t.note || ''}</td>
+                                    <td class="text-end fw-bold ${isPlus ? 'text-nvidia' : 'text-warning'}">${isPlus ? '+' : ''}${Number(t.amount).toLocaleString('vi-VN')} ₫</td>
+                                    <td class="text-end fw-bold">${Number(t.balance_after).toLocaleString('vi-VN')} ₫</td>
+                                    <td class="text-end text-muted">${t.created_at || ''}</td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function submitBankTopup(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const uid = getActiveUserId();
+            if (!uid) return;
+            const amount = Number(document.getElementById('bankTopupAmountInput')?.value || 0);
+            const note = document.getElementById('bankTopupNoteInput')?.value || 'Nạp tiền tự do NVIDIA PAY';
+            try {
+                const res = await fetch('/api/settings/bank-wallet/topup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: uid, amount, note })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    if (typeof notifyToast === 'function') notifyToast(data.error || 'Lỗi nạp tiền!', 'warning');
+                    return;
+                }
+                if (typeof notifyToast === 'function') notifyToast(data.message, 'success');
+                await loadBankWalletPage();
+                if (__activeScannedQrToken && !__isCurrentQrPaidDone) {
+                    await onQrPayloadDecoded(__activeScannedQrRawPayload || __activeScannedQrToken);
+                }
+            } catch (err) {}
+        }
+
+        async function saveNewPurchasePin(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const uid = getActiveUserId();
+            if (!uid) return;
+            const newPin = document.getElementById('bankNewPinInput')?.value.trim() || '';
+            try {
+                const res = await fetch('/api/settings/bank-wallet/set-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: uid, new_pin: newPin })
+                });
+                const data = await res.json();
+                if (typeof notifyToast === 'function') notifyToast(data.message || data.error, res.ok ? 'success' : 'warning');
+                if (res.ok) document.getElementById('bankNewPinInput').value = '';
+            } catch (err) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            resetScannedQrInvoiceState();
+            await loadBankWalletPage();
+
+            const params = new URLSearchParams(window.location.search);
+            const urlPayToken = params.get('pay_token') || params.get('qr_token') || params.get('token') || '';
+            const urlMode = (params.get('mode') || '').toLowerCase();
+            if (urlMode === 'behalf') {
+                switchQrPaymentBehalfMode(true);
+            }
+            if (urlPayToken) {
+                await onQrPayloadDecoded(urlPayToken);
+                document.getElementById('scannedInvoiceDetailPanel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+</body>
+</html>

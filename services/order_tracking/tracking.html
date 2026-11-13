@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Điều Phối Vận Đơn NVX Express 2H &amp; Bảo Lãnh Escrow - Nivida Store</title>
+    <link rel="icon" type="image/png" href="/assets/icons/icon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <style>
+        .nvx-step-node {
+            border-radius: 14px;
+            padding: 12px;
+            border: 1.5px solid rgba(148, 163, 184, 0.25);
+            background: rgba(15, 23, 42, 0.72);
+            transition: all 0.25s ease;
+            height: 100%;
+        }
+        .nvx-step-node.step-done {
+            border-color: rgba(118, 185, 0, 0.65);
+            background: rgba(118, 185, 0, 0.10);
+        }
+        .nvx-step-node.step-active {
+            border-color: #76b900;
+            border-width: 2px;
+            background: rgba(118, 185, 0, 0.22);
+            box-shadow: 0 0 18px rgba(118, 185, 0, 0.35);
+        }
+        .nvx-radar-box {
+            background: radial-gradient(circle at center, #0d1f12 0%, #070b12 100%);
+            border: 2px solid rgba(118, 185, 0, 0.55);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <!-- THANH TRA CỨU MÃ VẬN ĐƠN NVX EXPRESS & ĐƠN HÀNG ESCROW -->
+        <div class="nv-adaptive-card p-4 rounded-4 border shadow-sm mb-4" style="border-left: 5px solid #76b900 !important;">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-nvidia">NVX SMART LOGISTICS &amp; ESCROW LIFECYCLE</span>
+                        <span class="badge bg-dark border border-info text-info font-monospace" id="trkHeaderStageBadge">ESCROW_LOCKED</span>
+                    </div>
+                    <h3 class="fw-bold text-nvidia m-0">🛰️ Trung Tâm Điều Phối Vận Đơn NVX Express 2H &amp; Đồng Kiểm</h3>
+                    <p class="small text-secondary m-0 mt-1">
+                        Định vị lộ trình giao nhận thiết bị công nghệ theo thời gian thực • Bảo lãnh thanh toán 100% qua Quỹ Escrow SOP-01
+                    </p>
+                </div>
+                <div class="col-lg-6">
+                    <div class="d-flex gap-2">
+                        <input type="text" id="trackingInput" class="form-control font-monospace" placeholder="Nhập Mã vận đơn (VD: NVX-101) hoặc Mã đơn (#NVD-101)...">
+                        <button type="button" class="btn btn-nvidia fw-bold px-4 text-nowrap" onclick="lookupTracking()">🔍 Tra Cứu Vận Đơn</button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-2 small align-items-center">
+                        <span class="text-secondary">Gợi ý tra nhanh:</span>
+                        <button type="button" class="btn btn-outline-info btn-sm py-0 px-2" style="font-size:11px;" onclick="quickLookupSampleOrder('latest')">⚡ Đơn Hàng Mới Nhất</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:11px;" onclick="quickLookupSampleOrder('1')">#NVD-1 (NVX-1)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THANH ĐIỀU KHIỂN CHUYỂN NHANH TRẠNG THÁI GIAO HÀNG (DEMO) -->
+        <div class="nv-adaptive-card p-3 rounded-4 border border-warning border-opacity-50 mb-4 shadow-sm" style="background: rgba(245, 158, 11, 0.07);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <div>
+                    <span class="badge bg-warning text-dark fw-bold me-1">⚡ CHUYỂN NHANH TRẠNG THÁI GIAO HÀNG (DEMO)</span>
+                    <span class="small text-light">Bấm vào từng mốc bên dưới để mô phỏng tức thì 6 bước hành trình NVX Express &amp; mở quyền Đồng kiểm / Hoàn tiền 100%:</span>
+                </div>
+                <button type="button" class="btn btn-warning text-dark btn-sm fw-bold px-3" onclick="advanceOrderLogisticsStage('NEXT')">
+                    ⏭️ Chuyển Tới Bước Kế Tiếp
+                </button>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-light btn-sm py-1 px-2" onclick="advanceOrderLogisticsStage('AWAITING_PAYMENT')">1. Chờ Quét QR</button>
+                <button type="button" class="btn btn-outline-info btn-sm py-1 px-2" onclick="advanceOrderLogisticsStage('ESCROW_LOCKED')">2. Khóa Quỹ Escrow</button>
+                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2" onclick="advanceOrderLogisticsStage('SELLER_PACKING')">3. Shop Đóng Gói SOP-01</button>
+                <button type="button" class="btn btn-outline-success btn-sm py-1 px-2" onclick="advanceOrderLogisticsStage('NVX_IN_TRANSIT')">4. Đang Giao NVX 2H</button>
+                <button type="button" class="btn btn-nvidia btn-sm fw-bold py-1 px-3" onclick="advanceOrderLogisticsStage('DELIVERED_INSPECTING')">5. Đã Giao &amp; Mở Đồng Kiểm 24h (Test Nhận / Hoàn Đơn)</button>
+                <button type="button" class="btn btn-outline-success btn-sm py-1 px-2" onclick="advanceOrderLogisticsStage('COMPLETED')">6. Hoàn Tất Giải Ngân</button>
+            </div>
+        </div>
+
+        <!-- KẾT QUẢ CHI TIẾT VẬN ĐƠN, BẢN ĐỒ RADAR CANVAS & TRẠM ĐỒNG KIỂM / HOÀN ĐƠN -->
+        <div id="trackingResult"></div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/order_tracking/tracking.js"></script>
+</body>
+</html>

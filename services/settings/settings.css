@@ -1,0 +1,10 @@
+[id="profileForm"] .form-control,
+[id="userDisputeForm"] .form-control,
+[id="userDisputeForm"] .form-select {
+    min-height: 40px;
+    border-radius: 8px;
+}
+
+[id="disputeCreateCard"] {
+    min-height: 340px;
+}

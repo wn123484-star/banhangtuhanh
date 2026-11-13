@@ -1,0 +1,129 @@
+/* ==========================================================================
+   SERVICES/ADMIN_DISPUTE/ADMIN-CENTER.CSS - GIAO DIỆN QUẢN TRỊ ADMIN & SOC V7.5
+   (Tối ưu hóa độ tương phản, bảng dữ liệu, khung biểu đồ Canvas & Đa giao diện)
+   ========================================================================== */
+
+:root {
+    --nv-admin-green: #76b900;
+    --nv-admin-green-bright: #a3e635;
+    --nv-admin-card-bg: rgba(15, 23, 42, 0.86);
+    --nv-admin-card-border: rgba(118, 185, 0, 0.28);
+    --nv-admin-table-head: rgba(15, 23, 42, 0.96);
+    --nv-admin-row-hover: rgba(118, 185, 0, 0.08);
+    --nv-admin-text: #f8fafc;
+    --nv-admin-muted: #94a3b8;
+}
+
+body.theme-light,
+body[data-skin*="daylight"],
+body.minimalist-daylight {
+    --nv-admin-card-bg: #ffffff;
+    --nv-admin-card-border: rgba(15, 23, 42, 0.12);
+    --nv-admin-table-head: #f1f5f9;
+    --nv-admin-row-hover: rgba(118, 185, 0, 0.09);
+    --nv-admin-text: #0f172a;
+    --nv-admin-muted: #475569;
+}
+
+/* 1. Khung Thẻ Quản Trị & Command Hub */
+#visibleAdminCommandHub,
+.nv-adaptive-card,
+main .card,
+main .bg-surface {
+    background: var(--nv-admin-card-bg) !important;
+    border: 1px solid var(--nv-admin-card-border) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#visibleAdminCommandHub:hover,
+.nv-adaptive-card:hover,
+main .card:hover {
+    border-color: rgba(118, 185, 0, 0.55) !important;
+}
+
+/* 2. Chuẩn Hóa Bảng Dữ Liệu Admin (4 Bảng Thống Kê + Bảng SOC 25 Lớp) */
+main .table-responsive {
+    border-radius: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: #76b900 rgba(15, 23, 42, 0.25);
+}
+
+main table.table {
+    margin-bottom: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+main table.table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--nv-admin-table-head) !important;
+    color: var(--nv-admin-green) !important;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    padding: 10px 12px;
+    border-bottom: 2px solid rgba(118, 185, 0, 0.35) !important;
+    white-space: nowrap;
+}
+
+main table.table tbody td {
+    padding: 9px 12px;
+    vertical-align: middle;
+    font-size: 0.84rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+main table.table tbody tr:hover td {
+    background: var(--nv-admin-row-hover) !important;
+}
+
+/* 3. Khung 4 Biểu Đồ HTML5 Canvas */
+#nativeChart1Voucher,
+#nativeChart2Farm,
+#nativeChart3Behavior,
+#nativeChart4Accounts {
+    background: rgba(15, 23, 42, 0.18);
+    border-radius: 12px;
+    padding: 6px;
+    border: 1px dashed rgba(118, 185, 0, 0.25);
+}
+
+body.theme-light #nativeChart1Voucher,
+body.theme-light #nativeChart2Farm,
+body.theme-light #nativeChart3Behavior,
+body.theme-light #nativeChart4Accounts {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+/* 4. Nút Bấm Chuyển Tab & Ô Nhập Liệu Trong Admin */
+.admin-hub-pane .form-control,
+.admin-hub-pane .form-select {
+    border-radius: 8px;
+    border: 1px solid rgba(148, 163, 184, 0.32);
+    font-size: 0.83rem;
+}
+
+.admin-hub-pane .form-control:focus,
+.admin-hub-pane .form-select:focus {
+    border-color: #76b900 !important;
+    box-shadow: 0 0 0 3px rgba(118, 185, 0, 0.22) !important;
+}
+
+.btn-nvidia {
+    background: linear-gradient(135deg, #76b900 0%, #5a8f00 100%) !important;
+    color: #090d16 !important;
+    border: none !important;
+    font-weight: 700 !important;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.btn-nvidia:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}

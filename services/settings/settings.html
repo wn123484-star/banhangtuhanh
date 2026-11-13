@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài Đặt Tài Khoản, Hoàn Thiện Bảo Mật OTP/Câu Hỏi &amp; Hệ Thống - Nvidia Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/settings/settings.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <!-- CỐ VẤN HOÀN THIỆN HỒ SƠ BẢO MẬT ĐỂ ĐẢM BẢO KHẢ NĂNG ĐỔI MẬT KHẨU -->
+        <div class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #76b900 !important;">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-nvidia">TRUNG TÂM BẢO VỆ TÀI KHOẢN &amp; KHÔI PHỤC MẬT KHẨU</span>
+                        <span id="secHealthScoreBadge" class="badge bg-warning text-dark fw-bold">Độ hoàn thiện bảo mật: 50%</span>
+                    </div>
+                    <h4 class="fw-bold m-0" id="secAdvisorHeadline">🛡️ Gợi Ý Hoàn Thiện Thông Tin Bảo Mật Tài Khoản</h4>
+                    <p class="small text-muted mb-2 mt-1">
+                        Hoàn thiện đầy đủ <strong>Email nhận OTP</strong>, <strong>Số điện thoại</strong> và <strong>Câu hỏi bảo mật</strong> giúp bạn luôn có thể tự đổi hoặc khôi phục mật khẩu tức thì ngay cả khi quên mật khẩu cũ.
+                    </p>
+                    <div id="secMissingChecklistBox" class="d-flex flex-wrap gap-2"></div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="p-3 rounded-3 border text-center">
+                        <div class="small text-muted mb-1">Chỉ Số Sức Khỏe Bảo Mật</div>
+                        <div class="fs-2 fw-bold text-nvidia" id="secScoreBigNumber">50%</div>
+                        <div class="progress mt-1" style="height: 10px;">
+                            <div id="secHealthProgressBar" class="progress-bar bg-nvidia" style="width: 50%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- CỘT TRÁI: HOÀN THIỆN HỒ SƠ & CÂU HỎI BẢO MẬT -->
+            <div class="col-lg-6">
+                <div class="nv-adaptive-card p-4 h-100 shadow-sm">
+                    <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">👤 1. Cập Nhật Thông Tin Khôi Phục &amp; Câu Hỏi Bảo Mật</h5>
+                    <form id="securityProfileForm" onsubmit="saveSecurityProfileSettings(event)">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Tên đăng nhập (ID)</label>
+                                <input type="text" id="setUsername" class="form-control form-control-sm font-monospace" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Họ và tên hiển thị *</label>
+                                <input type="text" id="setFullName" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Email nhận mã OTP khôi phục *</label>
+                                <input type="email" id="setEmail" class="form-control form-control-sm" placeholder="Nhập email để nhận OTP..." required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Số điện thoại xác thực *</label>
+                                <input type="tel" id="setPhone" class="form-control form-control-sm" placeholder="VD: 0988 777 666" required>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="p-3 rounded-3 border" style="background: rgba(118, 185, 0, 0.06);">
+                                    <div class="fw-bold small text-nvidia mb-2">❓ Thiết Lập Câu Hỏi &amp; Câu Trả Lời Bảo Mật (Dùng khi Đổi / Quên Mật Khẩu)</div>
+                                    <div class="mb-2">
+                                        <label class="form-label small mb-1 fw-semibold">Chọn câu hỏi bảo mật của bạn</label>
+                                        <select id="setSecurityQuestion" class="form-select form-select-sm">
+                                            <option value="Thương hiệu công nghệ yêu thích nhất của bạn là gì?">1. Thương hiệu công nghệ yêu thích nhất của bạn là gì?</option>
+                                            <option value="Tên thú cưng đầu tiên của bạn là gì?">2. Tên thú cưng đầu tiên của bạn là gì?</option>
+                                            <option value="Thành phố nơi bạn sinh ra là ở đâu?">3. Thành phố nơi bạn sinh ra là ở đâu?</option>
+                                            <option value="Món đồ linh kiện PC đầu tiên bạn mua là gì?">4. Món đồ linh kiện PC đầu tiên bạn mua là gì?</option>
+                                            <option value="Trường đại học hoặc cấp 3 của bạn tên là gì?">5. Trường đại học hoặc cấp 3 của bạn tên là gì?</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label small mb-1 fw-semibold">Câu trả lời bí mật mới *</label>
+                                        <input type="text" id="setSecurityAnswer" class="form-control form-control-sm" placeholder="Nhập câu trả lời bảo mật (VD: nvidia)..." required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="setTwoFactorSwitch" checked>
+                                    <label class="form-check-label small fw-semibold" for="setTwoFactorSwitch">Bật xác thực Smart OTP 2 lớp khi thay đổi mật khẩu</label>
+                                </div>
+                            </div>
+
+                            <div class="col-12 pt-1">
+                                <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">💾 Lưu Hồ Sơ Bảo Mật (Đạt 100% An Toàn)</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CỘT PHẢI: ĐỔI MẬT KHẨU TRỰC TIẾP QUA OTP / CÂU HỎI BẢO MẬT / MK CŨ -->
+            <div class="col-lg-6">
+                <div class="nv-adaptive-card p-4 h-100 shadow-sm">
+                    <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">🔐 2. Đổi Mật Khẩu Nhanh (Qua OTP hoặc Câu Hỏi Bảo Mật)</h5>
+
+                    <div class="btn-group w-100 btn-group-sm mb-3" role="group">
+                        <button type="button" id="setPwTab_otp" class="btn btn-nvidia fw-bold" onclick="switchSettingsPwMethod('otp')">📲 Qua Mã OTP 6 Số</button>
+                        <button type="button" id="setPwTab_question" class="btn btn-outline-info fw-bold" onclick="switchSettingsPwMethod('security_question')">❓ Qua Câu Hỏi Bảo Mật</button>
+                        <button type="button" id="setPwTab_old" class="btn btn-outline-secondary fw-bold" onclick="switchSettingsPwMethod('old_password')">🔒 Qua Mật Khẩu Cũ</button>
+                    </div>
+
+                    <form id="settingsPasswordChangeForm" onsubmit="submitSettingsPasswordChange(event)">
+                        <!-- Phương thức OTP -->
+                        <div id="setPwBox_otp" class="p-3 rounded-3 border mb-3" style="background: rgba(118, 185, 0, 0.06);">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small fw-bold">Nhận mã OTP 6 số để xác nhận đổi mật khẩu:</span>
+                                <button type="button" class="btn btn-warning btn-sm fw-bold text-dark py-0" onclick="sendOtpInSettingsPage()">📩 Gửi Mã OTP</button>
+                            </div>
+                            <div id="setSmartOtpBanner" class="p-2 rounded border border-success mb-2 d-none small"></div>
+                            <input type="text" id="setOtpInput" class="form-control form-control-sm font-monospace text-center fw-bold fs-6" maxlength="6" placeholder="Nhập mã OTP 6 số...">
+                        </div>
+
+                        <!-- Phương thức Câu hỏi bảo mật -->
+                        <div id="setPwBox_security_question" class="p-3 rounded-3 border mb-3 d-none" style="background: rgba(14, 165, 233, 0.08);">
+                            <div class="small mb-2">
+                                <strong>Câu hỏi bảo mật của bạn:</strong>
+                                <div id="setActiveQuestionLabel" class="text-nvidia fw-bold">Thương hiệu công nghệ yêu thích nhất của bạn là gì?</div>
+                            </div>
+                            <input type="text" id="setAnswerVerifyInput" class="form-control form-control-sm" placeholder="Nhập câu trả lời bảo mật của bạn...">
+                        </div>
+
+                        <!-- Phương thức Mật khẩu cũ -->
+                        <div id="setPwBox_old_password" class="p-3 rounded-3 border mb-3 d-none">
+                            <label class="form-label small fw-bold mb-1">Mật khẩu hiện tại</label>
+                            <input type="password" id="setOldPwInput" class="form-control form-control-sm" placeholder="Nhập mật khẩu đang dùng...">
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Mật khẩu mới *</label>
+                                <input type="password" id="setNewPwInput" class="form-control form-control-sm" placeholder="Mật khẩu mới (>= 4 ký tự)" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Nhập lại mật khẩu mới *</label>
+                                <input type="password" id="setConfirmPwInput" class="form-control form-control-sm" placeholder="Xác nhận mật khẩu mới" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">✅ Xác Nhận Đổi Mật Khẩu Ngay</button>
+                    </form>
+
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between align-items-center small">
+                        <span class="text-muted">Chế độ giao diện toàn web:</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="if(typeof toggleTheme==='function') toggleTheme(); else document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');">🌓 Đổi Giao Diện Sáng / Tối</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KHỐI NẠP JSON & QUẢN LÝ ICON WEB (#jsonSeedCard) -->
+        <section id="jsonSeedCard" class="nv-adaptive-card p-4 shadow-sm">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-3">
+                <div>
+                    <span class="badge bg-nvidia">CÔNG CỤ HỆ THỐNG &amp; DỮ LIỆU</span>
+                    <h5 class="fw-bold m-0 mt-1">⚡ Đồng Bộ Dữ Liệu JSON &amp; Trạng Thái Hệ Thống</h5>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/services/admin_dispute/admin-center.html" class="btn btn-outline-warning btn-sm">🛡️ Về Trung Tâm Admin</a>
+                    <a href="/services/seller/seller-dashboard.html" class="btn btn-outline-info btn-sm">🏪 Về Kênh Người Bán</a>
+                </div>
+            </div>
+            <div class="small text-muted">
+                Hệ thống cơ sở dữ liệu SQLite (WAL Mode) đã đồng bộ đầy đủ cấu trúc Bảo mật OTP, Câu hỏi bảo mật, Ví Voucher và Vận đơn NVIDIA XPRESS.
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/settings/settings.js"></script>
+</body>
+</html>

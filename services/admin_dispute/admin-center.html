@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trung Tâm Quản Trị Admin, Dự Báo Xu Hướng Voucher/Cây &amp; Trọng Tài AI - Nivida</title>
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/admin_dispute/admin-center.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="container-fluid px-3 px-lg-4 py-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h4 class="fw-bold text-nvidia m-0">⚖️ TRUNG TÂM QUẢN TRỊ ADMIN, DỰ BÁO XU HƯỚNG VOUCHER / TRỒNG CÂY &amp; TRỌNG TÀI AI</h4>
+                <small class="text-muted">Theo dõi số lượng nhận từng loại Voucher, thống kê loại Cây Voucher người chơi chọn trồng để dự đoán xu hướng mua sắm, nạp JSON &amp; xử lý tranh chấp</small>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-nvidia btn-sm" id="btnTabAnalytics" onclick="switchAdminTab('tab-analytics', this)">📊 1. Chỉ Số, Voucher, Cây &amp; Dự Báo Xu Hướng</button>
+                <button class="btn btn-warning btn-sm fw-bold text-dark" id="btnTabJsonLoader" onclick="switchAdminTab('tab-json-seed', this)">📥 2. Nạp Thủ Công JSON (Shop &amp; SP)</button>
+                <button class="btn btn-info btn-sm fw-bold text-dark" id="btnTabEvents" onclick="switchAdminTab('tab-events', this)">🎉 3. Bật/Tắt &amp; Lên Lịch Sự Kiện (20/10 • 11/11 • 20/11)</button>
+                <button class="btn btn-outline-secondary btn-sm" id="defaultDisputeTabBtn" onclick="switchAdminTab('tab-disputes', this)">⚖️ 4. Tòa Án Tranh Chấp AI</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="switchAdminTab('tab-workflows', this)">🛡 5. Quy Trình 4 Tình Huống (SOP)</button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="switchAdminTab('tab-ai-control', this)">🤖 6. Kiểm Soát Hệ Thống AI &amp; Logs</button>
+                <button class="btn btn-outline-warning btn-sm fw-bold" onclick="toggleConfigModal('apiKeyModal', true)">🔑 API Keys</button>
+            </div>
+        </div>
+
+        <section id="tab-analytics" class="admin-tab-section">
+            <div class="row g-2 mb-3">
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="p-3 bg-surface border border-start border-4 border-nvidia h-100">
+                        <div class="small text-muted fw-semibold">Doanh Thu Thực Thu</div>
+                        <div class="fs-5 fw-bold text-nvidia" id="ovTotalRevenue">0 Xu</div>
+                        <small class="text-muted" id="ovTotalGmvSub">GMV: 0 Xu</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="p-3 bg-surface border border-start border-4 border-info h-100">
+                        <div class="small text-muted fw-semibold">Tổng Đơn Hàng</div>
+                        <div class="fs-5 fw-bold" id="ovTotalOrders">0</div>
+                        <small class="text-info" id="ovEscrowBreakdownSub">Escrow Giữ: 0 | Giải ngân: 0</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="p-3 bg-surface border border-start border-4 border-warning h-100">
+                        <div class="small text-muted fw-semibold">Khấu Trừ Xu &amp; Voucher</div>
+                        <div class="fs-6 fw-bold text-warning" id="ovXuUsedTotal">Đã trừ: 0 Xu</div>
+                        <small class="text-muted" id="ovVoucherDiscountSub">Giảm Voucher: 0 Xu</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="p-3 bg-surface border border-start border-4 border-success h-100">
+                        <div class="small text-muted fw-semibold">Sản Phẩm &amp; Kho Thực</div>
+                        <div class="fs-5 fw-bold" id="ovTotalProducts">0 SP</div>
+                        <small class="text-nvidia" id="ovStockAndSoldSub">Kho: 0 | Đã bán: 0</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="p-3 bg-surface border border-start border-4 border-primary h-100">
+                        <div class="small text-muted fw-semibold">Tài Khoản &amp; Ví Lưu Hành</div>
+                        <div class="fs-5 fw-bold" id="ovTotalUsers">0 User</div>
+                        <small class="text-warning" id="ovWalletCirculationSub">Ví lưu hành: 0 Xu</small>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3 col-xl-2">
+                    <div class="p-3 bg-surface border border-start border-4 border-danger h-100">
+                        <div class="small text-muted fw-semibold">Tranh Chấp &amp; Trợ Lý AI</div>
+                        <div class="fs-5 fw-bold text-warning" id="ovTotalDisputes">0 vụ</div>
+                        <small class="fw-bold" id="ovAiStatus">Đang Hoạt Động</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-surface border border-2 border-nvidia p-3 rounded-3 shadow-sm mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 border-bottom pb-2">
+                    <div>
+                        <span class="badge bg-nvidia me-1">DỰ BÁO XU HƯỚNG TỪ VOUCHER &amp; NÔNG TRẠI CÂY VOUCHER</span>
+                        <strong class="fs-6">🔮 Dự Đoán Xu Hướng Mua Sắm Cho Admin (Tổng Hợp Từ Loại Voucher Được Nhận &amp; Loại Cây Được Trồng)</strong>
+                    </div>
+                    <span class="badge bg-warning text-dark">100% Dữ Liệu SQLite Thực Tế</span>
+                </div>
+                <div class="row g-3" id="adminTrendForecastContainer">
+                    <div class="col-12 text-muted small">Đang phân tích dữ liệu nhận Voucher và trồng Cây Voucher...</div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-lg-6">
+                    <div class="bg-surface border p-3 h-100 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-nvidia m-0">🎟 Thống Kê Số Lượng Nhận Từng Loại Voucher (Giới Hạn 2/5 Mã)</h6>
+                            <span class="badge bg-info text-dark">Theo dõi loại Voucher hot</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Mã Voucher</th>
+                                        <th>Ngành Hàng Gắn Kết</th>
+                                        <th>Mức Giảm</th>
+                                        <th>Đã Nhận / Giới Hạn</th>
+                                        <th>Số Ví Đang Giữ</th>
+                                        <th>Đơn Đã Áp Mã</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminVoucherAnalyticsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="bg-surface border p-3 h-100 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-nvidia m-0">🌱 Thống Kê Loại Cây Voucher Người Dùng Chọn Trồng Nhiều Nhất</h6>
+                            <span class="badge bg-success">Theo dõi hành vi Nông trại</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Giống Cây Voucher</th>
+                                        <th>Chi Phí Giống</th>
+                                        <th>Mã Thu Hoạch</th>
+                                        <th>Ô Đang Trồng</th>
+                                        <th>Lượt Gieo / Thu Hoạch</th>
+                                        <th>Xu Hướng Ngành</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminTreeAnalyticsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <div class="bg-surface border p-3 h-100">
+                        <h6 class="fw-bold small mb-2">1. Biểu Đồ Lượt Nhận Từng Mã Voucher</h6>
+                        <canvas id="disputeStatusChart" height="190"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-surface border p-3 h-100">
+                        <h6 class="fw-bold small mb-2">2. Biểu Đồ Loại Cây Được Trồng</h6>
+                        <canvas id="shopTierChart" height="190"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-surface border p-3 h-100">
+                        <h6 class="fw-bold small mb-2">3. Tín Hiệu Hành Vi Thực Tế (SQL Logs)</h6>
+                        <canvas id="behaviorActionChart" height="190"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bg-surface border p-3 h-100">
+                        <h6 class="fw-bold small mb-2">4. Cơ Cấu Tài Khoản Hệ Thống</h6>
+                        <canvas id="userRoleChart" height="190"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="bg-surface border p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-nvidia m-0">📦 Chỉ Số Ngành Hàng &amp; Tín Hiệu Thuật Toán Đề Xuất (100% SQL Thực)</h6>
+                            <span class="badge bg-dark">Hybrid Recommendation Inputs</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Ngành hàng</th>
+                                        <th>Số SP</th>
+                                        <th>Tổng Tồn kho</th>
+                                        <th>Đã bán thực</th>
+                                        <th>Giá TB (Xu)</th>
+                                        <th>Lượt hành vi (Log)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminCategoryMetricsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="bg-surface border p-3 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-nvidia m-0">🏪 Danh Sách Gian Hàng &amp; Phân Hạng (Mall / Yêu Thích / Thường)</h6>
+                            <button class="btn btn-warning btn-sm py-0 fw-bold text-dark" onclick="switchAdminTab('tab-json-seed', document.getElementById('btnTabJsonLoader'))">+ Nạp Thêm Shop Bằng JSON</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Tên Gian Hàng</th>
+                                        <th>Email Shop</th>
+                                        <th>Phân Hạng</th>
+                                        <th>Tích Xanh</th>
+                                        <th>Số SP / Đã Bán</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminStoresMetricsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-json-seed" class="admin-tab-section d-none">
+            <div class="alert alert-info py-2 small mb-3">
+                📂 <strong>Vị trí lưu các tệp JSON lẻ trong dự án của bạn:</strong> Thư mục <code>data_json/</code> (gồm <code>data_json/1_danh_sach_gian_hang.json</code>, <code>data_json/2_danh_sach_san_pham.json</code> và <code>data_json/3_danh_sach_su_kien.json</code>). Hệ thống <strong>không tự động nạp ngầm</strong>; chỉ khi bạn bấm nút Nạp thủ công bên dưới thì dữ liệu mới được đẩy vào SQLite!
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="bg-surface border border-2 border-warning p-4 h-100 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold text-warning m-0">🏪 LOẠI 1: NẠP JSON DANH SÁCH GIAN HÀNG (SHOPS)</h5>
+                            <span class="badge bg-warning text-dark">data_json/1_danh_sach_gian_hang.json</span>
+                        </div>
+                        <p class="small text-muted mb-2">Đọc từ tệp <code>data_json/1_danh_sach_gian_hang.json</code> hoặc chọn file từ máy tính để nạp thủ công các Shop (Shop Mall, Shop Yêu Thích, Shop Thường).</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-warning fw-bold" onclick="loadServerDiskJson('shops', 'adminShopsJsonTextarea')">📥 Đọc File data_json/1_danh_sach_gian_hang.json</button>
+                            <label class="btn btn-sm btn-outline-info mb-0" style="cursor:pointer;">
+                                📂 Chọn File .JSON Từ Máy Tính
+                                <input type="file" accept=".json" class="d-none" onchange="loadJsonFileIntoTextarea(event, 'adminShopsJsonTextarea')">
+                            </label>
+                        </div>
+                        <textarea id="adminShopsJsonTextarea" class="form-control font-monospace small mb-3" rows="12" placeholder='Bấm nút "Đọc File data_json/1_danh_sach_gian_hang.json" ở trên hoặc dán JSON vào đây...'></textarea>
+                        <button type="button" class="btn btn-warning w-100 fw-bold text-dark py-2" onclick="submitAdminShopsJson()">
+                            ⬆️ NẠP THỦ CÔNG JSON GIAN HÀNG VÀO SQLITE
+                        </button>
+                        <div id="adminShopsSeedStatus" class="small fw-bold mt-2"></div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="bg-surface border border-2 border-nvidia p-4 h-100 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="fw-bold text-nvidia m-0">📦 LOẠI 2: NẠP JSON DANH SÁCH SẢN PHẨM ĐA NGÀNH</h5>
+                            <span class="badge bg-nvidia">data_json/2_danh_sach_san_pham.json</span>
+                        </div>
+                        <p class="small text-muted mb-2">Đọc từ tệp <code>data_json/2_danh_sach_san_pham.json</code> hoặc chọn file từ máy tính để nạp thủ công các mặt hàng gắn với từng Shop.</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-nvidia fw-bold" onclick="loadServerDiskJson('products', 'adminProductsJsonTextarea')">📥 Đọc File data_json/2_danh_sach_san_pham.json</button>
+                            <label class="btn btn-sm btn-outline-info mb-0" style="cursor:pointer;">
+                                📂 Chọn File .JSON Từ Máy Tính
+                                <input type="file" accept=".json" class="d-none" onchange="loadJsonFileIntoTextarea(event, 'adminProductsJsonTextarea')">
+                            </label>
+                        </div>
+                        <textarea id="adminProductsJsonTextarea" class="form-control font-monospace small mb-2" rows="11" placeholder='Bấm nút "Đọc File data_json/2_danh_sach_san_pham.json" ở trên hoặc dán JSON vào đây...'></textarea>
+                        <div class="form-check mb-2">
+                            <input type="checkbox" id="adminClearOldProductsCheck" class="form-check-input">
+                            <label class="form-check-label small fw-semibold text-danger" for="adminClearOldProductsCheck">Xóa toàn bộ sản phẩm cũ trong bảng products trước khi nạp mới</label>
+                        </div>
+                        <button type="button" class="btn btn-nvidia w-100 fw-bold py-2" onclick="submitAdminProductsJson()">
+                            ⬆️ NẠP THỦ CÔNG JSON SẢN PHẨM VÀO SQLITE
+                        </button>
+                        <div id="adminProductsSeedStatus" class="small fw-bold mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-events" class="admin-tab-section d-none">
+            <div class="bg-surface border p-3 mb-3 shadow-sm">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 border-bottom pb-2">
+                    <div>
+                        <span class="badge bg-info text-dark mb-1">ĐIỀU KHIỂN CHIẾN DỊCH TOÀN SÀN</span>
+                        <h5 class="fw-bold m-0">🎉 Bật / Tắt Nhanh Các Sự Kiện (20/10 • 11/11 • 20/11)</h5>
+                        <small class="text-muted">Khi bật một sự kiện, Banner Trang chủ, Hệ số nhân thưởng Vòng quay và Mã Voucher sự kiện đó sẽ được kích hoạt ngay lập tức.</small>
+                    </div>
+                </div>
+                <div class="row g-3" id="adminEventsCardsContainer"></div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <div class="bg-surface border p-4 h-100 shadow-sm">
+                        <h6 class="fw-bold text-nvidia mb-3">🗓 Lên Lịch &amp; Chỉnh Sửa Tham Số Sự Kiện (Hoặc Tạo Sự Kiện Mới)</h6>
+                        <form id="adminEventEditorForm">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Mã Sự Kiện (Event Code)</label>
+                                    <input type="text" id="evCode" class="form-control form-control-sm" placeholder="VD: EVENT_20_10, EVENT_11_11..." required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold">Nhãn Ngày</label>
+                                    <input type="text" id="evDateLabel" class="form-control form-control-sm" placeholder="VD: 11/11" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Màu Chủ Đạo (CSS/RGB)</label>
+                                    <input type="text" id="evThemeColor" class="form-control form-control-sm" value="rgb(249, 115, 22)">
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Tên Chiến Dịch Sự Kiện</label>
+                                <input type="text" id="evTitle" class="form-control form-control-sm" placeholder="VD: Sự Kiện 11/11 - Siêu Sale Độc Thân &amp; Đại Tiệc Công Nghệ" required>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Ngày Bắt Đầu</label>
+                                    <input type="date" id="evStartDate" class="form-control form-control-sm" value="2026-11-01" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Ngày Kết Thúc</label>
+                                    <input type="date" id="evEndDate" class="form-control form-control-sm" value="2026-11-15" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Hệ Số Nhân Xu (Vòng Quay)</label>
+                                    <input type="number" step="0.1" id="evMultiplier" class="form-control form-control-sm" value="2.0" required>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Quỹ Ngân Sách (Xu)</label>
+                                    <input type="number" id="evBudgetXu" class="form-control form-control-sm" value="15000000000" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Mã Voucher Sự Kiện</label>
+                                    <input type="text" id="evVoucherCode" class="form-control form-control-sm" placeholder="VD: MEGA1111" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold">Mức Giảm Voucher (Xu)</label>
+                                    <input type="number" id="evVoucherDiscount" class="form-control form-control-sm" value="111000" required>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Khẩu Hiệu / Slogan Hiển Thị Trên Trang Chủ</label>
+                                <textarea id="evSlogan" class="form-control form-control-sm" rows="2" required></textarea>
+                            </div>
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="evIsActive" checked>
+                                <label class="form-check-label small fw-bold text-nvidia" for="evIsActive">Kích hoạt hiển thị Sự kiện này ngay sau khi lưu</label>
+                            </div>
+                            <button type="submit" class="btn btn-nvidia w-100 fw-bold">💾 Lưu Tham Số Sự Kiện &amp; Ghi File JSON</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="bg-surface border border-2 border-info p-4 h-100 shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="fw-bold text-info m-0">📂 LOẠI 3: NẠP &amp; LƯU SỰ KIỆN BẰNG JSON</h6>
+                            <span class="badge bg-info text-dark">data_json/3_danh_sach_su_kien.json</span>
+                        </div>
+                        <p class="small text-muted mb-2">Đọc hoặc chỉnh sửa trực tiếp cấu trúc JSON của toàn bộ các sự kiện (20/10, 11/11, 20/11, Black Friday, Tết...) và nạp vào hệ thống.</p>
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <button type="button" class="btn btn-sm btn-outline-info fw-bold" onclick="loadServerDiskJson('events', 'adminEventsJsonTextarea')">📥 Đọc File data_json/3_danh_sach_su_kien.json</button>
+                            <label class="btn btn-sm btn-outline-warning mb-0" style="cursor:pointer;">
+                                📂 Chọn File .JSON Sự Kiện Từ Máy
+                                <input type="file" accept=".json" class="d-none" onchange="loadJsonFileIntoTextarea(event, 'adminEventsJsonTextarea')">
+                            </label>
+                        </div>
+                        <textarea id="adminEventsJsonTextarea" class="form-control font-monospace small mb-3" rows="11"></textarea>
+                        <button type="button" class="btn btn-info w-100 fw-bold text-dark py-2" onclick="submitAdminEventsJson()">
+                            ⬆️ NẠP JSON SỰ KIỆN &amp; CẬP NHẬT LỊCH TRÌNH
+                        </button>
+                        <div id="adminEventsSeedStatus" class="small fw-bold mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-disputes" class="admin-tab-section d-none">
+            <div class="dispute-3col-grid">
+                <div class="dispute-panel bg-surface border">
+                    <div class="panel-top-bar">
+                        <span class="fw-bold text-nvidia">1. Danh Sách Vụ Việc Test Case</span>
+                        <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="seedDemoDisputes()">+ Nạp 4 Kịch Bản Mẫu</button>
+                    </div>
+                    <div class="p-2 border-bottom d-flex gap-1">
+                        <button class="btn btn-nvidia btn-sm flex-fill" onclick="evaluateBatchDisputes()">🤖 AI Chấm Hàng Loạt</button>
+                    </div>
+                    <div id="disputeListContainer" class="panel-scroll-body"></div>
+                </div>
+
+                <div class="dispute-panel bg-surface border">
+                    <div class="panel-top-bar">
+                        <span class="fw-bold text-nvidia">2. Hồ Sơ Khách Quan &amp; Đối Chất 3 Bên</span>
+                        <span id="dStatusBadge" class="badge bg-secondary">--</span>
+                    </div>
+                    <div id="disputeCenterBody" class="panel-scroll-body d-none">
+                        <div class="mb-2">
+                            <span id="dWorkflowBadge" class="badge bg-warning text-dark mb-1">SOP_SAI_MAU</span>
+                            <h6 class="fw-bold mb-1" id="dReasonTitle"></h6>
+                            <p class="small text-muted mb-2" id="dMetaSub"></p>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-3">
+                                <div class="p-2 border rounded small">
+                                    <span class="text-muted d-block">Số Xu tranh chấp</span>
+                                    <strong class="text-nvidia" id="dRefundAmount">0 Xu</strong>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2 border rounded small">
+                                    <span class="text-muted d-block">Mức thiệt hại</span>
+                                    <strong class="text-danger" id="dDamageRate">0%</strong>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2 border rounded small">
+                                    <span class="text-muted d-block">Trễ vận chuyển</span>
+                                    <strong id="dDelayHours">0 giờ</strong>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-2 border rounded small">
+                                    <span class="text-muted d-block">Lịch sử lỗi Shop</span>
+                                    <strong id="dSellerHistory">0 lần</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-bordered small mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 120px;">Bên liên quan</th>
+                                        <th>Lời khai &amp; Bằng chứng ghi nhận</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold text-info">👤 Khách mua</td>
+                                        <td id="dBuyerEvidence"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-warning">🏪 Người bán</td>
+                                        <td id="dSellerResponse"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-success">🚚 Vận chuyển</td>
+                                        <td id="dShipperLog"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <h6 class="fw-bold mb-2">💬 Biên Bản Đối Chất 3 Bên &amp; Trọng Tài</h6>
+                        <div id="disputeChatBox" class="dispute-chat-log border rounded p-2 mb-2"></div>
+                        <form id="disputeChatForm" class="d-flex gap-1">
+                            <select id="chatSenderRole" class="form-select form-select-sm" style="max-width: 125px;">
+                                <option value="admin">⚖️ Admin</option>
+                                <option value="buyer">👤 Khách</option>
+                                <option value="seller">🏪 Shop</option>
+                                <option value="shipper">🚚 Shipper</option>
+                            </select>
+                            <input type="text" id="chatMsgInput" class="form-control form-control-sm" placeholder="Nhập biên bản đối chất..." required>
+                            <button type="submit" class="btn btn-nvidia btn-sm">Gửi</button>
+                        </form>
+                    </div>
+                    <div id="disputeCenterPlaceholder" class="p-5 text-center text-muted">Hãy chọn 1 vụ tranh chấp ở cột trái (hoặc bấm "+ Nạp 4 Kịch Bản Mẫu").</div>
+                </div>
+
+                <div class="dispute-panel bg-surface border">
+                    <div class="panel-top-bar">
+                        <span class="fw-bold text-nvidia">3. Phân Tích AI (Điều Khoản + SOP)</span>
+                    </div>
+                    <div id="disputeRightBody" class="panel-scroll-body d-none">
+                        <button class="btn btn-nvidia w-100 mb-3 fw-bold" id="btnRunGroqDispute" onclick="evaluateSingleDispute()">
+                            🤖 Chạy AI Đối Chiếu Điều Khoản &amp; SOP
+                        </button>
+                        <div class="p-3 border rounded mb-3">
+                            <div class="d-flex align-items-baseline gap-2 mb-2">
+                                <h2 class="fw-bold m-0" id="aiDisputeScore">--</h2>
+                                <span id="aiDisputeLevelBadge" class="badge bg-secondary">Chưa chấm</span>
+                            </div>
+                            <p class="small mb-2" id="aiDisputeRationale">Bấm nút phía trên để AI đối chiếu chứng cứ 3 bên với Điều khoản Pháp lý &amp; 4 Quy trình SOP.</p>
+                            <div class="p-2 rounded bg-dark text-nvidia small fw-semibold" id="aiDisputeActionPlan"></div>
+                        </div>
+
+                        <h6 class="fw-bold small mb-2">Hệ Thống Tiêu Chí Đạo Đức ACM/IEEE &amp; Điều Khoản</h6>
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <div class="ethical-rule-item" id="erule1">
+                                <span class="badge bg-danger">IEEE 3</span>
+                                <div>
+                                    <strong>Quy tắc 1: Bảo vệ Người mua &amp; Trả hàng 7 ngày</strong>
+                                    <div class="text-muted">Hàng vỡ hỏng / lỗi kỹ thuật kèm video mở hộp -> Hoàn 100% Xu.</div>
+                                </div>
+                            </div>
+                            <div class="ethical-rule-item" id="erule2">
+                                <span class="badge bg-warning text-dark">ACM 1.3</span>
+                                <div>
+                                    <strong>Quy tắc 2: Giao đúng Mẫu &amp; Đơn vị (Chiếc/Set/Bộ)</strong>
+                                    <div class="text-muted">Giao thiếu phụ kiện Set hoặc sai mẫu -> Buộc gửi bù hoặc hoàn Xu.</div>
+                                </div>
+                            </div>
+                            <div class="ethical-rule-item" id="erule3">
+                                <span class="badge bg-info text-dark">IEEE 2</span>
+                                <div>
+                                    <strong>Quy tắc 3: Trách nhiệm Đơn vị Vận chuyển</strong>
+                                    <div class="text-muted">Va đập tại trạm trung chuyển hoặc giao trễ > 24h.</div>
+                                </div>
+                            </div>
+                            <div class="ethical-rule-item" id="erule4">
+                                <span class="badge bg-primary">ACM 1.4</span>
+                                <div>
+                                    <strong>Quy tắc 4: Chống Bom hàng COD &amp; Chống Tráo hàng</strong>
+                                    <div class="text-muted">Khách bom COD hoặc không có video mở hộp / sai Serial -> Bảo vệ Shop.</div>
+                                </div>
+                            </div>
+                            <div class="ethical-rule-item" id="erule5">
+                                <span class="badge bg-secondary">ACM 1.6</span>
+                                <div>
+                                    <strong>Quy tắc 5: Toàn vẹn &amp; Minh bạch Chứng cứ 3 Bên</strong>
+                                    <div class="text-muted">Phán quyết dựa trên log đối chất, Serial NV-SN và Camera kho.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 border rounded">
+                            <h6 class="fw-bold small mb-2">Phán Quyết Cuối Cùng Của Trọng Tài (Admin):</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-danger btn-sm fw-bold" onclick="issueFinalVerdict('refund_buyer')">1. Hoàn 100% Xu Về Ví Khách Hàng</button>
+                                <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="issueFinalVerdict('shipper_compensate')">2. Vận Chuyển Đền Bù Xu &amp; Giải Ngân Shop</button>
+                                <button class="btn btn-secondary btn-sm fw-bold" onclick="issueFinalVerdict('reject_claim')">3. Bác Khiếu Nại / Xử Lý Bom Hàng (Bảo Vệ Shop)</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="disputeRightPlaceholder" class="p-5 text-center text-muted">Chưa chọn vụ tranh chấp.</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-workflows" class="admin-tab-section d-none">
+            <div class="bg-surface border p-4 shadow-sm mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 border-bottom pb-2">
+                    <div>
+                        <span class="badge bg-nvidia mb-1">QUY TRÌNH CHUẨN KHẮC PHỤC LỖ HỔNG SÀN TMĐT</span>
+                        <h5 class="fw-bold m-0">🛡 Bản Quy Trình Giải Quyết 4 Kịch Bản Tranh Chấp Trọng Tâm (SOP)</h5>
+                        <small class="text-muted">Kết nối trực tiếp với Bộ Điều Khoản Pháp Lý (<a href="/services/legal/terms.html" class="text-nvidia fw-bold">Xem Điều khoản</a>) và Cơ chế Tạm giữ Dòng tiền Escrow</small>
+                    </div>
+                    <button class="btn btn-nvidia btn-sm" onclick="switchAdminTab('tab-disputes', document.getElementById('defaultDisputeTabBtn')); seedDemoDisputes();">
+                        ⚡ Chạy Thử Ngay 4 Test Case Này
+                    </button>
+                </div>
+                <div class="row g-3" id="sopWorkflowsContainer"></div>
+            </div>
+        </section>
+
+        <section id="tab-ai-control" class="admin-tab-section d-none">
+            <div class="row g-3">
+                <div class="col-lg-5">
+                    <div class="bg-surface border p-4 h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold text-nvidia m-0">🤖 Trung Tâm Điều Khiển Hệ Thống AI</h5>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="aiKillSwitchToggle">
+                                <label class="form-check-label fw-bold text-danger" for="aiKillSwitchToggle">KILL-SWITCH (Khóa AI)</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Model AI sử dụng</label>
+                            <input type="text" id="cfgModelName" class="form-control form-control-sm" value="llama-3.3-70b-versatile">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">System Prompt (Hướng dẫn hành vi của AI toàn sàn)</label>
+                            <textarea id="cfgSystemPrompt" class="form-control form-control-sm mb-3" rows="4" placeholder="Bạn là Trọng tài AI công tâm của Sàn TMĐT Nivida Store..."></textarea>
+<div id="cfgGoogleAiEmailExtraBox" class="p-3 rounded-3 border bg-light text-dark mt-2">
+    <div class="fw-bold small text-success mb-2">🔑 Cấu Hình Khóa Google AI &amp; Google Email Thông Báo Điều Khoản</div>
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label small mb-1 fw-semibold text-dark">Google Gemini API Key (AIza...)</label>
+            <input type="password" id="cfgGeminiKey" class="form-control form-control-sm" placeholder="Dán mã AIza... để kích hoạt AI toàn web">
+        </div>
+        <div class="col-md-6">
+            <label class="form-label small mb-1 fw-semibold text-dark">Gmail Admin Gửi Thông Báo</label>
+            <input type="email" id="cfgGoogleMailSender" class="form-control form-control-sm" placeholder="admin@gmail.com">
+        </div>
+        <div class="col-md-8">
+            <label class="form-label small mb-1 fw-semibold text-dark">Google App Password / Email Key (16 ký tự)</label>
+            <input type="password" id="cfgGoogleAppPassword" class="form-control form-control-sm" placeholder="xxxx xxxx xxxx xxxx">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <div class="form-check form-switch mb-1">
+                <input class="form-check-input" type="checkbox" id="cfgEnableLegalEmail" checked>
+                <label class="form-check-label small fw-semibold text-dark" for="cfgEnableLegalEmail">Gửi Email Điều Khoản</label>
+            </div>
+        </div>
+    </div>
+    <hr class="my-3">
+    <div id="qaBugMatrixAdminPanel" class="p-2 rounded bg-white text-dark border">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <div>
+                <span class="badge bg-dark">QA TEST &amp; BUG TOGGLE MATRIX (21 TEST CASES)</span>
+                <strong id="qaMatrixSummaryBadge" class="small text-success ms-2">Đã vá: 21/21 lỗi (100% An toàn)</strong>
+            </div>
+            <div class="d-flex gap-1">
+                <button type="button" class="btn btn-success btn-sm py-0" onclick="batchToggleQaBugs('fix_all')">✅ Vá Toàn Bộ 21 Lỗi</button>
+                <button type="button" class="btn btn-outline-warning btn-sm py-0 text-dark" onclick="batchToggleQaBugs('reproduce_all')">🐞 Bật Lỗi Để Test</button>
+                <button type="button" class="btn btn-outline-primary btn-sm py-0" onclick="exportQaBugComparisonReport()">📥 Xuất Báo Cáo Dev/QA</button>
+            </div>
+        </div>
+        <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
+            <table class="table table-sm table-bordered align-middle mb-0 small">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mã Lỗi</th>
+                        <th>Phân Hệ</th>
+                        <th>Mô Tả Lỗ Hổng &amp; Giải Pháp Đã Fix</th>
+                        <th class="text-center">Trạng Thái</th>
+                    </tr>
+                </thead>
+                <tbody id="qaBugMatrixTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+                        </div>
+                        <button class="btn btn-nvidia w-100" onclick="saveAiControlSettings()">Lưu Cấu Hình &amp; Hành Vi AI</button>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="bg-surface border p-4 h-100">
+                        <h5 class="fw-bold text-nvidia mb-3">Nhật Ký Giám Sát Con Người (Human Oversight Logs)</h5>
+                        <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+                            <table class="table table-sm table-hover align-middle small">
+                                <thead>
+                                    <tr>
+                                        <th>Tác nhân</th>
+                                        <th>Loại</th>
+                                        <th>Nội dung / Vụ việc</th>
+                                        <th>Phản hồi của AI</th>
+                                        <th>Giám sát</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="aiOversightLogsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="apiKeyModal" class="admin-modal-overlay d-none">
+        <div class="bg-surface border p-4 shadow-lg" style="width: 480px; max-width: 95vw;">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <h5 class="fw-bold text-nvidia m-0">Cấu Hình 3 Khóa API AI (Fallback)</h5>
+                <button class="btn-close" onclick="toggleConfigModal('apiKeyModal', false)"></button>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Key Chính (Primary Key)</label>
+                <input type="password" id="modalKeyMain" class="form-control form-control-sm" placeholder="Nhập API Key...">
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Key Dự Phòng 1 (Backup 1)</label>
+                <input type="password" id="modalKeyBackup1" class="form-control form-control-sm" placeholder="Nhập API Key dự phòng 1...">
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Key Dự Phòng 2 (Backup 2)</label>
+                <input type="password" id="modalKeyBackup2" class="form-control form-control-sm" placeholder="Nhập API Key dự phòng 2...">
+            </div>
+            <button class="btn btn-nvidia w-100" onclick="saveAiControlSettings(true)">Lưu API Keys</button>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/admin_dispute/admin-center.js"></script>
+</body>
+</html>

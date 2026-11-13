@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Tác Nghiệp Vận Đơn QR &amp; Phiếu Giao Hàng NVIDIA XPRESS (NVX)</title>
+    <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/seller/seller.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        .live-order-tracker {
+            background: var(--nv-bg-surface, #141c2b);
+            color: var(--nv-text-main, #f8fafc);
+            border: 1.5px solid rgba(118, 185, 0, 0.55);
+            border-radius: 16px;
+            padding: 18px;
+        }
+        .step-pill {
+            flex: 1;
+            min-width: 155px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--nv-border-col, #334155);
+            background: rgba(148, 163, 184, 0.08);
+            font-size: 13px;
+        }
+        .step-pill.active {
+            border-color: #76b900;
+            background: rgba(118, 185, 0, 0.2);
+            font-weight: bold;
+        }
+        .nvx-waybill-sheet {
+            max-width: 780px;
+            margin: 0 auto;
+            background: var(--nv-bg-surface, #141c2b);
+            color: var(--nv-text-main, #f8fafc);
+            border: 2.5px solid #76b900;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.25);
+            transition: max-width 0.2s ease;
+        }
+        .nvx-waybill-sheet.thermal-80mm {
+            max-width: 390px !important;
+            padding: 12px !important;
+            font-size: 12px !important;
+        }
+        .nvx-waybill-sheet.thermal-80mm .nvx-addr-grid,
+        .nvx-waybill-sheet.thermal-80mm .nvx-body-grid,
+        .nvx-waybill-sheet.thermal-80mm .nvx-footer-grid {
+            grid-template-columns: 1fr !important;
+        }
+        .nvx-waybill-sheet.thermal-80mm .nvx-addr-col:first-child,
+        .nvx-waybill-sheet.thermal-80mm .nvx-items-col {
+            border-right: none !important;
+            border-bottom: 1px dashed rgba(148, 163, 184, 0.4);
+        }
+        .nvx-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px dashed rgba(118, 185, 0, 0.6);
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .nvx-brand-main {
+            font-size: 24px;
+            font-weight: 900;
+            color: #76b900;
+            letter-spacing: -0.5px;
+        }
+        .nvx-brand-sub {
+            font-size: 20px;
+            font-weight: 900;
+            font-style: italic;
+            color: #38bdf8;
+        }
+        .nvx-addr-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 2px dashed rgba(148, 163, 184, 0.4);
+            margin-bottom: 12px;
+        }
+        .nvx-addr-col {
+            padding: 10px;
+            font-size: 13.5px;
+            line-height: 1.45;
+        }
+        .nvx-addr-col:first-child {
+            border-right: 2px dashed rgba(148, 163, 184, 0.4);
+        }
+        .nvx-route-code-bar {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #76b900;
+            letter-spacing: 1.5px;
+            padding: 8px 0;
+            border-bottom: 2px dashed rgba(148, 163, 184, 0.4);
+            margin-bottom: 12px;
+            background: rgba(118, 185, 0, 0.08);
+            border-radius: 8px;
+        }
+        .nvx-body-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            border-bottom: 2px dashed rgba(148, 163, 184, 0.4);
+            min-height: 210px;
+        }
+        .nvx-items-col {
+            padding: 8px 14px 8px 6px;
+            border-right: 2px dashed rgba(148, 163, 184, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-size: 13.5px;
+        }
+        .nvx-qr-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+            padding: 8px;
+        }
+        .qr-clean-box {
+            background: #ffffff !important;
+            padding: 10px;
+            border-radius: 10px;
+            display: inline-block;
+            border: 2px solid #76b900;
+        }
+        .nvx-date-box {
+            border-top: 1px dashed rgba(148, 163, 184, 0.4);
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+        .nvx-footer-grid {
+            display: grid;
+            grid-template-columns: 1.25fr 1fr;
+            border-bottom: 2px solid rgba(118, 185, 0, 0.6);
+            padding: 12px 6px;
+            align-items: center;
+        }
+        .nvx-cod-amount {
+            font-size: 28px;
+            font-weight: 900;
+            color: #76b900;
+            margin-top: 4px;
+        }
+        .nvx-sign-box {
+            border-left: 1px dashed rgba(148, 163, 184, 0.4);
+            padding-left: 12px;
+            text-align: center;
+            min-height: 85px;
+        }
+        .nvx-bottom-banner {
+            border: 1.5px solid #76b900;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            color: #76b900;
+            padding: 6px;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body, .nvx-waybill-sheet {
+                background: #ffffff !important;
+                color: #000000 !important;
+                border-color: #000000 !important;
+                box-shadow: none !important;
+            }
+            .nvx-brand-main, .nvx-route-code-bar, .nvx-cod-amount, .nvx-bottom-banner {
+                color: #000000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder" class="no-print"></div>
+
+    <main class="container py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 no-print">
+            <div class="d-flex align-items-center gap-2">
+                <a href="/services/seller/seller-dashboard.html" class="btn btn-outline-secondary btn-sm">&larr; Về Kênh Người Bán</a>
+                <span class="badge bg-nvidia fw-bold px-3 py-2" id="topUrlBadge">CỔNG VẬN ĐƠN QR</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleThermalPrintSize()">📐 Đổi Khổ In (A5 ↔ Nhiệt 80mm)</button>
+                <button type="button" class="btn btn-outline-info btn-sm" onclick="copyUniqueOrderUrl()">🔗 Copy URL Tracking</button>
+                <button type="button" class="btn btn-nvidia btn-sm fw-bold px-3" onclick="window.print()">🖨️ In Phiếu Vận Đơn NVX</button>
+            </div>
+        </div>
+
+        <div class="live-order-tracker mb-4 no-print">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 border-bottom pb-2">
+                <div>
+                    <span class="badge bg-nvidia me-1">📱 TRẠM TÁC NGHIỆP QUÉT QR THỜI GIAN THỰC</span>
+                    <span class="small text-muted">URL Theo dõi Vận đơn:</span>
+                    <code id="uniqueOrderUrlText" class="small text-nvidia fw-bold ms-1"></code>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-secondary" id="liveEscrowBadge">Escrow: Đang bảo lãnh</span>
+                    <span class="badge bg-info text-dark">ĐVVC: NVIDIA XPRESS (NVX)</span>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-3" id="orderProgressSteps">
+                <div class="step-pill" data-step="pending">1. Đặt hàng &amp; Cấp mã NVX</div>
+                <div class="step-pill" data-step="confirmed">2. Kho đóng gói &amp; Dán nhãn QR</div>
+                <div class="step-pill" data-step="shipping">3. Shipper NVX đang giao hàng</div>
+                <div class="step-pill" data-step="completed">4. Đã giao (POD) &amp; Giải ngân Escrow</div>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
+                <div class="small text-muted">
+                    💡 <strong>Thao tác nhanh khi quét mã QR trên kiện hàng:</strong> Bấm nút tương ứng bên phải để cập nhật trạng thái vận đơn tức thì.
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-warning text-dark btn-sm fw-bold" onclick="updateOrderStatusFromDetailPage('confirmed')">📦 1. Kho Xác Nhận Đã Đóng Gói</button>
+                    <button type="button" class="btn btn-info text-dark btn-sm fw-bold" onclick="notifyShipper()">🚚 2. Shipper Quét Nhận Hàng</button>
+                    <button type="button" class="btn btn-success btn-sm fw-bold" onclick="updateOrderStatusFromDetailPage('completed')">✅ 3. Xác Nhận Đã Giao (Giải Ngân Escrow)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nvx-waybill-sheet" id="waybillPrintableArea">
+            <div class="nvx-header-row">
+                <div>
+                    <div class="nvx-brand-main">⚡ NVIDIA STORE</div>
+                    <div class="nvx-brand-sub">NVIDIA XPRESS (NVX)</div>
+                    <div class="small fw-bold mt-1" id="wbStatusLabel">TRẠNG THÁI: ĐANG VẬN CHUYỂN</div>
+                </div>
+                <div class="text-center">
+                    <div class="qr-clean-box py-1 px-2 mb-1"><svg id="barcodeCanvas"></svg></div>
+                    <div style="font-size: 13px;"><strong>Mã vận đơn:</strong> <span id="wbTrackingCode" class="font-monospace fw-bold text-nvidia">NVX-0001</span></div>
+                    <div style="font-size: 13px;"><strong>Mã đơn hàng:</strong> <span id="wbOrderCode" class="font-monospace fw-bold">NVD-2611-0001</span></div>
+                </div>
+            </div>
+
+            <div class="nvx-addr-grid">
+                <div class="nvx-addr-col">
+                    <div class="fw-bold text-nvidia mb-1">📍 Từ: (Kho Người Bán)</div>
+                    <div class="fw-bold" id="wbSellerName">Nvidia Flagship Official Store</div>
+                    <div id="wbSenderAddress" class="small">Kho Trung Tâm Nvidia Partner, Quận Long Biên, Hà Nội</div>
+                    <div class="mt-1 small"><strong>SĐT Kho:</strong> <span id="wbSellerPhone">0848 307 774</span></div>
+                </div>
+                <div class="nvx-addr-col">
+                    <div class="fw-bold text-info mb-1">👤 Đến: (Địa Chỉ Khách Nhận)</div>
+                    <div class="fw-bold fs-6" id="wbCustomerName">Khách hàng</div>
+                    <div id="wbShippingAddress" class="small">Hà Nội</div>
+                    <div class="mt-1 small"><strong>SĐT Nhận:</strong> <span id="wbCustomerPhone">0988 777 666</span></div>
+                </div>
+            </div>
+
+            <div class="nvx-route-code-bar" id="wbRouteSortCode">
+                NVD-HN-01-KV01
+            </div>
+
+            <div class="nvx-body-grid">
+                <div class="nvx-items-col">
+                    <div>
+                        <div class="fw-bold mb-2 text-nvidia" id="wbTotalItemsHeader">📦 Nội dung kiện hàng (Tổng SL: 1)</div>
+                        <div id="wbItemsListContainer"></div>
+                    </div>
+                    <div class="small text-muted pt-2 border-top" style="font-size: 11.5px;">
+                        Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn NVX / Mã đơn hàng NVD trên hệ thống Nvidia Store trước khi nhận hàng.
+                    </div>
+                </div>
+                <div class="nvx-qr-col">
+                    <div class="d-flex flex-column align-items-center justify-content-center flex-fill">
+                        <div class="qr-clean-box"><div id="qrcode"></div></div>
+                        <small class="fw-bold mt-1" style="font-size: 10.5px;">Quét QR dẫn thẳng tới trang Theo dõi Vận đơn</small>
+                    </div>
+                    <div class="nvx-date-box">
+                        <div class="small text-muted">Thời gian tạo vận đơn:</div>
+                        <div class="fw-bold fs-6" id="wbCreatedDate">10-11-2026</div>
+                        <div class="fw-bold small text-nvidia" id="wbCreatedTime">12:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end small fw-bold py-1 border-bottom">
+                Khối lượng đóng gói tối đa: <span id="wbWeightGrams" class="text-nvidia">550g</span>
+            </div>
+
+            <div class="nvx-footer-grid">
+                <div>
+                    <div class="small fw-bold">Giá trị đơn hàng / Thu hộ (COD):</div>
+                    <div class="nvx-cod-amount" id="wbCodAmount">0 VND</div>
+                </div>
+                <div class="nvx-sign-box">
+                    <div class="fw-bold">Chữ ký người nhận (POD)</div>
+                    <div class="small text-muted">Xác nhận kiện hàng nguyên niêm phong Nvidia, không móp méo</div>
+                </div>
+            </div>
+
+            <div class="small py-1">
+                <strong>Chỉ dẫn giao hàng:</strong> Cho đồng kiểm ngoại quan; Tặng ngay Voucher HOATOC50K nếu giao trễ cam kết SLA.
+            </div>
+            <div class="nvx-bottom-banner">
+                Hệ Thống Vận Chuyển Thông Minh NVIDIA XPRESS (NVX) — Bảo Vệ Đơn Hàng Escrow 100% — Hotline 1900 6885
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder" class="no-print"></div>
+    <script src="/core/main.js"></script>
+    <script>
+        function formatVND(a) {
+            return Number(a || 0).toLocaleString('vi-VN') + ' VND';
+        }
+
+        function getQueryParam(p) {
+            return new URLSearchParams(window.location.search).get(p);
+        }
+
+        function toggleThermalPrintSize() {
+            const sheet = document.getElementById('waybillPrintableArea');
+            if (sheet) sheet.classList.toggle('thermal-80mm');
+        }
+
+        function copyUniqueOrderUrl() {
+            const urlTxt = document.getElementById('uniqueOrderUrlText')?.textContent || window.location.href;
+            navigator.clipboard.writeText(urlTxt);
+            if (typeof notifyToast === 'function') {
+                notifyToast('🔗 Đã sao chép URL Theo dõi Vận đơn!', 'success');
+            }
+        }
+
+        async function loadOrderData() {
+            const orderId = getQueryParam('id') || getQueryParam('order_id') || '1';
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            const uid = (u && u.id) ? u.id : 0;
+            try {
+                const res = await fetch(`/api/seller/orders/${encodeURIComponent(orderId)}/detail?user_id=${uid}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderWaybillAndTracker(data);
+                    if (getQueryParam('autoprint') === '1') {
+                        setTimeout(() => window.print(), 650);
+                    }
+                    return;
+                }
+            } catch (e) {}
+
+            const area = document.getElementById('waybillPrintableArea');
+            if (area) {
+                area.innerHTML = `<div class="p-4 text-center"><h5 class="fw-bold text-warning">⚠️ Không tìm thấy vận đơn #${orderId}</h5><p class="small text-muted mb-3">Vận đơn này chưa được khởi tạo hoặc không tồn tại trên hệ thống.</p><a href="/services/home/index.html" class="btn btn-nvidia btn-sm fw-bold">🏠 Về Trang Chủ</a></div>`;
+            }
+        }
+
+        function renderWaybillAndTracker(data) {
+            const oid = data.order_id || '1';
+            const rawTrack = String(data.tracking_code || '');
+            const trackCode = (!rawTrack || rawTrack.startsWith('SPX')) ? `NVX-${String(oid).padStart(4, '0')}` : rawTrack;
+            const ordCode = `NVD-2611-${String(oid).padStart(4, '0')}`;
+            const routeCode = `NVD-HN-01-KV${String(oid).slice(-2).padStart(2, '0')}`;
+            const status = (data.status || 'shipping').toLowerCase();
+
+            const shortCanonicalUrl = `${window.location.origin}/services/order_tracking/tracking.html?id=${encodeURIComponent(oid)}&code=${encodeURIComponent(trackCode)}`;
+            const ultraShortQrText = `${window.location.origin}/?ord=${oid}`;
+
+            document.getElementById('uniqueOrderUrlText').textContent = shortCanonicalUrl;
+            document.getElementById('topUrlBadge').textContent = `ĐƠN #NVD-${oid} • ${trackCode}`;
+
+            const statusMap = {
+                'pending': 'BƯỚC 1: CHỜ SHOP XÁC NHẬN & ĐÓNG GÓI',
+                'confirmed': 'BƯỚC 2: ĐÃ ĐÓNG GÓI - CHỜ SHIPPER NVX LẤY HÀNG',
+                'shipping': 'BƯỚC 3: ĐANG VẬN CHUYỂN TRÊN TUYẾN ' + routeCode,
+                'completed': 'BƯỚC 4: ĐÃ GIAO THÀNH CÔNG & GIẢI NGÂN ESCROW'
+            };
+            document.getElementById('wbStatusLabel').textContent = 'TRẠNG THÁI: ' + (statusMap[status] || status.toUpperCase());
+            document.getElementById('liveEscrowBadge').textContent = (data.escrow_status === 'released' || status === 'completed')
+                ? '✅ Escrow: Đã giải ngân về Ví Shop'
+                : '🛡️ Escrow: Sàn đang bảo lãnh tiền hàng';
+
+            const stepOrder = ['pending', 'confirmed', 'shipping', 'completed'];
+            const activeIdx = Math.max(0, stepOrder.indexOf(status));
+            document.querySelectorAll('#orderProgressSteps .step-pill').forEach((el, idx) => {
+                el.classList.toggle('active', idx <= activeIdx);
+            });
+
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            const isSellerOrAdmin = Boolean(u && (u.role === 'admin' || (u.role === 'seller' && (!data.seller_id || Number(u.id) === Number(data.seller_id)))));
+            const isBuyerOrAdmin = Boolean(u && (u.role === 'admin' || (data.buyer_id && Number(u.id) === Number(data.buyer_id))));
+            document.querySelectorAll('button[onclick*="confirmed"], button[onclick*="notifyShipper"]').forEach(btn => {
+                btn.classList.toggle('d-none', !isSellerOrAdmin);
+            });
+            document.querySelectorAll('button[onclick*="completed"]').forEach(btn => {
+                btn.classList.toggle('d-none', !isBuyerOrAdmin);
+            });
+
+            document.getElementById('wbTrackingCode').textContent = trackCode;
+            document.getElementById('wbOrderCode').textContent = ordCode;
+            document.getElementById('wbRouteSortCode').textContent = routeCode;
+
+            document.getElementById('wbSellerName').textContent = data.seller_name || 'Nvidia Partner Official Store';
+            document.getElementById('wbSenderAddress').textContent = data.sender_address || 'Kho Trung Tâm Nvidia Partner, Quận Long Biên, Hà Nội';
+            document.getElementById('wbSellerPhone').textContent = data.seller_phone || '0848 307 774';
+
+            document.getElementById('wbCustomerName').textContent = data.customer_name || 'Khách nhận hàng';
+            document.getElementById('wbShippingAddress').textContent = data.shipping_address || 'Hà Nội';
+            document.getElementById('wbCustomerPhone').textContent = data.phone || '0988 777 666';
+
+            const items = Array.isArray(data.items) && data.items.length ? data.items : [
+                { product_name: data.product_name || 'Sản phẩm Công nghệ Nvidia', quantity: data.quantity || 1, unit_price: data.unit_price || 0 }
+            ];
+            const totalQty = items.reduce((s, i) => s + Number(i.quantity || 1), 0);
+            const totalCod = data.total_amount ?? items.reduce((s, i) => s + Number(i.unit_price || 0) * Number(i.quantity || 1), 0);
+
+            document.getElementById('wbTotalItemsHeader').textContent = `📦 Nội dung kiện hàng (Tổng SL: ${totalQty} món)`;
+            document.getElementById('wbItemsListContainer').innerHTML = items.map((it, idx) => `
+                <div class="mb-1">
+                    <strong>${idx + 1}. ${it.product_name || it.name}</strong> — ĐVT: ${it.unit || 'Chiếc'}, BH: ${it.warranty || '24 tháng'}, <strong>SL: x${it.quantity || 1}</strong>
+                </div>
+            `).join('');
+
+            const rawCreated = String(data.created_at || '2026-11-10 12:00:00');
+            const [dPart, tPart] = rawCreated.split(' ');
+            document.getElementById('wbCreatedDate').textContent = dPart || '10-11-2026';
+            document.getElementById('wbCreatedTime').textContent = (tPart || '12:00').slice(0, 5);
+            document.getElementById('wbWeightGrams').textContent = (data.weight_grams || (totalQty * 450)) + 'g';
+            document.getElementById('wbCodAmount').textContent = data.is_pii_masked ? (data.total_amount_display || '***.000 VND (Bảo mật PII)') : formatVND(totalCod);
+
+            try {
+                JsBarcode("#barcodeCanvas", trackCode, {
+                    format: "CODE128",
+                    width: 2.0,
+                    height: 44,
+                    displayValue: false,
+                    margin: 0
+                });
+            } catch (e) {}
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            try {
+                new QRCode(qrContainer, {
+                    text: ultraShortQrText,
+                    width: 116,
+                    height: 116,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+            } catch (e) {}
+        }
+
+        async function updateOrderStatusFromDetailPage(newStatus) {
+            const oid = getQueryParam('id') || getQueryParam('order_id') || '1';
+            try {
+                const res = await fetch(`/api/seller/orders/${encodeURIComponent(oid)}/status`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    if (typeof notifyToast === 'function') {
+                        notifyToast(data.message || `Đã cập nhật trạng thái vận đơn #NVD-${oid} sang [${newStatus}]!`, 'success');
+                    }
+                    loadOrderData();
+                }
+            } catch (e) {}
+        }
+
+        async function notifyShipper() {
+            const oid = getQueryParam('id') || getQueryParam('order_id') || '1';
+            try {
+                const res = await fetch(`/api/seller/orders/${encodeURIComponent(oid)}/notify-shipper`, { method: 'POST' });
+                const data = await res.json();
+                if (typeof notifyToast === 'function') {
+                    notifyToast(`🚚 [NVX Webhook] ${data.message || 'Shipper đã nhận kiện hàng!'}`, 'success');
+                }
+                loadOrderData();
+            } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', loadOrderData);
+    </script>
+</body>
+</html>

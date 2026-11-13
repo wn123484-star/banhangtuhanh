@@ -1,0 +1,51 @@
+# ==============================================================================
+# .GITIGNORE CHUẨN CHO DỰ ÁN NVIDIA STORE (GIỮ SẠCH REPO TRÊN GITHUB & VPS)
+# ==============================================================================
+
+# 1. Môi trường ảo Python & Cache hệ thống
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# 2. Khóa bí mật (Chỉ cấu hình trực tiếp trên máy chủ / local)
+.env
+.env.local
+
+# 3. Các công cụ Patch, Obfuscate & Kiểm thử tự động (Không cần trên VPS)
+smart_patcher.py
+cat_code_obfuscator.py
+auto_tester_gui.py
+auto_tester_gui.py.bak
+tester_suite_p1.py
+tester_suite_p2.py
+standalone_terms_builder.html
+qa_testing/
+test_sessions/
+patch*.txt
+*.bak
+
+# 4. Nhật ký chạy thử & Bản sao lưu DB tạm thời
+logs/*.log
+database/backups/
+database/*.db-wal
+database/*.db-shm
+database/*.db-journal
+
+# 5. Đảm bảo LUÔN GIỮ LẠI các tệp lõi bắt buộc để chạy Server
+!app.py
+!database/db_manager.py
+
+
+
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+database/*.db-wal
+database/*.db-shm
+backups/
+patch_*.txt

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vườn Sinh Thái Cây Voucher &amp; Siêu Xu — Đồ Họa Canvas 60FPS Chống Giật</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/minigame/minigame.css">
+    <style>
+        .farm-stage-arena {
+            position: relative;
+            background: linear-gradient(180deg, #060d18 0%, #0b1f17 65%, #12220b 100%);
+            border: 1.5px solid rgba(118, 185, 0, 0.65);
+            border-radius: 22px;
+            padding: 20px;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 20px 48px rgba(0, 0, 0, 0.52);
+            overflow: hidden;
+        }
+        #proceduralTreeCanvas {
+            width: 100%;
+            max-width: 620px;
+            height: 380px;
+            border-radius: 18px;
+            background: #040914;
+            border: 1.5px solid rgba(132, 204, 22, 0.45);
+            box-shadow: inset 0 0 45px rgba(0, 0, 0, 0.78), 0 8px 24px rgba(0, 0, 0, 0.35);
+            display: block;
+            margin: 0 auto 14px;
+            will-change: transform;
+        }
+        .species-select-btn {
+            border: 1.5px solid rgba(148, 163, 184, 0.28);
+            border-radius: 12px;
+            padding: 9px 11px;
+            background: rgba(15, 23, 42, 0.72);
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.18s ease;
+            text-align: left;
+        }
+        .species-select-btn:hover,
+        .species-select-btn.active {
+            border-color: #76b900;
+            background: rgba(118, 185, 0, 0.20);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+        .harvest-reward-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 11, 22, 0.86);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.28s ease;
+        }
+        .harvest-reward-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .harvest-reward-card {
+            background: linear-gradient(145deg, #0f172a, #1e293b);
+            border: 2px solid #facc15;
+            border-radius: 20px;
+            padding: 24px 28px;
+            max-width: 390px;
+            width: 90%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(250, 204, 21, 0.28);
+            transform: scale(0.92);
+            transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .harvest-reward-overlay.show .harvest-reward-card {
+            transform: scale(1);
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <div class="nv-adaptive-card p-3 mb-4 shadow-sm">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <span class="badge bg-nvidia mb-1">SMOOTH BOTANICAL ENGINE 60FPS • KHÔNG CHỚP GIẬT</span>
+                    <h4 class="fw-bold m-0">🌳 Nông Trại 7 Giống Cây Quý &amp; Hạt Giống Gian Hàng</h4>
+                    <small class="text-muted">Mỗi loại cây có chu kỳ hấp thụ tự nhiên từ vài phút đến 12 giờ (Riêng Admin được mở khóa tưới/bón tức thì 0 giây)</small>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <span id="farmRolePrivilegeBadge" class="badge bg-dark border border-secondary px-3 py-2">Đang kiểm tra quyền...</span>
+                    <a href="/services/minigame/minigame.html" class="btn btn-warning text-dark btn-sm fw-bold px-3 py-2">🎡 Sang Vòng Quay LED</a>
+                    <a href="/services/vouchers_deals/vouchers.html" class="btn btn-outline-info btn-sm py-2">🎟️ Mở Ví Voucher</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="farm-stage-arena h-100 d-flex flex-column justify-content-between">
+                    <div id="harvestCelebrationOverlay" class="harvest-reward-overlay">
+                        <div class="harvest-reward-card text-center">
+                            <div class="fs-1 mb-1">🎉🍎✨</div>
+                            <span class="badge bg-warning text-dark fw-bold mb-2">THU HOẠCH THÀNH CÔNG</span>
+                            <h5 class="fw-bold text-white mb-2" id="harvestModalTitle">Cây Táo Kim Bảo</h5>
+                            <div class="fs-4 fw-bold text-nvidia font-monospace my-2 p-2 rounded border border-success bg-dark" id="harvestModalBadge">TAOKIMBAO50K</div>
+                            <p class="small text-light opacity-90 mb-3" id="harvestModalDetail">Đã lưu phần thưởng vào Ví của bạn!</p>
+                            <button type="button" class="btn btn-nvidia w-100 fw-bold py-2" onclick="closeHarvestOverlay()">🌟 Tiếp Tục Trồng Vụ Mới</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <span class="badge bg-warning text-dark fw-bold px-3 py-2" id="farmStageLabelBadge">GIAI ĐOẠN: CÂY ĐANG LỚN</span>
+                            <span class="badge bg-info text-dark fw-bold px-3 py-2" id="farmRewardPreviewBadge">🎁 Quả nở: TAOKIMBAO50K</span>
+                            <span class="badge bg-dark border border-secondary px-3 py-2">Đã thu hoạch: <strong id="farmHarvestedCount" class="text-nvidia">0</strong> vụ</span>
+                        </div>
+
+                        <canvas id="proceduralTreeCanvas" width="620" height="380"></canvas>
+
+                        <div class="d-flex flex-wrap justify-content-between align-items-center px-md-3 mb-1">
+                            <h5 class="fw-bold text-nvidia m-0" id="farmTreeNameText">Cây Táo Kim Bảo</h5>
+                            <span class="badge bg-dark border border-warning text-warning font-monospace px-2 py-1" id="farmCooldownTimerBadge">⏳ Chu kỳ: 3 phút / lần chăm</span>
+                        </div>
+                        <div id="farm-message" class="small text-light opacity-90 fw-semibold mb-3">
+                            Chăm sóc cây đạt 100% để thu hoạch Voucher &amp; Siêu Xu miễn phí!
+                        </div>
+
+                        <div class="px-md-3 mb-3">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>Tiến độ trưởng thành:</span>
+                                <strong id="farmGrowthPctBadge" class="text-nvidia fs-6">30%</strong>
+                            </div>
+                            <div class="progress" style="height: 15px; border-radius: 99px; background: rgba(0,0,0,0.55);">
+                                <div id="farmGrowthBar" class="progress-bar bg-success fw-bold" style="width: 30%; transition: width 0.35s ease;">30%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <button type="button" id="btnWaterTree" class="btn btn-info text-dark w-100 fw-bold py-2" onclick="triggerFarmCare('water')">
+                                    💧 Tưới Mưa (+25%)
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" id="btnFertilizeTree" class="btn btn-warning text-dark w-100 fw-bold py-2" onclick="triggerFarmCare('fertilize')">
+                                    ✨ Bón Dinh Dưỡng (+35%)
+                                </button>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" id="btnHarvestTree" class="btn btn-nvidia w-100 fw-bold py-2" onclick="triggerFarmCare('harvest')">
+                                    🍎 Thu Hoạch (100%)
+                                </button>
+                            </div>
+                        </div>
+                        <div id="adminInstantMatureRow" class="mt-2 d-none">
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100 fw-bold py-1" onclick="triggerFarmCare('admin_instant_mature')">
+                                👑 Đặc Quyền Admin: Tưới/Bón Tức Thì 0 Giây &amp; Kích Chín 100% Ngay
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="nv-adaptive-card p-3 shadow-sm mb-3" style="border: 1.5px solid #76b900 !important;">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <h6 class="fw-bold text-nvidia m-0">🌱 Danh Mục Giống Cây &amp; Hạt Giống Gian Hàng</h6>
+                        <small class="text-muted">Bấm để gieo hạt</small>
+                    </div>
+                    <div class="row g-2" id="speciesSelectorGrid" style="max-height: 295px; overflow-y: auto;"></div>
+                </div>
+
+                <div class="nv-adaptive-card p-3 shadow-sm mb-3" style="border: 1.5px dashed #f59e0b !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="badge bg-warning text-dark fw-bold">🏪 DÀNH CHO NGƯỜI BÁN &amp; ADMIN</span>
+                            <strong class="small ms-1">Tạo Hạt Giống Voucher Shop / Cây Siêu Xu</strong>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-warning py-0" onclick="document.getElementById('sellerSeedCreatorForm').classList.toggle('d-none')">Ẩn/Hiện</button>
+                    </div>
+                    <form id="sellerSeedCreatorForm" onsubmit="submitCreateSellerSeed(event)" class="row g-2 small">
+                        <div class="col-md-6">
+                            <label class="fw-bold mb-1">Tên hạt giống / cây *</label>
+                            <input type="text" id="seedTreeName" class="form-control form-control-sm" placeholder="VD: Cây Lộc Vàng Shop" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold mb-1">Kiểu dáng đồ họa Canvas</label>
+                            <select id="seedVisualStyle" class="form-select form-select-sm">
+                                <option value="apple_gold">🍎 Cây Táo Kim Bảo</option>
+                                <option value="sakura_ruby">🌸 Cây Anh Đào Mùa Xuân</option>
+                                <option value="bamboo_emerald">🎋 Cây Trúc Thanh Ngọc</option>
+                                <option value="lotus_crystal">🪷 Cây Sen Pha Lê</option>
+                                <option value="ginkgo_amber">🍂 Cây Ngân Hạnh Hoàng Kim</option>
+                                <option value="bonsai_dragon">🌲 Cây Tùng Cổ Thụ</option>
+                                <option value="super_coin_tree">🪙 Cây Siêu Xu Tài Lộc</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold mb-1">Loại phần thưởng khi nở *</label>
+                            <select id="seedRewardType" class="form-select form-select-sm" onchange="toggleSeedRewardInputs(this.value)">
+                                <option value="voucher">🎟️ Nở ra Mã Voucher Shop</option>
+                                <option value="super_coins">🪙 Nở ra Cây Siêu Xu</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold mb-1">Thời gian chờ mỗi lần chăm</label>
+                            <select id="seedCooldownSec" class="form-select form-select-sm">
+                                <option value="180">⏳ 3 phút (Nhanh)</option>
+                                <option value="600" selected>⏳ 10 phút (Tiêu chuẩn)</option>
+                                <option value="1800">⏳ 30 phút</option>
+                                <option value="3600">⏳ 1 giờ</option>
+                                <option value="14400">⏳ 4 giờ</option>
+                                <option value="43200">⏳ 12 giờ (Nửa ngày)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6" id="seedVoucherCodeWrap">
+                            <label class="fw-bold mb-1">Mã Voucher phát hành</label>
+                            <input type="text" id="seedVoucherCode" class="form-control form-control-sm font-monospace" value="SHOPVOUCHER80K">
+                        </div>
+                        <div class="col-md-6" id="seedVoucherValWrap">
+                            <label class="fw-bold mb-1">Mức giảm (VNĐ)</label>
+                            <input type="number" id="seedVoucherValue" class="form-control form-control-sm" value="80000" min="10000" step="5000">
+                        </div>
+                        <div class="col-12">
+                            <label class="fw-bold mb-1">Số Xu thưởng khi thu hoạch</label>
+                            <div class="d-flex gap-2">
+                                <input type="number" id="seedBonusCoins" class="form-control form-control-sm" value="20000" min="1000" step="1000">
+                                <button type="submit" class="btn btn-nvidia btn-sm fw-bold text-nowrap px-3">🌱 Phát Hành Hạt Giống</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="nv-adaptive-card p-3 shadow-sm">
+                    <div class="row g-2 text-center">
+                        <div class="col-6">
+                            <div class="p-2 rounded border">
+                                <div class="small text-muted">Số Dư Ví Xu</div>
+                                <div class="fs-5 fw-bold text-warning" id="farmUserCoins">15.000 Xu</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded border">
+                                <div class="small text-muted">Lượt Quay Thưởng</div>
+                                <div class="fs-5 fw-bold text-nvidia" id="farmUserSpins">2</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script>
+        let __treeSpecies = 'apple_gold';
+        let __visualStyle = 'apple_gold';
+        let __treeCurrentGrowth = 30;
+        let __treeDisplayGrowth = 30;
+        let __treeEffectParticles = [];
+        let __cooldownRemainingSec = 0;
+        let __isUserAdmin = false;
+        let __allSpeciesCatalog = [];
+        let __careLock = false;
+        let __farmAnimFrameId = null;
+
+        let __fallingPetals = Array.from({ length: 18 }, (_, idx) => ({
+            x: 60 + ((idx * 31) % 500),
+            y: (idx * 23) % 320,
+            vx: 0.22 + (idx % 3) * 0.12,
+            vy: 0.35 + (idx % 4) * 0.14,
+            r: 3.0 + (idx % 3) * 0.9,
+            phase: idx * 0.6
+        }));
+
+        const SPECIES_PALETTE = {
+            apple_gold: {
+                trunk: '#5c2d0c', trunkLight: '#854d0e', branch: '#713f12',
+                leaf1: '#3f6212', leaf2: '#65a30d', leaf3: '#a3e635',
+                flower: '#fef08a', fruit: '#dc2626', fruitRim: '#facc15',
+                sky1: '#040a14', sky2: '#0b1e2d', sky3: '#0d2614',
+                aura: 'rgba(118, 185, 0, 0.25)', icon: '🍎'
+            },
+            sakura_ruby: {
+                trunk: '#3b0764', trunkLight: '#6b21a8', branch: '#701a75',
+                leaf1: '#be185d', leaf2: '#f472b6', leaf3: '#fbcfe8',
+                flower: '#ffe4e6', fruit: '#e11d48', fruitRim: '#fda4af',
+                sky1: '#090514', sky2: '#251042', sky3: '#381238',
+                aura: 'rgba(244, 114, 182, 0.26)', icon: '🌸'
+            },
+            bamboo_emerald: {
+                trunk: '#065f46', trunkLight: '#10b981', branch: '#059669',
+                leaf1: '#047857', leaf2: '#34d399', leaf3: '#a7f3d0',
+                flower: '#ccfbf1', fruit: '#06b6d4', fruitRim: '#67e8f9',
+                sky1: '#031117', sky2: '#072a28', sky3: '#093524',
+                aura: 'rgba(16, 185, 129, 0.26)', icon: '🎋'
+            },
+            lotus_crystal: {
+                trunk: '#0f766e', trunkLight: '#14b8a6', branch: '#0d9488',
+                leaf1: '#0e7490', leaf2: '#22d3ee', leaf3: '#f472b6',
+                flower: '#fbcfe8', fruit: '#38bdf8', fruitRim: '#e0f2fe',
+                sky1: '#030919', sky2: '#0c2540', sky3: '#09383e',
+                aura: 'rgba(56, 189, 248, 0.28)', icon: '🪷'
+            },
+            ginkgo_amber: {
+                trunk: '#713f12', trunkLight: '#a16207', branch: '#854d0e',
+                leaf1: '#ca8a04', leaf2: '#eab308', leaf3: '#fef08a',
+                flower: '#fef9c3', fruit: '#f97316', fruitRim: '#fde047',
+                sky1: '#120904', sky2: '#2d1606', sky3: '#362008',
+                aura: 'rgba(234, 179, 8, 0.28)', icon: '🍂'
+            },
+            bonsai_dragon: {
+                trunk: '#78350f', trunkLight: '#b45309', branch: '#92400e',
+                leaf1: '#14532d', leaf2: '#16a34a', leaf3: '#facc15',
+                flower: '#fde047', fruit: '#f59e0b', fruitRim: '#fef08a',
+                sky1: '#050c12', sky2: '#11221c', sky3: '#192a11',
+                aura: 'rgba(250, 204, 21, 0.28)', icon: '🌲'
+            },
+            super_coin_tree: {
+                trunk: '#854d0e', trunkLight: '#eab308', branch: '#ca8a04',
+                leaf1: '#a16207', leaf2: '#facc15', leaf3: '#fef08a',
+                flower: '#ffffff', fruit: '#eab308', fruitRim: '#fef9c3',
+                sky1: '#140c02', sky2: '#2e1d05', sky3: '#3b2607',
+                aura: 'rgba(250, 204, 21, 0.34)', icon: '🪙'
+            }
+        };
+
+        function formatCountdownClient(sec) {
+            const s = Math.max(0, Math.floor(sec));
+            const h = Math.floor(s / 3600);
+            const m = Math.floor((s % 3600) / 60);
+            const rem = s % 60;
+            if (h > 0) return `${h}h ${String(m).padStart(2, '0')}p ${String(rem).padStart(2, '0')}s`;
+            return `${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+        }
+
+        function toggleSeedRewardInputs(val) {
+            const isCoin = (val === 'super_coins');
+            document.getElementById('seedVoucherCodeWrap')?.classList.toggle('d-none', isCoin);
+            document.getElementById('seedVoucherValWrap')?.classList.toggle('d-none', isCoin);
+            if (isCoin) {
+                document.getElementById('seedBonusCoins').value = 50000;
+                document.getElementById('seedVisualStyle').value = 'super_coin_tree';
+            }
+        }
+
+        async function submitCreateSellerSeed(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            const payload = {
+                seller_id: u && u.id ? u.id : 1,
+                seller_name: u ? (u.company_name || u.store_name || u.full_name || 'Gian Hàng Đối Tác') : 'Gian Hàng Đối Tác',
+                tree_name: document.getElementById('seedTreeName')?.value.trim() || 'Cây Hạt Giống Shop',
+                visual_style: document.getElementById('seedVisualStyle')?.value || 'apple_gold',
+                reward_type: document.getElementById('seedRewardType')?.value || 'voucher',
+                cooldown_seconds: Number(document.getElementById('seedCooldownSec')?.value || 600),
+                voucher_code: document.getElementById('seedVoucherCode')?.value.trim().toUpperCase() || 'SHOP80K',
+                voucher_value: Number(document.getElementById('seedVoucherValue')?.value || 80000),
+                bonus_coins: Number(document.getElementById('seedBonusCoins')?.value || 20000)
+            };
+            try {
+                const res = await fetch('/api/minigame/farm/seller-seeds', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    if (typeof notifyToast === 'function') notifyToast(data.message, 'success');
+                    document.getElementById('seedTreeName').value = '';
+                    await selectTreeSpecies(data.seed_code);
+                }
+            } catch (err) {}
+        }
+
+        function renderSpeciesCatalogGrid(catalogList) {
+            const grid = document.getElementById('speciesSelectorGrid');
+            if (!grid || !Array.isArray(catalogList)) return;
+            __allSpeciesCatalog = catalogList;
+
+            grid.innerHTML = catalogList.map(sp => {
+                const code = sp.tree_type || sp.code;
+                const vStyle = sp.visual_style || code;
+                const pal = SPECIES_PALETTE[vStyle] || SPECIES_PALETTE.apple_gold;
+                const isAct = (code === __treeSpecies);
+                const rewardLabel = sp.reward_type === 'super_coins'
+                    ? `🪙 +${Number(sp.bonus_coins || 50000).toLocaleString('vi-VN')} Siêu Xu`
+                    : `🎟️ ${sp.voucher_code} (+${Math.round(Number(sp.bonus_coins || 10000)/1000)}K Xu)`;
+                const shopBadge = sp.is_seller_seed ? `<span class="badge bg-warning text-dark ms-1" style="font-size:9px;">Hạt Shop</span>` : '';
+
+                return `
+                    <div class="col-6">
+                        <div class="species-select-btn ${isAct ? 'active' : ''} w-100 h-100" data-tree="${code}" onclick="selectTreeSpecies('${code}')">
+                            <div class="fw-bold small text-truncate" style="color:${pal.leaf3};">${pal.icon} ${sp.tree_name}${shopBadge}</div>
+                            <div class="text-light" style="font-size:10.5px;">${rewardLabel}</div>
+                            <small class="text-muted d-block" style="font-size:10px;">⏳ ${sp.cooldown_label || '3 phút'}</small>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectTreeSpecies(treeKey) {
+            __treeSpecies = treeKey;
+            await executeFarmCareRequest('select_tree', { tree_type: treeKey });
+        }
+
+        function spawnTreeEffectParticles(effectType) {
+            if (__treeEffectParticles.length > 40) {
+                __treeEffectParticles.splice(0, __treeEffectParticles.length - 20);
+            }
+            for (let i = 0; i < 24; i++) {
+                if (effectType === 'water') {
+                    __treeEffectParticles.push({
+                        type: 'water',
+                        x: 160 + Math.random() * 300,
+                        y: 35 + Math.random() * 35,
+                        vx: -0.2 + Math.random() * 0.4,
+                        vy: 4.2 + Math.random() * 2.2,
+                        life: 50,
+                        color: '#38bdf8'
+                    });
+                } else if (effectType === 'fertilize' || effectType === 'admin_instant_mature') {
+                    __treeEffectParticles.push({
+                        type: 'fertilize',
+                        x: 220 + Math.random() * 180,
+                        y: 335 + Math.random() * 12,
+                        vx: (Math.random() - 0.5) * 1.4,
+                        vy: -(2.0 + Math.random() * 2.0),
+                        life: 60,
+                        color: i % 2 === 0 ? '#facc15' : '#a3e635'
+                    });
+                } else if (effectType === 'harvest') {
+                    __treeEffectParticles.push({
+                        type: 'harvest',
+                        x: 310,
+                        y: 175,
+                        vx: (Math.random() - 0.5) * 6.5,
+                        vy: -(2.5 + Math.random() * 4.0),
+                        life: 70,
+                        color: i % 2 === 0 ? '#facc15' : '#ef4444'
+                    });
+                }
+            }
+        }
+
+        function showHarvestOverlayModal(summary) {
+            const ov = document.getElementById('harvestCelebrationOverlay');
+            if (!ov || !summary) return;
+            document.getElementById('harvestModalTitle').textContent = summary.title || 'Thu Hoạch Thành Công';
+            document.getElementById('harvestModalBadge').textContent = summary.badge || 'PHẦN THƯỞNG';
+            document.getElementById('harvestModalDetail').textContent = summary.detail || '';
+            ov.classList.add('show');
+        }
+
+        function closeHarvestOverlay() {
+            document.getElementById('harvestCelebrationOverlay')?.classList.remove('show');
+        }
+
+        function drawLotusPondScene(ctx, w, h, timeSec, gRatio, pal) {
+            const pondY = h - 42;
+            const waterGrad = ctx.createLinearGradient(0, pondY - 22, 0, h);
+            waterGrad.addColorStop(0, '#0e7490');
+            waterGrad.addColorStop(1, '#042f2e');
+            ctx.fillStyle = waterGrad;
+            ctx.beginPath();
+            ctx.ellipse(w / 2, pondY + 12, 220, 32, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const stems = [
+                { ox: -85, hScale: 0.72, phase: 0.4 },
+                { ox: -38, hScale: 0.90, phase: 1.2 },
+                { ox: 0, hScale: 1.12, phase: 2.0 },
+                { ox: 42, hScale: 0.94, phase: 2.8 },
+                { ox: 88, hScale: 0.75, phase: 3.6 }
+            ];
+
+            stems.forEach((st) => {
+                const bx = w / 2 + st.ox;
+                const by = pondY + 6;
+                ctx.fillStyle = '#0f766e';
+                ctx.strokeStyle = '#2dd4bf';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.ellipse(bx, by, 32 * st.hScale, 9 * st.hScale, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                const stemH = (45 + gRatio * 145) * st.hScale;
+                const sway = Math.sin(timeSec * 1.4 + st.phase) * 5;
+                const topX = bx + sway;
+                const topY = by - stemH;
+
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 3.8 * st.hScale;
+                ctx.beginPath();
+                ctx.moveTo(bx, by);
+                ctx.quadraticCurveTo(bx + sway * 0.4, by - stemH * 0.5, topX, topY);
+                ctx.stroke();
+
+                if (gRatio >= 0.25) {
+                    ctx.save();
+                    ctx.translate(topX, topY);
+                    const bloomOpen = Math.min(1, (gRatio - 0.2) / 0.65);
+                    for (let i = -3; i <= 3; i++) {
+                        ctx.save();
+                        ctx.rotate(i * (0.18 + bloomOpen * 0.14));
+                        ctx.fillStyle = Math.abs(i) <= 1 ? '#fbcfe8' : '#f472b6';
+                        ctx.beginPath();
+                        ctx.moveTo(0, 4);
+                        ctx.quadraticCurveTo(-8 * st.hScale, -14 * st.hScale, 0, -28 * st.hScale);
+                        ctx.quadraticCurveTo(8 * st.hScale, -14 * st.hScale, 0, 4);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    if (gRatio >= 0.80) {
+                        ctx.fillStyle = '#38bdf8';
+                        ctx.strokeStyle = '#fef08a';
+                        ctx.lineWidth = 1.6;
+                        ctx.beginPath();
+                        ctx.arc(0, -10 * st.hScale, 7.5 * st.hScale, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+            });
+        }
+
+        function drawBambooForestScene(ctx, w, h, timeSec, gRatio, pal) {
+            const stalks = [-75, -36, 0, 38, 76];
+            stalks.forEach((ox, sIdx) => {
+                let curX = w / 2 + ox;
+                let curY = h - 32;
+                const sc = sIdx === 2 ? 1.12 : (sIdx % 2 === 0 ? 0.85 : 0.98);
+                const segments = 3 + Math.round(gRatio * 4);
+                const segLen = (17 + gRatio * 19) * sc;
+
+                for (let i = 0; i < segments; i++) {
+                    const sway = Math.sin(timeSec * 1.5 + i * 0.4 + sIdx) * (i * 1.1);
+                    const nextX = curX + sway;
+                    const nextY = curY - segLen;
+                    const segW = Math.max(3.5, (11 - i) * sc);
+
+                    ctx.strokeStyle = i % 2 === 0 ? pal.trunk : pal.trunkLight;
+                    ctx.lineWidth = segW;
+                    ctx.lineCap = 'butt';
+                    ctx.beginPath();
+                    ctx.moveTo(curX, curY);
+                    ctx.lineTo(nextX, nextY);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = '#d1fae5';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(nextX - segW * 0.65, nextY);
+                    ctx.lineTo(nextX + segW * 0.65, nextY);
+                    ctx.stroke();
+
+                    if (i >= 1 && gRatio >= 0.22) {
+                        const dir = (i + sIdx) % 2 === 0 ? 1 : -1;
+                        ctx.save();
+                        ctx.translate(nextX, nextY);
+                        ctx.rotate(dir * 0.42 + Math.sin(timeSec * 1.8 + i) * 0.05);
+                        ctx.fillStyle = i % 2 === 0 ? pal.leaf2 : pal.leaf3;
+                        ctx.beginPath();
+                        ctx.ellipse(dir * 14, -3, 15, 3.6, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    curX = nextX;
+                    curY = nextY - 2;
+                }
+            });
+        }
+
+        /* SỬA TRIỆT ĐỂ LỖI CHỚP GIẬT QUẢ: Dùng branchId cố định thay vì Math.round(x2)+Math.round(y2) */
+        function drawFractalSpeciesBranch(ctx, x, y, len, angle, depth, maxDepth, timeSec, gRatio, pal, branchId) {
+            if (depth <= 0 || len < 3) return;
+            const curveBias = __visualStyle === 'bonsai_dragon' ? (depth % 2 === 0 ? 0.20 : -0.20) : 0;
+            const sway = Math.sin(timeSec * 1.25 + depth * 0.55 + (branchId % 5) * 0.2) * 0.018 * (maxDepth - depth + 1);
+            const finalAngle = angle + sway + curveBias;
+            const x2 = x + Math.sin(finalAngle) * len;
+            const y2 = y - Math.cos(finalAngle) * len;
+
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = depth > 2 ? pal.trunk : pal.trunkLight;
+            ctx.lineWidth = Math.max(1.8, depth * (__visualStyle === 'bonsai_dragon' ? 2.75 : 2.25));
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            if (depth <= 3 && gRatio >= 0.20) {
+                ctx.save();
+                ctx.translate(x2, y2);
+
+                if (__visualStyle === 'ginkgo_amber') {
+                    ctx.fillStyle = depth === 1 ? pal.leaf3 : pal.leaf2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 4);
+                    ctx.arc(0, 0, 10, -Math.PI * 0.85, -Math.PI * 0.15);
+                    ctx.closePath();
+                    ctx.fill();
+                } else if (__visualStyle === 'bonsai_dragon') {
+                    ctx.fillStyle = pal.leaf1;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 2, 17, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = pal.leaf2;
+                    ctx.beginPath();
+                    ctx.ellipse(0, -1, 13, 4.5, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = depth === 1 ? pal.leaf3 : pal.leaf2;
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 8.5, 4.8, finalAngle, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                /* Điều kiện mọc quả dựa trên branchId cố định 100%, không bao giờ chớp giật */
+                if (gRatio >= 0.75 && depth === 1 && (branchId % 2 === 0)) {
+                    const fruitScale = Math.min(1, (gRatio - 0.70) / 0.25);
+                    ctx.scale(fruitScale, fruitScale);
+                    ctx.fillStyle = pal.fruit;
+                    ctx.strokeStyle = pal.fruitRim;
+                    ctx.lineWidth = 1.6;
+                    ctx.beginPath();
+                    ctx.arc(0, 5, 6.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+                    ctx.beginPath();
+                    ctx.arc(-2.2, 3.0, 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    if (__visualStyle === 'super_coin_tree') {
+                        ctx.strokeStyle = '#78350f';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(-2.2, 2.8, 4.4, 4.4);
+                    }
+                }
+                ctx.restore();
+            }
+
+            const subLen = len * (__visualStyle === 'bonsai_dragon' ? 0.72 : 0.75);
+            const spread = __visualStyle === 'bonsai_dragon' ? 0.52 : 0.42;
+            drawFractalSpeciesBranch(ctx, x2, y2, subLen, finalAngle - spread, depth - 1, maxDepth, timeSec, gRatio, pal, branchId * 2);
+            drawFractalSpeciesBranch(ctx, x2, y2, subLen, finalAngle + spread, depth - 1, maxDepth, timeSec, gRatio, pal, branchId * 2 + 1);
+            if (depth === maxDepth && gRatio >= 0.55) {
+                drawFractalSpeciesBranch(ctx, x2, y2, subLen * 0.85, finalAngle + 0.04, depth - 1, maxDepth, timeSec, gRatio, pal, branchId * 3 + 1);
+            }
+        }
+
+        function animateProceduralTreeCanvas(timestamp) {
+            const canvas = document.getElementById('proceduralTreeCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+            const timeSec = (timestamp || 0) * 0.001;
+            const pal = SPECIES_PALETTE[__visualStyle] || SPECIES_PALETTE.apple_gold;
+
+            const diff = __treeCurrentGrowth - __treeDisplayGrowth;
+            if (Math.abs(diff) > 0.05) {
+                __treeDisplayGrowth += diff * 0.08;
+            } else {
+                __treeDisplayGrowth = __treeCurrentGrowth;
+            }
+            const gRatio = Math.max(0.08, Math.min(1.0, __treeDisplayGrowth / 100));
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+            skyGrad.addColorStop(0, pal.sky1);
+            skyGrad.addColorStop(0.62, pal.sky2);
+            skyGrad.addColorStop(1, pal.sky3);
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.beginPath();
+            ctx.moveTo(0, h - 55);
+            ctx.quadraticCurveTo(w * 0.28, h - 125, w * 0.55, h - 65);
+            ctx.quadraticCurveTo(w * 0.82, h - 115, w, h - 55);
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.fill();
+
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.arc(w - 75, 52, 18, 0, Math.PI * 2);
+            ctx.fill();
+
+            const auraGrad = ctx.createRadialGradient(w / 2, h - 95, 16, w / 2, h - 135, 160 * gRatio + 40);
+            auraGrad.addColorStop(0, pal.aura);
+            auraGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = auraGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            if (__visualStyle === 'lotus_crystal') {
+                drawLotusPondScene(ctx, w, h, timeSec, gRatio, pal);
+            } else {
+                ctx.fillStyle = '#3f2e18';
+                ctx.beginPath();
+                ctx.ellipse(w / 2, h - 18, 170, 24, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = pal.leaf2;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                if (__visualStyle === 'bamboo_emerald') {
+                    drawBambooForestScene(ctx, w, h, timeSec, gRatio, pal);
+                } else {
+                    const maxDepth = __treeCurrentGrowth >= 75 ? 6 : (__treeCurrentGrowth >= 40 ? 5 : 4);
+                    const trunkLen = 36 + gRatio * 48;
+                    drawFractalSpeciesBranch(ctx, w / 2, h - 30, trunkLen, 0, maxDepth, maxDepth, timeSec, gRatio, pal, 1);
+                }
+            }
+
+            for (const pt of __fallingPetals) {
+                pt.x += Math.sin(timeSec + pt.phase) * 0.35 + pt.vx * 0.25;
+                pt.y += pt.vy;
+                if (pt.y > h - 22) {
+                    pt.y = 14;
+                }
+                if (pt.x > w - 20) pt.x = 20;
+                ctx.fillStyle = pal.flower;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, pt.r * 0.65, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            for (let i = __treeEffectParticles.length - 1; i >= 0; i--) {
+                const ef = __treeEffectParticles[i];
+                ef.x += ef.vx;
+                ef.y += ef.vy;
+                if (ef.type === 'harvest') ef.vy += 0.16;
+                ef.life -= 1;
+
+                if (ef.type === 'water') {
+                    ctx.strokeStyle = ef.color;
+                    ctx.lineWidth = 1.6;
+                    ctx.beginPath();
+                    ctx.moveTo(ef.x, ef.y);
+                    ctx.lineTo(ef.x - ef.vx * 2, ef.y - 8);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = ef.color;
+                    ctx.beginPath();
+                    ctx.arc(ef.x, ef.y, ef.type === 'harvest' ? 4.8 : 3.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                if (ef.life <= 0) __treeEffectParticles.splice(i, 1);
+            }
+
+            __farmAnimFrameId = requestAnimationFrame(animateProceduralTreeCanvas);
+        }
+
+        function syncCooldownButtonsUI() {
+            const btnW = document.getElementById('btnWaterTree');
+            const btnF = document.getElementById('btnFertilizeTree');
+            const timerBadge = document.getElementById('farmCooldownTimerBadge');
+
+            if (__isUserAdmin) {
+                if (timerBadge) {
+                    timerBadge.className = 'badge bg-warning text-dark fw-bold font-monospace px-2 py-1';
+                    timerBadge.textContent = '👑 Admin: Tưới & Bón Tức Thì (0s)';
+                }
+                if (btnW) { btnW.disabled = false; btnW.textContent = '💧 Tưới Mưa (+25%)'; }
+                if (btnF) { btnF.disabled = false; btnF.textContent = '✨ Bón Dinh Dưỡng (+35%)'; }
+                return;
+            }
+
+            if (__cooldownRemainingSec > 0) {
+                const fmt = formatCountdownClient(__cooldownRemainingSec);
+                if (timerBadge) {
+                    timerBadge.className = 'badge bg-danger font-monospace px-2 py-1';
+                    timerBadge.textContent = `⏳ Chờ chăm tiếp: ${fmt}`;
+                }
+                if (btnW) { btnW.disabled = true; btnW.textContent = `⏳ Chờ ${fmt}`; }
+                if (btnF) { btnF.disabled = true; btnF.textContent = `⏳ Chờ ${fmt}`; }
+            } else {
+                if (timerBadge) {
+                    timerBadge.className = 'badge bg-success font-monospace px-2 py-1';
+                    timerBadge.textContent = '✅ Đã sẵn sàng Tưới / Bón phân!';
+                }
+                if (btnW) { btnW.disabled = false; btnW.textContent = '💧 Tưới Mưa (+25%)'; }
+                if (btnF) { btnF.disabled = false; btnF.textContent = '✨ Bón Dinh Dưỡng (+35%)'; }
+            }
+        }
+
+        function updateFarmStageVisuals(data) {
+            if (!data) return;
+            const pct = Number(data.growth_pct ?? __treeCurrentGrowth);
+            __treeCurrentGrowth = pct;
+            __isUserAdmin = Boolean(data.is_admin);
+            __cooldownRemainingSec = Number(data.cooldown_remaining || 0);
+
+            if (data.tree_type) __treeSpecies = data.tree_type;
+            if (data.visual_style) __visualStyle = data.visual_style;
+            else if (SPECIES_PALETTE[__treeSpecies]) __visualStyle = __treeSpecies;
+
+            if (Array.isArray(data.species_catalog) && data.species_catalog.length) {
+                renderSpeciesCatalogGrid(data.species_catalog);
+            } else {
+                document.querySelectorAll('#speciesSelectorGrid .species-select-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.getAttribute('data-tree') === __treeSpecies);
+                });
+            }
+
+            const roleBadge = document.getElementById('farmRolePrivilegeBadge');
+            const adminRow = document.getElementById('adminInstantMatureRow');
+            if (__isUserAdmin) {
+                if (roleBadge) {
+                    roleBadge.className = 'badge bg-warning text-dark fw-bold px-3 py-2';
+                    roleBadge.textContent = '👑 Quyền Admin: Chăm Cây Tức Thì 0 Giây';
+                }
+                adminRow?.classList.remove('d-none');
+            } else {
+                if (roleBadge) {
+                    roleBadge.className = 'badge bg-dark border border-info text-info px-3 py-2';
+                    roleBadge.textContent = `⏳ Chu kỳ cây: ${data.cooldown_label || 'Theo cấp độ cây'}`;
+                }
+                adminRow?.classList.add('d-none');
+            }
+
+            const bar = document.getElementById('farmGrowthBar');
+            const pctBadge = document.getElementById('farmGrowthPctBadge');
+            const stageBadge = document.getElementById('farmStageLabelBadge');
+            const harvCnt = document.getElementById('farmHarvestedCount');
+            const coinsEl = document.getElementById('farmUserCoins');
+            const spinsEl = document.getElementById('farmUserSpins');
+            const msgEl = document.getElementById('farm-message');
+            const nameEl = document.getElementById('farmTreeNameText');
+            const rewBadge = document.getElementById('farmRewardPreviewBadge');
+
+            if (bar) { bar.style.width = pct + '%'; bar.textContent = pct + '%'; }
+            if (pctBadge) pctBadge.textContent = pct + '%';
+            if (nameEl && data.tree_name) nameEl.textContent = data.tree_name;
+            if (rewBadge && data.voucher_reward_preview) rewBadge.textContent = `🎁 Quả nở: ${data.voucher_reward_preview}`;
+            if (harvCnt && data.harvested_count !== undefined) harvCnt.textContent = String(data.harvested_count);
+            if (coinsEl && data.coins !== undefined) coinsEl.textContent = Number(data.coins).toLocaleString('vi-VN') + ' Xu';
+            if (spinsEl && data.spins_left !== undefined) spinsEl.textContent = String(data.spins_left);
+            if (msgEl && (data.message || data.error)) {
+                msgEl.textContent = data.error || data.message;
+                msgEl.className = data.error ? 'small text-danger fw-bold mb-3' : 'small text-warning fw-bold mb-3';
+            }
+
+            if (stageBadge) {
+                if (pct >= 100) {
+                    stageBadge.textContent = '🎉 ĐÃ CHÍN 100% — BẤM THU HOẠCH NGAY!';
+                    stageBadge.className = 'badge bg-nvidia fw-bold px-3 py-2';
+                } else if (pct >= 75) {
+                    stageBadge.textContent = 'GIAI ĐOẠN 3: CÂY KẾT TRÁI QUÝ';
+                } else if (pct >= 40) {
+                    stageBadge.textContent = 'GIAI ĐOẠN 2: CÂY PHÂN NHÁNH & TRỔ HOA';
+                } else {
+                    stageBadge.textContent = 'GIAI ĐOẠN 1: MẦM NON VƯƠN CHỒI';
+                }
+            }
+
+            if (data.harvest_summary) {
+                showHarvestOverlayModal(data.harvest_summary);
+            }
+            syncCooldownButtonsUI();
+        }
+
+        function enforceSellerSeedCardVisibility() {
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            const canCreateSeeds = Boolean(u && (u.role === 'seller' || u.role === 'admin'));
+            const formEl = document.getElementById('sellerSeedCreatorForm');
+            if (formEl) {
+                const cardWrap = formEl.closest('.nv-adaptive-card');
+                if (cardWrap) {
+                    cardWrap.classList.toggle('d-none', !canCreateSeeds);
+                }
+            }
+        }
+
+        async function executeFarmCareRequest(actionKey, extraPayload = {}) {
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            if (!u || !u.id) {
+                if (typeof notifyToast === 'function') {
+                    notifyToast('🔒 Vui lòng đăng nhập tài khoản trước khi trồng cây, chăm sóc và thu hoạch Voucher!', 'warning');
+                }
+                window.location.href = '/services/auth/auth.html';
+                return;
+            }
+            if (__careLock) return;
+            __careLock = true;
+            const uid = Number(u.id);
+            const uRole = u.role || 'buyer';
+            try {
+                const res = await fetch('/api/minigame/farm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.assign({ user_id: uid, role: uRole, action: actionKey }, extraPayload))
+                });
+                const data = await res.json();
+                updateFarmStageVisuals(data);
+                if (typeof notifyToast === 'function') {
+                    notifyToast(data.error || data.message || 'Đã cập nhật nông trại!', data.ok === false ? 'warning' : 'success');
+                }
+            } catch (e) {
+            } finally {
+                __careLock = false;
+            }
+        }
+
+        async function refreshFarmState() {
+            enforceSellerSeedCardVisibility();
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            const uid = (u && u.id) ? Number(u.id) : 0;
+            const uRole = (u && u.role) ? u.role : 'buyer';
+            try {
+                const res = await fetch(`/api/minigame/farm?user_id=${uid}&role=${encodeURIComponent(uRole)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    updateFarmStageVisuals(data);
+                }
+            } catch (e) {}
+        }
+
+        async function triggerFarmCare(actionKey) {
+            spawnTreeEffectParticles(actionKey);
+            await executeFarmCareRequest(actionKey);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshFarmState();
+            if (__farmAnimFrameId) cancelAnimationFrame(__farmAnimFrameId);
+            __farmAnimFrameId = requestAnimationFrame(animateProceduralTreeCanvas);
+            setInterval(() => {
+                if (!__isUserAdmin && __cooldownRemainingSec > 0) {
+                    __cooldownRemainingSec = Math.max(0, __cooldownRemainingSec - 1);
+                    syncCooldownButtonsUI();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

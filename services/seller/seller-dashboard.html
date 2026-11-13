@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh Người Bán &amp; Trung Tâm Điều Phối Vận Đơn NVX - Nvidia Partner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/seller/seller.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body data-layout="dashboard">
+    <div id="header-placeholder"></div>
+
+    <div class="dashboard-layout">
+        <aside class="dashboard-sidebar p-3">
+            <div class="d-flex align-items-center justify-content-between px-2 mb-3">
+                <h6 class="text-nvidia fw-bold m-0">🏪 KÊNH NGƯỜI BÁN</h6>
+                <span class="badge bg-dark border border-secondary">NVX Pro</span>
+            </div>
+            <div class="nav flex-column nav-pills gap-1">
+                <button class="nav-link active text-start" data-sec="overview" onclick="switchSellerSection('overview', this)">📊 1. Tổng Quan &amp; Dòng Tiền</button>
+                <button class="nav-link text-start" data-sec="orders" onclick="switchSellerSection('orders', this)">🧾 2. Điều Phối Đơn Hàng &amp; QR</button>
+                <button class="nav-link text-start" data-sec="products" onclick="switchSellerSection('products', this)">📦 3. Quản Lý Kho Sản Phẩm</button>
+                <button class="nav-link text-start" data-sec="inbox" onclick="switchSellerSection('inbox', this)">💬 4. Chat Khách Hàng (AI/Người)</button>
+                <hr class="border-secondary my-2">
+                <a href="/services/seller/sell.html" class="nav-link text-start text-nvidia fw-bold">➕ Đăng Bán Sản Phẩm Mới</a>
+                <a href="/services/seller/store.html?seller_id=1" id="viewPublicStoreBtn" class="nav-link text-start text-info">🌐 Xem Gian Hàng Công Khai ↗</a>
+            </div>
+        </aside>
+
+        <main class="dashboard-content p-3 p-lg-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <div>
+                    <h4 class="fw-bold m-0">Trung Tâm Vận Hành Gian Hàng &amp; Vận Đơn NVIDIA XPRESS</h4>
+                    <small class="text-muted">Quy trình khép kín: Xác nhận đóng gói ➔ In nhãn QR định danh ➔ Bàn giao Shipper NVX ➔ Đối soát giải ngân Escrow</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-nvidia px-3 py-2" id="sellerStoreBadge">Shop Partner</span>
+                </div>
+            </div>
+
+            <!-- TAB 1: TỔNG QUAN TÀI CHÍNH ESCROW & PHÂN TÍCH AI -->
+            <section id="sec-overview" class="seller-sec">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 nv-adaptive-card border-start border-4 border-success h-100">
+                            <div class="stat-label small text-muted mb-1">TỔNG DOANH THU ĐƠN HÀNG</div>
+                            <div class="fs-4 fw-bold text-nvidia" id="statRevenue">0 đ</div>
+                            <small class="text-muted">Tính trên toàn bộ đơn phát sinh</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 nv-adaptive-card border-start border-4 border-info h-100">
+                            <div class="stat-label small text-muted mb-1">ĐÃ GIẢI NGÂN VỀ VÍ SHOP</div>
+                            <div class="fs-4 fw-bold text-info" id="statReleasedRevenue">0 đ</div>
+                            <small class="text-muted">Đơn đã giao thành công (POD)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 nv-adaptive-card border-start border-4 border-warning h-100">
+                            <div class="stat-label small text-muted mb-1">ĐANG TẠM GIỮ ESCROW</div>
+                            <div class="fs-4 fw-bold text-warning" id="statEscrowHolding">0 đ</div>
+                            <small class="text-muted">Giải ngân ngay khi giao xong</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-3 nv-adaptive-card border-start border-4 border-primary h-100">
+                            <div class="stat-label small text-muted mb-1">ĐƠN HÀNG / SẢN PHẨM</div>
+                            <div class="fs-4 fw-bold"><span id="statOrders" class="text-nvidia">0</span> Đơn <small class="text-muted">/ <span id="statProducts">0</span> SP</small></div>
+                            <small class="text-muted">Đang niêm yết minh bạch</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nv-adaptive-card p-3 mb-3 shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h6 class="fw-bold text-nvidia m-0">⚡ Quy Trình Xử Lý Đơn Hàng &amp; Mã QR Чуẩn NVIDIA XPRESS (4 Bước)</h6>
+                            <small class="text-muted">Bấm vào từng bước để chuyển nhanh sang bảng điều phối đơn hàng tương ứng</small>
+                        </div>
+                        <button type="button" class="btn btn-outline-info btn-sm py-0" onclick="switchSellerSection('orders', document.querySelector('[data-sec=orders]'))">Mở Bảng Điều Phối Đơn ➔</button>
+                    </div>
+                    <div class="row g-2 text-center small">
+                        <div class="col-md-3">
+                            <div class="p-2 rounded border h-100" style="cursor:pointer;" onclick="jumpToOrderFilter('pending')">
+                                <span class="badge bg-warning text-dark mb-1">BƯỚC 1 • CHỜ XÁC NHẬN</span>
+                                <div class="fw-bold">Duyệt Đơn &amp; Đóng Gói</div>
+                                <div class="text-muted">Cấp mã vận đơn <code>NVX-xxxx</code></div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 rounded border h-100" style="cursor:pointer;" onclick="jumpToOrderFilter('confirmed')">
+                                <span class="badge bg-info text-dark mb-1">BƯỚC 2 • ĐÃ ĐÓNG GÓI</span>
+                                <div class="fw-bold">In Nhãn QR &amp; Giao Bưu Cục</div>
+                                <div class="text-muted">Dán tem QR tinh gọn lên kiện hàng</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 rounded border h-100" style="cursor:pointer;" onclick="jumpToOrderFilter('shipping')">
+                                <span class="badge bg-primary mb-1">BƯỚC 3 • ĐANG VẬN CHUYỂN</span>
+                                <div class="fw-bold">Shipper NVX Giao Hàng</div>
+                                <div class="text-muted">Khách/Shipper quét QR cập nhật POD</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-2 rounded border h-100" style="cursor:pointer;" onclick="jumpToOrderFilter('completed')">
+                                <span class="badge bg-success mb-1">BƯỚC 4 • HOÀN TẤT</span>
+                                <div class="fw-bold">Giải Ngân Escrow 100%</div>
+                                <div class="text-muted">Cộng tiền trực tiếp vào doanh thu</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nv-adaptive-card p-3 shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <h5 class="fw-bold text-nvidia m-0">🤖 Trợ Lý Gemini / Groq AI Phân Tích Kinh Doanh &amp; Tồn Kho</h5>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <select id="aiAnalyzeProdSelect" class="form-select form-select-sm" style="max-width: 300px;"></select>
+                            <button class="btn btn-nvidia btn-sm text-nowrap fw-bold" onclick="runSellerAiAnalysis()">⚡ Chạy AI Phân Tích Mặt Hàng</button>
+                        </div>
+                    </div>
+                    <div id="sellerAiErrorBanner" class="alert alert-danger py-2 small d-none"></div>
+                    <div id="sellerAiMetricsRow" class="row g-2 mb-2 d-none"></div>
+                    <div id="sellerAiReportBox" class="p-3 border rounded small" style="white-space: pre-line; background: rgba(118,185,0,0.06);">
+                        Chọn một mặt hàng của Shop trên thanh chọn rồi bấm "⚡ Chạy AI Phân Tích Mặt Hàng" để AI đánh giá tốc độ tiêu thụ, độ minh bạch bảo hành và gợi ý chiến lược Flash Sale.
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: ĐIỀU PHỐI ĐƠN HÀNG, MÃ VẬN ĐƠN NVX & QR -->
+            <section id="sec-orders" class="seller-sec d-none">
+                <div class="nv-adaptive-card p-3 mb-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h5 class="fw-bold m-0">🧾 Quản Lý Đơn Đặt Hàng, Nhãn QR Tinh Gọn &amp; Tiến Trình NVX</h5>
+                            <small class="text-muted">Các sản phẩm trong cùng 1 đơn hàng được gộp chung 1 phiếu vận đơn duy nhất kèm nút chuyển bước tuần tự</small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <input type="search" id="sellerOrderSearchInput" class="form-control form-control-sm" style="width: 240px;" placeholder="🔍 Tìm mã NVX, tên, SĐT khách..." oninput="renderFilteredSellerOrders()">
+                        </div>
+                    </div>
+                    <div id="sellerOrderStatusTabs" class="d-flex flex-wrap gap-1"></div>
+                </div>
+
+                <div class="table-responsive nv-adaptive-card p-2">
+                    <table class="table table-hover align-middle small mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã Đơn &amp; Vận Đơn NVX</th>
+                                <th>Lộ Trình: Kho Gửi ➔ Khách Nhận</th>
+                                <th>Kiện Hàng &amp; Khối Lượng</th>
+                                <th>Tổng Thu COD &amp; Escrow</th>
+                                <th>Bước Xử Lý Tiếp Theo (Tuần Tự)</th>
+                                <th class="text-end">Nhãn QR &amp; Phiếu Vận Đơn</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellerOrdersBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 3: QUẢN LÝ SẢN PHẨM & CHÍNH SÁCH MINH BẠCH -->
+            <section id="sec-products" class="seller-sec d-none">
+                <div class="nv-adaptive-card p-3 mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h5 class="fw-bold m-0">📦 Danh Mục Sản Phẩm &amp; Cam Kết Bảo Hành Minh Bạch</h5>
+                        <small class="text-muted">Mỗi sản phẩm có một mã QR định danh riêng dẫn thẳng tới trang thông số &amp; lịch sử bảo hành</small>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <input type="search" id="sellerProdSearchInput" class="form-control form-control-sm" style="width: 210px;" placeholder="🔍 Tìm tên sản phẩm..." oninput="renderFilteredSellerProducts()">
+                        <select id="sellerProdCategoryFilter" class="form-select form-select-sm" style="width: 155px;" onchange="renderFilteredSellerProducts()">
+                            <option value="">Tất cả ngành</option>
+                            <option value="gpu">Card đồ họa (GPU)</option>
+                            <option value="cpu">Vi xử lý (CPU)</option>
+                            <option value="mainboard">Mainboard</option>
+                            <option value="ram">RAM &amp; SSD</option>
+                            <option value="monitor">Màn hình</option>
+                            <option value="keyboard">Bàn phím &amp; Chuột</option>
+                            <option value="headphones">Tai nghe</option>
+                            <option value="fashion">Balo &amp; Phụ kiện</option>
+                            <option value="home_living">Đèn &amp; Gia dụng</option>
+                            <option value="health_care">Sức khỏe</option>
+                        </select>
+                        <a href="/services/settings/settings.html#jsonSeedCard" id="sellerJsonSeedBtn" class="btn btn-outline-warning btn-sm d-none">⚡ Nạp JSON</a>
+                        <a href="/services/seller/sell.html" class="btn btn-nvidia btn-sm fw-bold">+ Đăng Bán Sản Phẩm</a>
+                    </div>
+                </div>
+
+                <div class="table-responsive nv-adaptive-card p-2">
+                    <table class="table table-hover align-middle small mb-0">
+                        <thead>
+                            <tr>
+                                <th>Mã SP</th>
+                                <th>Sản Phẩm &amp; Nhãn Sale</th>
+                                <th>Ngành Hàng</th>
+                                <th>ĐVT &amp; Bảo Hành</th>
+                                <th>Giá Niêm Yết</th>
+                                <th>Tồn Kho / Đã Bán</th>
+                                <th class="text-end">Tem QR, AI &amp; Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sellerProductsBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 4: CHAT KHÁCH HÀNG -->
+            <section id="sec-inbox" class="seller-sec d-none">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="nv-adaptive-card p-3 h-100">
+                            <h6 class="fw-bold text-nvidia mb-2">Danh Sách Khách Liên Hệ</h6>
+                            <div id="sellerChatSessionsList" class="d-flex flex-column gap-2"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="nv-adaptive-card p-3 h-100 d-flex flex-column">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-2">
+                                <strong id="sellerActiveBuyerTitle">Chưa chọn hội thoại</strong>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <span id="sellerSessionModeBadge" class="badge bg-secondary">--</span>
+                                    <button class="btn btn-sm btn-warning fw-bold py-0 text-dark" onclick="toggleSessionHumanMode('human')">👤 Người Thật Trả Lời</button>
+                                    <button class="btn btn-sm btn-outline-info py-0" onclick="toggleSessionHumanMode('ai')">🤖 Bật AI Tự Động</button>
+                                </div>
+                            </div>
+                            <div id="sellerInboxMessages" class="flex-fill border rounded p-2 mb-2" style="height: 290px; overflow-y: auto;"></div>
+                            <form onsubmit="sendSellerHumanReply(event)" class="d-flex gap-2">
+                                <input type="text" id="sellerReplyInput" class="form-control form-control-sm" placeholder="Nhập câu trả lời trực tiếp của Chủ Shop...">
+                                <button type="submit" class="btn btn-nvidia btn-sm px-3 fw-bold">Gửi</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL SỬA NHANH SẢN PHẨM & CHÍNH SÁCH BẢO HÀNH -->
+    <div id="quickEditModal" class="custom-modal-backdrop d-none">
+        <div class="nv-adaptive-card p-4 shadow-lg" style="width: 580px; max-width: 95vw;">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <h5 class="fw-bold text-nvidia m-0">✏️ Chỉnh Sửa Sản Phẩm &amp; Chính Sách Minh Bạch</h5>
+                <button type="button" class="btn-close" onclick="closeQuickEditModal()"></button>
+            </div>
+            <form id="quickEditForm">
+                <input type="hidden" id="qeId">
+                <input type="hidden" id="qeImageUrl">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Ảnh sản phẩm</label>
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <img id="qeImgPreview" src="/assets/icons/icon.png" alt="Preview" style="width: 44px; height: 44px; object-fit: cover;" class="border rounded">
+                        <input type="file" id="qeImageFile" class="form-control form-control-sm" accept="image/*">
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Tên sản phẩm</label>
+                    <input type="text" id="qeName" class="form-control form-control-sm" required>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Giá bán (VNĐ)</label>
+                        <input type="number" id="qePrice" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Giá gốc (VNĐ)</label>
+                        <input type="number" id="qeOldPrice" class="form-control form-control-sm">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Tồn kho</label>
+                        <input type="number" id="qeStock" class="form-control form-control-sm" required>
+                    </div>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Danh mục</label>
+                        <select id="qeCategory" class="form-select form-select-sm">
+                            <option value="gpu">Card đồ họa (GPU)</option>
+                            <option value="cpu">Vi xử lý (CPU)</option>
+                            <option value="mainboard">Mainboard</option>
+                            <option value="ram">RAM &amp; SSD</option>
+                            <option value="monitor">Màn hình</option>
+                            <option value="psu">Nguồn (PSU)</option>
+                            <option value="headphones">Tai nghe</option>
+                            <option value="keyboard">Bàn phím</option>
+                            <option value="mouse">Chuột</option>
+                            <option value="fashion">Balo &amp; Phụ kiện</option>
+                            <option value="home_living">Đèn &amp; Gia dụng</option>
+                            <option value="health_care">Sức khỏe</option>
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Đơn vị tính</label>
+                        <input type="text" id="qeUnit" class="form-control form-control-sm" value="Chiếc">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label small fw-semibold">Cam kết Bảo hành</label>
+                        <input type="text" id="qeWarranty" class="form-control form-control-sm" value="36 tháng Chính hãng">
+                    </div>
+                </div>
+                <div class="row g-2 mb-2 align-items-end">
+                    <div class="col-6">
+                        <label class="form-label small fw-semibold">Nhãn giảm giá</label>
+                        <input type="text" id="qeBadge" class="form-control form-control-sm" placeholder="VD: -15%">
+                    </div>
+                    <div class="col-6">
+                        <div class="form-check mb-1">
+                            <input type="checkbox" id="qeFlash" class="form-check-input">
+                            <label class="form-check-label small fw-semibold" for="qeFlash">⚡ Bật Flash Sale Trang Chủ</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Mô tả chi tiết &amp; Chính sách đổi trả</label>
+                    <textarea id="qeDesc" class="form-control form-control-sm" rows="3"></textarea>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeQuickEditModal()">Hủy</button>
+                    <button type="submit" class="btn btn-nvidia btn-sm px-4 fw-bold">💾 Lưu Cập Nhật (Ghi Log Minh Bạch)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TEM QR SẢN PHẨM KHÉP KÍN -->
+    <div id="productQrModal" class="custom-modal-backdrop d-none">
+        <div class="nv-adaptive-card p-4 shadow-lg text-center" style="width: 440px; max-width: 95vw;">
+            <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+                <h6 class="fw-bold text-nvidia m-0" id="qrModalProdTitle">Tem QR Định Danh Sản Phẩm</h6>
+                <button type="button" class="btn-close" onclick="closeProductQrModal()"></button>
+            </div>
+            <div class="qr-clean-box my-2 p-3 bg-white rounded-3 border border-2 border-success d-inline-block">
+                <div id="productQrContainer" class="d-flex justify-content-center"></div>
+            </div>
+            <div id="productQrMetaBox" class="small text-start p-2 rounded border mb-2"></div>
+            <input type="text" id="productQrUrlInput" class="form-control form-control-sm text-center mb-3 font-monospace" readonly>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-outline-info btn-sm flex-fill" onclick="downloadQrCanvasImage('productQrContainer', 'Tem_QR_San_Pham.png')">⬇️ Tải Tem QR (.PNG)</button>
+                <a id="productQrOpenLinkBtn" href="#" target="_blank" class="btn btn-nvidia btn-sm flex-fill fw-bold">🔗 Mở Trang Sản Phẩm</a>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeProductQrModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TEM QR VẬN ĐƠN NVX KHÉP KÍN -->
+    <div id="orderQrModal" class="custom-modal-backdrop d-none">
+    <div class="nv-adaptive-card p-4 shadow-lg text-center" style="width: 460px; max-width: 95vw;">
+        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2">
+            <h6 class="fw-bold text-nvidia m-0" id="qrModalOrderTitle">Tem QR Vận Đơn NVIDIA XPRESS</h6>
+            <button type="button" class="btn-close" onclick="closeOrderQrModal()"></button>
+        </div>
+        <div class="qr-clean-box my-2 p-3 bg-white rounded-3 border border-2 border-success d-inline-block">
+            <div id="orderQrContainer" class="d-flex justify-content-center"></div>
+        </div>
+        <div id="orderQrMetaBox" class="small text-start p-2 rounded border mb-2"></div>
+        <input type="text" id="orderQrUrlInput" class="form-control form-control-sm text-center mb-3 font-monospace" readonly>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-info btn-sm flex-fill" onclick="downloadQrCanvasImage('orderQrContainer', 'Tem_QR_Van_Don_NVX.png')">⬇️ Tải Tem QR (.PNG)</button>
+            <a id="orderQrOpenLinkBtn" href="#" target="_blank" class="btn btn-nvidia btn-sm flex-fill fw-bold">🧾 Mở Phiếu Vận Đơn &amp; Tác Nghiệp</a>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeOrderQrModal()">Đóng</button>
+        </div>
+    </div>
+</div>
+
+<div id="packagingProofModal" class="custom-modal-backdrop d-none">
+    <div class="nv-adaptive-card p-4 shadow-lg" style="width: 540px; max-width: 96vw; border: 2px solid #76b900 !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+            <div>
+                <span class="badge bg-nvidia">CHỐNG GIAN LẬN &amp; ĐỐI CHIẾU TRANH CHẤP ESCROW</span>
+                <h6 class="fw-bold m-0 mt-1" id="pkgModalTitle">📸 Chụp Ảnh Minh Chứng Đóng Gói Hàng Hóa</h6>
+            </div>
+            <button type="button" class="btn-close" onclick="closePackagingProofModal()"></button>
+        </div>
+
+        <input type="hidden" id="pkgModalOrderId">
+        <div class="text-center mb-3">
+            <video id="pkgCameraVideo" playsinline autoplay muted class="w-100 rounded-3 border border-success d-none" style="max-height: 230px; object-fit: cover; background: #000;"></video>
+            <canvas id="pkgCameraCanvas" width="480" height="320" class="d-none"></canvas>
+            <img id="pkgPreviewImage" src="/assets/icons/icon.png" alt="Preview" class="img-fluid rounded-3 border" style="max-height: 210px; object-fit: contain;">
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button type="button" class="btn btn-info text-dark btn-sm fw-bold flex-fill" onclick="startSellerPackagingCamera()">🎥 1. Bật Camera Chụp Kiện Hàng</button>
+            <button type="button" id="btnSnapPackagingFrame" class="btn btn-warning text-dark btn-sm fw-bold flex-fill d-none" onclick="captureSellerPackagingPhoto()">📸 2. Chụp Khung Hình &amp; Đóng Dấu Giờ</button>
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label small fw-bold mb-1">Hoặc chọn ảnh chụp kiện hàng từ máy:</label>
+            <input type="file" id="pkgUploadFileInput" class="form-control form-control-sm" accept="image/*" onchange="uploadPackagingProofFile(this)">
+        </div>
+        <div class="mb-3">
+            <label class="form-label small fw-bold mb-1">Ghi chú tình trạng niêm phong kiện hàng:</label>
+            <input type="text" id="pkgNoteInput" class="form-control form-control-sm" value="Đã kiểm tra đủ phụ kiện, bọc xốp chống sốc 3 lớp & dán tem niêm phong NVX.">
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closePackagingProofModal()">Hủy</button>
+            <button type="button" class="btn btn-nvidia btn-sm fw-bold px-3" onclick="submitPackagingProofToServer()">💾 Lưu Minh Chứng &amp; Xác Nhận Đóng Gói</button>
+        </div>
+    </div>
+</div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="/core/main.js"></script>
+    <script src="/services/seller/seller.js"></script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+/* ==========================================================================
+   AUTH.CSS - GIAO DIỆN ĐĂNG NHẬP / ĐĂNG KÝ SANG TRỌNG & KHUNG ĐIỀU KHOẢN SỐNG ĐỘNG
+   ========================================================================== */
+
+body.auth-panoramic-page {
+    position: relative;
+    min-height: 100vh;
+    background: #040711 !important;
+    color: #f8fafc !important;
+}
+
+#authSceneryCanvas,
+#sellerSceneryCanvas {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 1 !important;
+    pointer-events: none !important;
+}
+
+.auth-ecommerce-section {
+    position: relative;
+    z-index: 5;
+    min-height: calc(100vh - 118px);
+    display: flex;
+    align-items: center;
+    padding: 20px 12px 36px 12px !important;
+}
+
+.auth-art-showcase {
+    position: relative;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 8px 16px 8px 4px;
+    color: #ffffff;
+    pointer-events: none;
+}
+
+.auth-art-overlay-top,
+.auth-art-overlay-bottom {
+    position: relative;
+    z-index: 6;
+    pointer-events: auto;
+}
+
+.auth-hero-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(11, 17, 30, 0.78);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(118, 185, 0, 0.65);
+    color: #a3e635;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    padding: 6px 14px;
+    border-radius: 99px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.auth-art-glass-pill {
+    background: rgba(10, 16, 29, 0.74) !important;
+    backdrop-filter: blur(16px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(150%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.16) !important;
+    border-top: 2px solid rgba(118, 185, 0, 0.7) !important;
+    border-radius: 16px !important;
+    padding: 13px 15px !important;
+    color: #f8fafc !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45) !important;
+    transition: transform 0.22s ease, border-color 0.22s ease, background-color 0.22s ease;
+}
+
+.auth-art-glass-pill:hover {
+    transform: translateY(-3px);
+    border-color: #76b900 !important;
+    background: rgba(14, 22, 38, 0.88) !important;
+}
+
+.auth-pill-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background: rgba(118, 185, 0, 0.18);
+    border: 1px solid rgba(118, 185, 0, 0.45);
+    margin-bottom: 6px;
+}
+
+/* HỘP ĐĂNG NHẬP / ĐĂNG KÝ BÊN PHẢI */
+.auth-stationary-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 495px;
+    margin-left: auto;
+    background: rgba(9, 14, 26, 0.88) !important;
+    backdrop-filter: blur(24px) saturate(170%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(170%) !important;
+    color: #f8fafc !important;
+    border: 1.8px solid rgba(118, 185, 0, 0.58) !important;
+    border-radius: 22px !important;
+    padding: 20px 24px !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.72), 0 0 38px rgba(118, 185, 0, 0.14) !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+.auth-stationary-card h4,
+.auth-stationary-card label,
+.auth-stationary-card .form-label {
+    color: #f1f5f9 !important;
+}
+
+.auth-stationary-card .text-muted {
+    color: #94a3b8 !important;
+}
+
+.auth-stationary-card .form-control,
+.auth-stationary-card .form-select {
+    background-color: rgba(15, 23, 42, 0.90) !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    border-radius: 10px !important;
+    padding: 7px 12px !important;
+    font-size: 13px !important;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.auth-stationary-card .form-control::placeholder {
+    color: #64748b !important;
+}
+
+.auth-stationary-card .form-control:focus,
+.auth-stationary-card .form-select:focus {
+    background-color: rgba(15, 23, 42, 0.98) !important;
+    border-color: #76b900 !important;
+    box-shadow: 0 0 0 3px rgba(118, 185, 0, 0.24) !important;
+    color: #ffffff !important;
+}
+
+.auth-segmented-tabs {
+    display: inline-flex;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 3.5px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+}
+
+.auth-segmented-tabs .btn {
+    border-radius: 9px !important;
+    font-size: 12.5px !important;
+    padding: 5px 14px !important;
+    border: none !important;
+}
+
+.social-login-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: 1px solid rgba(148, 163, 184, 0.32) !important;
+    background: rgba(30, 41, 59, 0.75) !important;
+    color: #f8fafc !important;
+    transition: all 0.18s ease;
+}
+
+.social-login-btn:hover {
+    border-color: #76b900 !important;
+    background: rgba(30, 41, 59, 0.96) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(118, 185, 0, 0.22);
+}
+
+.auth-security-subbox {
+    border-radius: 12px;
+    padding: 8px 11px;
+    background: rgba(118, 185, 0, 0.08);
+    border: 1px solid rgba(118, 185, 0, 0.35);
+}
+
+/* ==========================================================================
+   KHUNG HIỂN THỊ & ĐỒNG Ý ĐIỀU KHOẢN PHÁP LÝ CHUYÊN NGHIỆP TRONG ĐĂNG KÝ
+   ========================================================================== */
+.auth-terms-consent-box {
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(20, 34, 54, 0.88));
+    border: 1.5px solid rgba(56, 189, 248, 0.45);
+    transition: all 0.2s ease;
+}
+
+.auth-terms-consent-box.terms-accepted-active {
+    border-color: #76b900 !important;
+    background: linear-gradient(135deg, rgba(20, 40, 22, 0.90), rgba(15, 23, 42, 0.92)) !important;
+    box-shadow: 0 0 18px rgba(118, 185, 0, 0.22);
+}
+
+.auth-terms-consent-box .form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+    border: 2px solid #76b900;
+    background-color: #090d16;
+}
+
+.auth-terms-consent-box .form-check-input:checked {
+    background-color: #76b900;
+    border-color: #a3e635;
+}
+
+.auth-inline-terms-drawer {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(9, 13, 22, 0.92);
+    border: 1px solid rgba(118, 185, 0, 0.45);
+    max-height: 135px;
+    overflow-y: auto;
+    font-size: 11px;
+    line-height: 1.45;
+    color: #cbd5e1;
+}
+
+.seller-portal-callout {
+    border-radius: 14px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(118, 185, 0, 0.15), rgba(14, 165, 233, 0.12));
+    border: 1px dashed rgba(118, 185, 0, 0.65);
+}
+
+@media (max-width: 991.98px) {
+    .auth-ecommerce-section {
+        min-height: auto;
+        padding: 18px 8px 34px 8px !important;
+    }
+    .auth-stationary-card {
+        max-width: 520px;
+        margin: 0 auto 16px auto !important;
+    }
+    .auth-art-showcase {
+        min-height: auto;
+        padding: 8px 0;
+        gap: 16px;
+    }
+}

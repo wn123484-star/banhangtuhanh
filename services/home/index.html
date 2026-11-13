@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nivida Store — Sàn Thương Mại Công Nghệ &amp; Đời Sống Minh Bạch 6 Tiêu Chí</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/home/home.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="nvidia-header-shell py-3">
+        <div id="mainHeroBox" class="p-3 mb-3 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #090d16 0%, #1e293b 60%, #14532d 100%); border: 1.5px solid #76b900; color: #f8fafc;">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-7">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <span class="badge bg-nvidia text-dark fw-bold" id="heroEventBadge">🔥 ĐẠI TIỆC CÔNG NGHỆ &amp; ĐỜI SỐNG</span>
+                        <span class="badge bg-dark border border-secondary">🛡️ Bảo lãnh Escrow 100%</span>
+                        <span class="badge bg-warning text-dark fw-bold">🚚 Đền bù 50K nếu trễ SLA</span>
+                    </div>
+                    <h4 class="fw-bold text-nvidia mb-1" id="heroEventTitle">Sàn Mua Sắm Minh Bạch 6 Tiêu Chí — Chọn Phân Loại &amp; Áp Mã Trực Tiếp</h4>
+                    <p class="small text-light opacity-90 mb-0" id="heroEventSlogan">
+                        Mọi sản phẩm đều niêm yết rõ Đơn vị tính, Hạn bảo hành, Khuyến mãi của Gian hàng và Lịch sử giá chống tăng giá ảo.
+                    </p>
+                </div>
+                <div class="col-lg-5">
+                    <div class="d-flex flex-wrap justify-content-lg-end gap-2">
+                        <button type="button" class="btn btn-warning text-dark btn-sm fw-bold px-3 py-2" onclick="executeGlobalCatSearchBarHunt('mua 2 RTX 4070')">
+                            🐾 Mèo AI Gắp Nhanh SP
+                        </button>
+                        <a href="/services/minigame/farm.html" class="btn btn-nvidia btn-sm fw-bold px-3 py-2">
+                            🌱 Trồng Cây Săn Voucher 200K
+                        </a>
+                        <a href="/services/pc_builder/pc-builder.html" class="btn btn-outline-info btn-sm fw-bold px-3 py-2">
+                            🛠️ Tự Build PC
+                        </a>
+                        <a href="/services/vouchers_deals/vouchers.html" class="btn btn-outline-light btn-sm px-3 py-2">
+                            🎟️ Kho Voucher
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="nv-adaptive-card p-3 mb-3 shadow-sm">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-nvidia">GIAN HÀNG CHÍNH HÃNG</span>
+                    <strong class="small">6 Gian Hàng Flagship &amp; Yêu Thích Nổi Bật</strong>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="small text-muted d-none d-md-inline">Click vào gian hàng để xem ưu đãi riêng</span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-0" style="font-size: 11px;" onclick="resetHomeAllFilters()">Xem tất cả SP</button>
+                </div>
+            </div>
+            <div id="homeStoresStrip" class="row g-2 mb-2"></div>
+            <div id="homeVoucherStrip" class="row g-2 pt-2 border-top"></div>
+        </section>
+
+        <section id="allProductsSection" class="nv-adaptive-card p-3 shadow-sm">
+            <div class="row g-2 align-items-center border-bottom pb-3 mb-3">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-nvidia">KỆ HÀNG 6 CỘT</span>
+                        <h5 class="fw-bold m-0">✨ Danh Mục Sản Phẩm Chính Hãng</h5>
+                    </div>
+                    <small class="text-muted" id="recommendationReasonText">Bấm vào sản phẩm để xem khuyến mãi của Shop và chọn phân loại trước khi bỏ giỏ</small>
+                </div>
+
+                <div class="col-lg-8">
+                    <div class="d-flex flex-wrap justify-content-lg-end gap-2 align-items-center">
+                        <select id="homeFilterCategory" class="form-select form-select-sm" style="width: 165px;" onchange="loadProducts()">
+                            <option value="">Tất cả ngành hàng</option>
+                            <option value="gpu">Card đồ họa (GPU)</option>
+                            <option value="cpu">Vi xử lý (CPU)</option>
+                            <option value="mainboard">Mainboard</option>
+                            <option value="ram">RAM &amp; SSD</option>
+                            <option value="monitor">Màn hình</option>
+                            <option value="keyboard">Bàn phím</option>
+                            <option value="mouse">Chuột Gaming</option>
+                            <option value="headphones">Tai nghe</option>
+                            <option value="home_living">Đèn &amp; Gia dụng</option>
+                            <option value="health_care">Đồng hồ &amp; Sức khỏe</option>
+                            <option value="fashion">Balo &amp; Phụ kiện</option>
+                        </select>
+
+                        <select id="homeFilterShopTier" class="form-select form-select-sm" style="width: 145px;" onchange="loadProducts()">
+                            <option value="">Mọi phân hạng Shop</option>
+                            <option value="mall">👑 Shop Mall</option>
+                            <option value="favorite">⭐ Shop Yêu Thích</option>
+                        </select>
+
+                        <select id="homeFilterSortBy" class="form-select form-select-sm" style="width: 155px;" onchange="loadProducts()">
+                            <option value="popular">Phổ biến &amp; Bán chạy</option>
+                            <option value="price_asc">Giá: Thấp ➔ Cao</option>
+                            <option value="price_desc">Giá: Cao ➔ Thấp</option>
+                            <option value="rating_desc">Đánh giá cao nhất</option>
+                        </select>
+
+                        <div class="form-check form-switch m-0 ms-1">
+                            <input class="form-check-input" type="checkbox" id="homeFilterFlashSale" onchange="loadProducts()">
+                            <label class="form-check-label small fw-bold text-warning" for="homeFilterFlashSale">⚡ Flash Sale</label>
+                        </div>
+
+                        <span class="badge bg-dark border border-secondary py-2 px-2" id="homeTotalProductsBadge">0 SP</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="recommendedProducts" class="d-none"></div>
+            <div id="productList" class="row g-2"></div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/home/home.js"></script>
+</body>
+</html>

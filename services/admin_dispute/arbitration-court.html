@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Phân Xử &amp; Tòa Án Trọng Tài Doanh Nghiệp 3 Bên - Nivida Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/admin_dispute/admin-center.css">
+    <style>
+        .arb-step-node {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1.5px solid var(--nv-border-col, #334155);
+            background: rgba(15, 23, 42, 0.45);
+            transition: all 0.2s ease;
+        }
+        .arb-step-node.step-done {
+            border-color: #76b900;
+            background: rgba(118, 185, 0, 0.16);
+        }
+        .arb-step-node.step-current {
+            border-color: #facc15;
+            background: rgba(250, 204, 21, 0.16);
+            box-shadow: 0 0 18px rgba(250, 204, 21, 0.22);
+        }
+        .arb-timeline-item {
+            position: relative;
+            padding-left: 18px;
+            border-left: 3px solid #76b900;
+            margin-bottom: 14px;
+        }
+        .arb-timeline-item.role-buyer { border-left-color: #38bdf8; }
+        .arb-timeline-item.role-seller { border-left-color: #f59e0b; }
+        .arb-timeline-item.role-ai { border-left-color: #a855f7; }
+        .arb-timeline-item.role-admin { border-left-color: #22c55e; }
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder" class="no-print"></div>
+
+    <main class="container-fluid px-lg-4 py-4">
+        <!-- THANH ĐIỀU HÀNH CỔNG PHÂN XỬ DOANH NGHIỆP & CHUYỂN ĐỔI GÓC NHÌN 3 BÊN -->
+        <div class="nv-adaptive-card p-3 mb-4 shadow-sm no-print" style="border-left: 5px solid #76b900 !important;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <span class="badge bg-nvidia px-3 py-1">⚖️ TRUNG TÂM TRỌNG TÀI &amp; PHÂN XỬ DOANH NGHIỆP (ENTERPRISE ODR COURT)</span>
+                        <span class="badge bg-dark border border-secondary" id="arbCurrentRoleBadge">Góc nhìn: Hội Đồng Trọng Tài</span>
+                    </div>
+                    <h4 class="fw-bold m-0">🏛️ Cổng Theo Dõi Phân Xử 3 Bên, Áp Dụng Quy Trình SOP &amp; Bảo Lãnh Escrow</h4>
+                    <small class="text-muted">
+                        Minh bạch hóa toàn bộ quá trình giải quyết tranh chấp giữa <strong>Người Mua</strong>, <strong>Gian Hàng</strong> và <strong>Trọng Tài AI / Admin</strong> theo 5 Quy trình chuẩn SOP.
+                    </small>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" id="arbRoleBtn_ADMIN_JUDGE" class="btn btn-warning text-dark fw-bold" onclick="setArbitrationPartyRole('ADMIN_JUDGE')">👑 Trọng Tài Sàn (Admin)</button>
+                        <button type="button" id="arbRoleBtn_BUYER" class="btn btn-outline-info fw-bold" onclick="setArbitrationPartyRole('BUYER')">👤 Góc Nhìn Người Mua</button>
+                        <button type="button" id="arbRoleBtn_SELLER" class="btn btn-outline-warning fw-bold" onclick="setArbitrationPartyRole('SELLER')">🏪 Góc Nhìn Gian Hàng</button>
+                    </div>
+                    <button type="button" class="btn btn-nvidia btn-sm fw-bold px-3 py-2" onclick="openCreateDisputeModal()">➕ Tạo Hồ Sơ Phân Xử Mới</button>
+                    <a href="/services/admin_dispute/admin-center.html" class="btn btn-outline-secondary btn-sm py-2">&larr; Về Admin Center</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 THẺ CHỈ SỐ SLA & QUỸ TẠM GIỮ ESCROW -->
+        <div class="row g-3 mb-4 no-print">
+            <div class="col-md-3 col-6">
+                <div class="nv-adaptive-card p-3 border-start border-4 border-success h-100">
+                    <div class="small text-muted">TỔNG HỒ SƠ PHÂN XỬ</div>
+                    <div class="fs-4 fw-bold text-nvidia" id="arbStatTotalCases">0 hồ sơ</div>
+                    <small class="text-muted">Đang mở: <strong id="arbStatPendingCases" class="text-warning">0</strong> • Đã xử: <strong id="arbStatResolvedCases" class="text-success">0</strong></small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="nv-adaptive-card p-3 border-start border-4 border-warning h-100">
+                    <div class="small text-muted">QUỸ ESCROW ĐANG PHONG TỎA</div>
+                    <div class="fs-4 fw-bold text-warning" id="arbStatFrozenEscrow">0 ₫</div>
+                    <small class="text-muted">Bảo vệ 100% quyền lợi các bên</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="nv-adaptive-card p-3 border-start border-4 border-info h-100">
+                    <div class="small text-muted">QUY TRÌNH DOANH NGHIỆP ÁP DỤNG</div>
+                    <div class="fs-5 fw-bold text-info mt-1" id="arbActiveSopBadge">5 Bộ Quy Chuẩn SOP</div>
+                    <small class="text-muted">Tự động khớp theo nguyên nhân</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="nv-adaptive-card p-3 border-start border-4 border-primary h-100 d-flex flex-column justify-content-between">
+                    <div class="small text-muted">TRỢ LÝ TRỌNG TÀI AI (GEMINI/GROQ)</div>
+                    <div class="d-flex gap-2 mt-1">
+                        <button type="button" class="btn btn-nvidia btn-sm w-100 fw-bold" onclick="runBatchAiTriageAllCases()">🤖 AI Chấm Toàn Bộ Hồ Sơ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THANH TIẾN TRÌNH 4 BƯỚC PHÂN XỬ CỦA HỒ SƠ ĐANG CHỌN -->
+        <div class="nv-adaptive-card p-3 mb-4 shadow-sm">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 border-bottom pb-2">
+                <div>
+                    <span class="badge bg-nvidia me-2" id="arbHeaderCaseCode">#ARB-2026-0001</span>
+                    <strong class="fs-5" id="arbHeaderCaseTitle">Đang tải hồ sơ phân xử...</strong>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge bg-warning text-dark p-2" id="arbHeaderSlaBadge">⏳ Cam kết xử lý: 4 giờ</span>
+                    <span class="badge bg-info text-dark p-2" id="arbHeaderEscrowBadge">🛡️ Escrow: Đang phong tỏa</span>
+                    <button type="button" class="btn btn-outline-light btn-sm no-print" onclick="window.print()">🖨️ In Biên Bản Phán Quyết</button>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2" id="arbWorkflow4StepsBar">
+                <div class="arb-step-node" data-wstep="1">
+                    <div class="fw-bold small text-nvidia">BƯỚC 1 • TIẾP NHẬN &amp; ESCROW</div>
+                    <div class="text-muted" style="font-size:11.5px;">Phong tỏa tạm giữ tiền đơn hàng</div>
+                </div>
+                <div class="arb-step-node" data-wstep="2">
+                    <div class="fw-bold small text-info">BƯỚC 2 • ĐỐI CHẤT 3 BÊN</div>
+                    <div class="text-muted" style="font-size:11.5px;">Người mua &amp; Shop nạp chứng cứ</div>
+                </div>
+                <div class="arb-step-node" data-wstep="3">
+                    <div class="fw-bold small text-warning">BƯỚC 3 • TRỌNG TÀI AI &amp; SOP</div>
+                    <div class="text-muted" style="font-size:11.5px;">Đối chiếu quy trình SOP &amp; Pháp lý</div>
+                </div>
+                <div class="arb-step-node" data-wstep="4">
+                    <div class="fw-bold small text-success">BƯỚC 4 • PHÁN QUYẾT &amp; GIẢI NGÂN</div>
+                    <div class="text-muted" style="font-size:11.5px;">Hoàn tiền / Giải ngân &amp; Thông báo</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BỐ CỤC 3 CỘT DOANH NGHIỆP: DANH SÁCH VỤ VIỆC | PHÒNG ĐỐI CHẤT & QUY TRÌNH SOP | PHÁN QUYẾT AI & THỰC THI -->
+        <div class="row g-4">
+            <!-- CỘT 1 (3 CỘT): DANH SÁCH HỒ SƠ TRANH CHẤP & BỘ LỌC -->
+            <div class="col-lg-3 no-print">
+                <div class="nv-adaptive-card p-3 h-100 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-nvidia m-0">📂 1. Danh Sách Hồ Sơ</h6>
+                        <button type="button" class="btn btn-outline-info btn-sm py-0" onclick="loadArbitrationCourtCases()">🔄</button>
+                    </div>
+                    <div class="btn-group w-100 btn-group-sm mb-3" role="group">
+                        <button type="button" class="btn btn-nvidia fw-bold" onclick="filterCourtCases('all', this)">Tất cả</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterCourtCases('pending', this)">Đang xử lý</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="filterCourtCases('resolved', this)">Đã xong</button>
+                    </div>
+                    <div id="arbCasesListContainer" class="d-flex flex-column gap-2" style="max-height: 680px; overflow-y: auto;"></div>
+                </div>
+            </div>
+
+            <!-- CỘT 2 (5 CỘT): QUY TRÌNH XỬ LÝ SOP ĐƯỢC ÁP DỤNG & DÒNG THỜI GIAN ĐỐI CHẤT 3 BÊN -->
+            <div class="col-lg-5">
+                <!-- Khung Quy trình SOP đang áp dụng & Checklist kiểm toán tự động -->
+                <div class="nv-adaptive-card p-3 mb-3 shadow-sm" style="border: 1.5px solid #38bdf8 !important;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-2">
+                        <div>
+                            <span class="badge bg-info text-dark fw-bold">QUY TRÌNH XỬ LÝ DOANH NGHIỆP (SOP WORKFLOW)</span>
+                            <h6 class="fw-bold m-0 mt-1 text-nvidia" id="arbMatchedSopTitle">SOP-01: Quy trình Xử lý Sai lệch Mô tả</h6>
+                        </div>
+                        <select id="arbSopSelectorDropdown" class="form-select form-select-sm no-print" style="width: auto; font-size: 11.5px;" onchange="changeCaseSopWorkflow(this.value)">
+                            <option value="SOP-01">Áp dụng: SOP-01 (Sai mô tả / Bảo hành)</option>
+                            <option value="SOP-02">Áp dụng: SOP-02 (Giao trễ SLA NVX 2H)</option>
+                            <option value="SOP-03">Áp dụng: SOP-03 (Lỗi phần cứng DOA 15 ngày)</option>
+                            <option value="SOP-04">Áp dụng: SOP-04 (Móp méo / Hư hỏng vận chuyển)</option>
+                            <option value="SOP-05">Áp dụng: SOP-05 (Kiểm toán Gian lận Voucher)</option>
+                        </select>
+                    </div>
+
+                    <div id="arbSopStepsChecklist" class="small mb-2"></div>
+                    <div id="arbSqliteVerificationGrid" class="row g-2 pt-2 border-top small"></div>
+                </div>
+
+                <!-- Phòng Đối Chất 3 Bên & Dòng Thời Gian Chứng Cứ -->
+                <div class="nv-adaptive-card p-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <h6 class="fw-bold text-nvidia m-0">💬 2. Phòng Đối Chất 3 Bên &amp; Nhật Ký Chứng Cứ</h6>
+                        <span class="badge bg-dark border border-secondary" id="arbTimelineCountBadge">0 bản ghi</span>
+                    </div>
+
+                    <div id="arbTimelineStreamBox" class="pe-1 mb-3" style="max-height: 360px; overflow-y: auto;"></div>
+
+                    <!-- Biểu mẫu gửi bằng chứng / lời khai theo đúng vai trò đang chọn -->
+                    <form onsubmit="submitPartyEvidenceForm(event)" class="border-top pt-3 no-print">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="small fw-bold text-nvidia" id="arbEvidenceFormLabel">✍️ Gửi Bằng Chứng / Ý Kiến Đối Chất (Có bắn thông báo 🔔):</label>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0" style="font-size:10.5px;" onclick="fillSampleEvidenceText('video')">+ Đính kèm Video mở hộp</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0" style="font-size:10.5px;" onclick="fillSampleEvidenceText('waybill')">+ Mã vận đơn NVX</button>
+                            </div>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="arbEvidenceMessageInput" class="form-control" placeholder="Nhập lời khai, mã vận đơn NVX hoặc đường dẫn ảnh/video bằng chứng..." required>
+                            <button type="submit" class="btn btn-nvidia fw-bold px-3">📤 Gửi &amp; Báo Các Bên</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CỘT 3 (4 CỘT): CỐ VẤN TRỌNG TÀI AI & BẢNG PHÁN QUYẾT THỰC THI DÒNG TIỀN ESCROW -->
+            <div class="col-lg-4">
+                <div class="nv-adaptive-card p-3 mb-3 shadow-sm" style="border: 2px solid #76b900 !important;">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <div>
+                            <span class="badge bg-nvidia">AI ARBITRATOR CO-PILOT</span>
+                            <h6 class="fw-bold m-0 mt-1">🤖 3. Phân Tích Từ Trọng Tài AI (SOP + Pháp Lý)</h6>
+                        </div>
+                        <span class="badge bg-success" id="arbAiConfidenceBadge">Độ tin cậy: 96%</span>
+                    </div>
+
+                    <div id="arbAiVerdictContentBox" class="p-3 rounded-3 border small mb-3 font-monospace" style="white-space: pre-line; background: rgba(118, 185, 0, 0.07); max-height: 280px; overflow-y: auto;"></div>
+
+                    <button type="button" id="btnRunSingleAiAnalyze" class="btn btn-nvidia btn-sm w-100 fw-bold py-2 no-print" onclick="triggerCurrentCaseAiAnalysis()">
+                        ⚡ Yêu Cầu Trọng Tài AI Phân Tích Lại Theo SOP Này
+                    </button>
+                </div>
+
+                <!-- BẢNG THỰC THI PHÁN QUYẾT DÒNG TIỀN ESCROW (DÀNH CHO HỘI ĐỒNG TRỌNG TÀI ADMIN) -->
+                <div class="nv-adaptive-card p-3 shadow-sm no-print" id="arbJudgeExecutionCard">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                        <h6 class="fw-bold text-warning m-0">⚖️ 4. Thực Thi Phán Quyết &amp; Giải Ngân Escrow</h6>
+                        <span class="badge bg-warning text-dark">Human-in-the-Loop</span>
+                    </div>
+                    <p class="small text-muted mb-2">
+                        Chọn phương án phán quyết bên dưới để hệ thống tự động giải ngân/hoàn tiền vào <strong>Ngân hàng NVIDIA PAY</strong> và gửi thông báo chính thức cho Người mua &amp; Gian hàng:
+                    </p>
+                    <div class="mb-2">
+                        <input type="text" id="arbJudgeFinalNoteInput" class="form-control form-control-sm" placeholder="Nhập ghi chú phán quyết của Trọng tài viên..." value="Đã đối chiếu đầy đủ chứng cứ 3 bên và quy chuẩn SOP.">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success btn-sm fw-bold py-2 text-start" onclick="executeCourtVerdict('refund_buyer_100')">
+                            💸 1. Hoàn Tiền 100% Cho Người Mua (Cộng Ví NVIDIA PAY)
+                        </button>
+                        <button type="button" class="btn btn-warning text-dark btn-sm fw-bold py-2 text-start" onclick="executeCourtVerdict('partial_50_50')">
+                            ⚖️ 2. Chia Sẻ Rủi Ro 50/50 (Hoàn 50% Khách • Giải Ngân 50% Shop)
+                        </button>
+                        <button type="button" class="btn btn-info text-dark btn-sm fw-bold py-2 text-start" onclick="executeCourtVerdict('compensate_voucher')">
+                            🎟️ 3. Đền Bù Voucher Hỏa Tốc HOATOC50K &amp; Giải Ngân Đơn Gốc
+                        </button>
+                        <button type="button" class="btn btn-outline-light btn-sm fw-bold py-2 text-start" onclick="executeCourtVerdict('release_seller_100')">
+                            🔓 4. Bác Khiếu Nại &amp; Giải Ngân 100% Về Ví Gian Hàng
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL TẠO HỒ SƠ KHIẾU NẠI / PHÂN XỬ MỚI TỪ ĐƠN HÀNG THỰC TẾ -->
+        <div id="createArbitrationModal" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center no-print" style="background: rgba(11,15,25,0.82); z-index: 1090;">
+            <div class="nv-adaptive-card p-4 shadow-lg" style="max-width: 620px; width: 95%; border: 2px solid #76b900 !important;">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <div>
+                        <span class="badge bg-nvidia">KHỞI TẠO HỒ SƠ PHÂN XỬ MỚI</span>
+                        <h5 class="fw-bold m-0 mt-1">➕ Gửi Yêu Cầu Trọng Tài Phân Xử &amp; Phong Tỏa Escrow</h5>
+                    </div>
+                    <button type="button" class="btn-close" onclick="document.getElementById('createArbitrationModal').classList.add('d-none')"></button>
+                </div>
+                <form onsubmit="submitNewArbitrationCase(event)" class="row g-2 small">
+                    <div class="col-md-6">
+                        <label class="fw-bold mb-1">Chọn Đơn Hàng Cần Phân Xử *</label>
+                        <select id="newArbOrderIdSelect" class="form-select form-select-sm" onchange="onSelectOrderForNewDispute(this.value)"></select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="fw-bold mb-1">Quy Trình SOP Đề Xuất Áp Dụng *</label>
+                        <select id="newArbSopSelect" class="form-select form-select-sm">
+                            <option value="SOP-01">SOP-01: Sai lệch mô tả &amp; Bảo hành</option>
+                            <option value="SOP-02">SOP-02: Giao hàng trễ cam kết SLA 2H</option>
+                            <option value="SOP-03">SOP-03: Lỗi phần cứng DOA 15 ngày</option>
+                            <option value="SOP-04">SOP-04: Hư hỏng / Móp méo khi vận chuyển</option>
+                            <option value="SOP-05">SOP-05: Kiểm toán giao dịch &amp; Voucher</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold mb-1">Tên Người Mua *</label>
+                        <input type="text" id="newArbBuyerName" class="form-control form-control-sm" value="Nguyễn Văn Khách" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold mb-1">Tên Gian Hàng *</label>
+                        <input type="text" id="newArbSellerName" class="form-control form-control-sm" value="ASUS ROG Official Mall" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="fw-bold mb-1">Số Tiền Phong Tỏa Escrow (₫) *</label>
+                        <input type="number" id="newArbAmount" class="form-control form-control-sm fw-bold text-nvidia" value="16890000" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="fw-bold mb-1">Tiêu Đề Vụ Việc Khiếu Nại *</label>
+                        <input type="text" id="newArbReason" class="form-control form-control-sm" placeholder="VD: Sản phẩm giao trễ SLA hoặc thông số bảo hành khác mô tả..." required>
+                    </div>
+                    <div class="col-12">
+                        <label class="fw-bold mb-1">Mô Tả Chi Tiết &amp; Bằng Chứng Đính Kèm (Link Video đồng kiểm / Mã vận đơn NVX) *</label>
+                        <textarea id="newArbDesc" class="form-control form-control-sm" rows="3" placeholder="Mô tả cụ thể tình trạng đơn hàng và yêu cầu bồi hoàn..." required></textarea>
+                    </div>
+                    <div class="col-12 d-flex justify-content-end gap-2 pt-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('createArbitrationModal').classList.add('d-none')">Hủy</button>
+                        <button type="submit" class="btn btn-nvidia btn-sm fw-bold px-4">🚀 Tạo Hồ Sơ &amp; Phong Tỏa Escrow Ngay</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder" class="no-print"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/admin_dispute/arbitration-court.js"></script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Ký Kênh Người Bán - Nivida Partner</title>
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/auth/auth.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="container py-4">
+        <div class="auth-card bg-surface border rounded-3 p-4 shadow-sm mx-auto" style="max-width: 500px;">
+            <h4 class="fw-bold text-nvidia text-center mb-1">🏪 Đăng Ký Mở Gian Hàng (Seller)</h4>
+            <p class="text-muted text-center small mb-3">Tạo gian hàng nhanh chóng, tùy chỉnh giao diện Shop và đăng bán sản phẩm đa ngành hàng</p>
+            <div id="authAlert" class="alert d-none"></div>
+            <form id="sellerRegForm">
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Họ và tên Chủ Shop</label>
+                    <input type="text" id="sellerFullName" class="form-control form-control-sm" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Tên Gian Hàng / Thương Hiệu</label>
+                    <input type="text" id="sellerCompany" class="form-control form-control-sm" placeholder="VD: GlowTech Lifestyle, GearVN..." required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Email đăng nhập</label>
+                    <input type="email" id="sellerEmail" class="form-control form-control-sm" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small fw-semibold">Mật khẩu</label>
+                    <input type="password" id="sellerPassword" class="form-control form-control-sm" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-semibold">Địa chỉ Kho hàng (Số nhà, Đường, Phường/Xã, Tỉnh/Thành phố)</label>
+                    <input type="text" id="sellerLocation" class="form-control form-control-sm" placeholder="VD: Số 12 Duy Tân, Phường Dịch Vọng Hậu, Thành phố Hà Nội" required>
+                </div>
+                <div class="p-2 border rounded mb-3 small" style="background: rgba(118,185,0,0.06);">
+                    <div class="form-check">
+                        <input type="checkbox" id="sellerTermsCheck" class="form-check-input" checked required>
+                        <label class="form-check-label" for="sellerTermsCheck">
+                            Tôi đồng ý với <a href="/services/legal/terms.html" target="_blank" class="text-nvidia fw-bold">Điều khoản dành cho Người bán</a> của sàn.
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-nvidia w-100 py-2 fw-bold">Kích Hoạt Gian Hàng</button>
+                <div class="text-center mt-3">
+                    <a href="/services/auth/auth.html" class="btn btn-outline-secondary btn-sm w-100">← Quay lại Đăng nhập / Đăng ký Người mua</a>
+                </div>
+            </form>
+        </div>
+    </main>
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/auth/auth.js"></script>
+</body>
+</html>

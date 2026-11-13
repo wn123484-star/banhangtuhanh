@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Tùy Chỉnh Giao Diện Gian Hàng &amp; Nhật Ký Chính Sách - Nvidia Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/seller/seller.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <div>
+                <span class="badge bg-nvidia mb-1">STORE DESIGN STUDIO &amp; POLICY AUDIT LOG V5.1</span>
+                <h3 class="fw-bold m-0">🎨 Studio Cá Nhân Hóa Gian Hàng &amp; Lưu Vết Chính Sách Minh Bạch</h3>
+                <small class="text-muted">Chèn hình nền riêng, đổi màu Neon, tùy chỉnh bố cục Bento và tự động ghi log lịch sử chính sách để đối chiếu bảo vệ người mua</small>
+            </div>
+            <div class="d-flex gap-2">
+                <a id="previewStorePublicLink" href="/services/seller/store.html?seller_id=1" target="_blank" class="btn btn-nvidia btn-sm fw-bold px-3 py-2">🌐 Mở Xem Gian Hàng Thực Tế ↗</a>
+                <a href="/services/seller/seller-dashboard.html" class="btn btn-outline-secondary btn-sm py-2">&larr; Về Dashboard</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <div class="nv-adaptive-card p-4 shadow-lg" style="border: 2px solid #76b900 !important;">
+                    <form id="storeCustomForm" onsubmit="saveStoreCustomization(event)">
+                        <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">✨ 1. Thương Hiệu, Hình Nền Riêng &amp; Hiệu Ứng Giao Diện</h5>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Chọn Nhanh Mẫu Chủ Đề Gian Hàng (1-Click Preset):</label>
+                            <div class="d-flex flex-wrap gap-1">
+                                <button type="button" class="btn btn-outline-success btn-sm py-0" onclick="applyStoreStudioPreset('nvidia')">🟢 ROG / Nvidia Matrix</button>
+                                <button type="button" class="btn btn-outline-danger btn-sm py-0" onclick="applyStoreStudioPreset('crimson')">🔴 MSI / Crimson Lava</button>
+                                <button type="button" class="btn btn-outline-info btn-sm py-0" onclick="applyStoreStudioPreset('cyber')">🔵 Cyberpunk Neon Blue</button>
+                                <button type="button" class="btn btn-outline-warning btn-sm py-0" onclick="applyStoreStudioPreset('gold')">🟡 Royal Luxury Gold</button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Tên Hiển Thị Gian Hàng *</label>
+                                <input type="text" id="customStoreName" class="form-control form-control-sm" placeholder="VD: ASUS ROG Official Mall" required oninput="updateLiveStudioPreview()">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Phân Hạng &amp; Huy Hiệu Shop</label>
+                                <select id="customStoreTier" class="form-select form-select-sm" onchange="updateLiveStudioPreview()">
+                                    <option value="mall">👑 Flagship Mall Chính Hãng</option>
+                                    <option value="favorite">⭐ Shop Yêu Thích+</option>
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label small fw-bold">Khẩu Hiệu / Slogan Thương Hiệu</label>
+                                <input type="text" id="customStoreSlogan" class="form-control form-control-sm" placeholder="VD: Đỉnh cao phần cứng gaming chiến thắng tuyệt đối" oninput="updateLiveStudioPreview()">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Chuyên Ngành Chính</label>
+                                <input type="text" id="customStoreSpecialty" class="form-control form-control-sm" placeholder="VD: VGA RTX &amp; Mainboard">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label small fw-bold">🖼️ Hình Nền Riêng Cho Toàn Gian Hàng (URL hoặc Tải Ảnh)</label>
+                                <div class="input-group input-group-sm mb-1">
+                                    <input type="text" id="customBgImageUrl" class="form-control" placeholder="Dán link ảnh nền (hoặc tải file bên dưới)..." oninput="updateLiveStudioPreview()">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('customBgImageUrl').value=''; updateLiveStudioPreview();">Xóa</button>
+                                </div>
+                                <input type="file" id="customBgFileInput" class="form-control form-control-sm" accept="image/*" onchange="uploadStudioImageFile(this, 'customBgImageUrl')">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label small fw-bold">🎨 Màu Nhấn Neon &amp; Độ Mờ Kính</label>
+                                <div class="d-flex gap-2 align-items-center mb-2">
+                                    <input type="color" id="customAccentColor" class="form-control form-control-color form-control-sm" value="#76b900" onchange="updateLiveStudioPreview()">
+                                    <select id="customLayoutMode" class="form-select form-select-sm" onchange="updateLiveStudioPreview()">
+                                        <option value="bento_showcase">Bố cục Cyber Bento (Nổi bật)</option>
+                                        <option value="classic_grid">Bố cục Lưới Tiêu Chuẩn</option>
+                                    </select>
+                                </div>
+                                <label class="small text-muted d-block">Độ đậm thẻ kính: <strong id="glassOpacityValLabel">88%</strong></label>
+                                <input type="range" id="customGlassOpacity" class="form-range" min="50" max="98" value="88" oninput="document.getElementById('glassOpacityValLabel').textContent=this.value+'%'; updateLiveStudioPreview();">
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Màu Gradient Banner Đầu Trang</label>
+                                <select id="customStoreThemeColor" class="form-select form-select-sm" onchange="updateLiveStudioPreview()">
+                                    <option value="linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #15803d 100%)">🟢 Xanh Nvidia Matrix</option>
+                                    <option value="linear-gradient(135deg, #18181b 0%, #7f1d1d 60%, #dc2626 100%)">🔴 Đỏ Gaming ROG / MSI</option>
+                                    <option value="linear-gradient(135deg, #09090b 0%, #172554 60%, #2563eb 100%)">🔵 Xanh Dương Cyber Neon</option>
+                                    <option value="linear-gradient(135deg, #171717 0%, #581c87 60%, #9333ea 100%)">🟣 Tím Huyền Bí Razer</option>
+                                    <option value="linear-gradient(135deg, #1c1917 0%, #78350f 60%, #d97706 100%)">🟡 Hoàng Kim Luxury</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold">Dòng Chữ Chạy Thông Báo (Marquee)</label>
+                                <input type="text" id="customStoreWelcome" class="form-control form-control-sm" placeholder="Nhập thông báo khuyến mãi chạy ngang..." oninput="updateLiveStudioPreview()">
+                            </div>
+                        </div>
+
+                        <h5 class="fw-bold text-warning border-bottom pb-2 mb-3 mt-4">🛡️ 2. Cam Kết Chính Sách Gian Hàng (Tự Động Lưu Vết Lịch Sử Phiên Bản)</h5>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">1. Chính Sách Bảo Hành Của Shop *</label>
+                            <input type="text" id="customWarrantyPolicy" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">2. Chính Sách Đổi Trả &amp; Hoàn Tiền Escrow *</label>
+                            <input type="text" id="customReturnPolicy" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">3. Cam Kết Giao Hàng &amp; Đền Bù SLA *</label>
+                            <input type="text" id="customShippingCommitment" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-info">Ghi chú lý do thay đổi chính sách (Lưu vào Nhật ký đối chiếu với người mua)</label>
+                            <input type="text" id="customChangeReason" class="form-control form-control-sm" placeholder="VD: Nâng thời hạn đổi trả dịp lễ từ 7 ngày lên 15 ngày...">
+                        </div>
+
+                        <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">💾 Lưu Giao Diện &amp; Ghi Nhận Phiên Bản Chính Sách Mới</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="nv-adaptive-card p-3 mb-3 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-nvidia">XEM TRƯỚC TRỰC TIẾP (LIVE PREVIEW)</span>
+                        <span id="studioCurrentVerBadge" class="badge bg-warning text-dark fw-bold">Phiên bản v1</span>
+                    </div>
+                    <div id="studioLivePreviewBox" class="p-3 rounded-4 border text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #15803d 100%); transition: all 0.25s ease;">
+                        <span class="badge bg-danger mb-1" id="prevTierBadge">👑 FLAGSHIP MALL</span>
+                        <h5 class="fw-bold mb-1" id="prevStoreTitle" style="color: #76b900;">ASUS ROG Official Mall</h5>
+                        <div class="small opacity-90 mb-2" id="prevStoreSlogan">Đỉnh cao phần cứng gaming</div>
+                        <div class="p-2 rounded bg-dark bg-opacity-75 small font-monospace text-warning" id="prevWelcomeBar">🔥 Chào mừng quý khách!</div>
+                    </div>
+                </div>
+
+                <div class="nv-adaptive-card p-3 mb-3 shadow-sm" style="border-left: 4px solid #38bdf8 !important;">
+                    <h6 class="fw-bold text-info mb-2">🔍 Tra Cứu Chính Sách Shop Áp Dụng Tại Thời Điểm Mua Hàng</h6>
+                    <p class="small text-muted mb-2">Giúp Người mua &amp; Trọng tài AI kiểm tra chính sách gốc của Shop tại ngày đặt đơn (kể cả khi Shop vừa sửa chính sách hôm nay):</p>
+                    <div class="input-group input-group-sm mb-2">
+                        <input type="date" id="matchOrderDateInput" class="form-control" value="2026-11-10">
+                        <input type="number" id="matchOrderIdInput" class="form-control" placeholder="Hoặc Mã đơn (VD: 1)">
+                        <button type="button" class="btn btn-info text-dark fw-bold" onclick="checkPolicyByOrderDate()">Đối Chiếu</button>
+                    </div>
+                    <div id="matchedPolicyResultBox" class="p-2 rounded border small d-none"></div>
+                </div>
+
+                <div class="nv-adaptive-card p-3 shadow-sm">
+                    <h6 class="fw-bold text-nvidia mb-2">📜 Nhật Ký Thay Đổi Giao Diện &amp; Chính Sách Gian Hàng</h6>
+                    <div id="storeAuditLogsContainer" style="max-height: 290px; overflow-y: auto;" class="small"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script>
+        function getActiveSellerId() {
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            if (!u || (u.role !== 'seller' && u.role !== 'admin')) {
+                window.location.replace('/services/auth/seller-auth.html');
+                return 0;
+            }
+            const params = new URLSearchParams(window.location.search);
+            if (u.role === 'admin' && params.get('seller_id')) {
+                return Number(params.get('seller_id'));
+            }
+            return Number(u.id);
+        }
+
+        function applyStoreStudioPreset(presetKey) {
+            const presets = {
+                'nvidia': {
+                    theme: 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #15803d 100%)',
+                    accent: '#76b900',
+                    bg: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80'
+                },
+                'crimson': {
+                    theme: 'linear-gradient(135deg, #18181b 0%, #7f1d1d 60%, #dc2626 100%)',
+                    accent: '#f43f5e',
+                    bg: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=80'
+                },
+                'cyber': {
+                    theme: 'linear-gradient(135deg, #09090b 0%, #172554 60%, #2563eb 100%)',
+                    accent: '#38bdf8',
+                    bg: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80'
+                },
+                'gold': {
+                    theme: 'linear-gradient(135deg, #1c1917 0%, #78350f 60%, #d97706 100%)',
+                    accent: '#facc15',
+                    bg: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=1600&q=80'
+                }
+            };
+            const p = presets[presetKey] || presets['nvidia'];
+            document.getElementById('customStoreThemeColor').value = p.theme;
+            document.getElementById('customAccentColor').value = p.accent;
+            document.getElementById('customBgImageUrl').value = p.bg;
+            updateLiveStudioPreview();
+        }
+
+        async function uploadStudioImageFile(fileInput, targetInputId) {
+            if (!fileInput.files || !fileInput.files.length) return;
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            try {
+                const res = await fetch('/api/seller/upload-image', { method: 'POST', body: fd });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.image_url) {
+                        document.getElementById(targetInputId).value = data.image_url;
+                        updateLiveStudioPreview();
+                        if (typeof notifyToast === 'function') notifyToast('🖼️ Đã tải ảnh nền gian hàng lên thành công!', 'success');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function updateLiveStudioPreview() {
+            const name = document.getElementById('customStoreName')?.value || 'ASUS ROG Official Mall';
+            const slogan = document.getElementById('customStoreSlogan')?.value || 'Đỉnh cao phần cứng gaming';
+            const tier = document.getElementById('customStoreTier')?.value || 'mall';
+            const theme = document.getElementById('customStoreThemeColor')?.value || '';
+            const accent = document.getElementById('customAccentColor')?.value || '#76b900';
+            const bgUrl = document.getElementById('customBgImageUrl')?.value.trim() || '';
+            const welcome = document.getElementById('customStoreWelcome')?.value || 'Chào mừng quý khách!';
+
+            const box = document.getElementById('studioLivePreviewBox');
+            if (box) {
+                if (bgUrl) {
+                    box.style.backgroundImage = `linear-gradient(135deg, rgba(11,15,25,0.84), rgba(20,30,48,0.88)), url('${bgUrl}')`;
+                    box.style.backgroundSize = 'cover';
+                    box.style.backgroundPosition = 'center';
+                } else {
+                    box.style.background = theme;
+                }
+                box.style.borderColor = accent;
+            }
+            const titleEl = document.getElementById('prevStoreTitle');
+            if (titleEl) { titleEl.textContent = name; titleEl.style.color = accent; }
+            document.getElementById('prevStoreSlogan').textContent = slogan;
+            document.getElementById('prevTierBadge').textContent = tier === 'mall' ? '👑 FLAGSHIP MALL' : '⭐ SHOP YÊU THÍCH+';
+            document.getElementById('prevWelcomeBar').textContent = '📢 ' + welcome;
+        }
+
+        function renderStoreAuditLogs(logs) {
+            const box = document.getElementById('storeAuditLogsContainer');
+            if (!box) return;
+            if (!Array.isArray(logs) || !logs.length) {
+                box.innerHTML = `<div class="text-muted py-3 text-center">Chưa có bản ghi lịch sử nào. Hãy bấm Lưu để khởi tạo vết phiên bản v1!</div>`;
+                return;
+            }
+            box.innerHTML = logs.map(l => `
+                <div class="p-2 rounded border mb-2" style="background: rgba(118,185,0,0.05);">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="badge bg-nvidia">Phiên bản v${l.version}</span>
+                        <small class="text-muted font-monospace">🕒 ${l.created_at || ''}</small>
+                    </div>
+                    <div class="fw-bold text-warning mb-1">📌 ${l.change_summary || 'Cập nhật cấu hình Shop'}</div>
+                    <div class="text-muted" style="font-size:11px;">
+                        • <strong>BH:</strong> ${l.warranty_policy || ''}<br>
+                        • <strong>Đổi trả:</strong> ${l.return_policy || ''}<br>
+                        • <strong>Giao vận:</strong> ${l.shipping_commitment || ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadStoreCustomizationData() {
+            const sid = getActiveSellerId();
+            const previewBtn = document.getElementById('previewStorePublicLink');
+            if (previewBtn) previewBtn.href = `/services/seller/store.html?seller_id=${sid}`;
+
+            try {
+                const res = await fetch(`/api/seller/store-customization?seller_id=${sid}`);
+                if (!res.ok) return;
+                const d = await res.json();
+                const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined && val !== null) el.value = val; };
+                setVal('customStoreName', d.store_name);
+                setVal('customStoreSlogan', d.slogan);
+                setVal('customStoreTier', d.shop_tier);
+                setVal('customStoreThemeColor', d.theme_color);
+                setVal('customStoreSpecialty', d.specialty);
+                setVal('customStoreWelcome', d.welcome_msg);
+                setVal('customBgImageUrl', d.bg_image_url);
+                setVal('customAccentColor', d.accent_color || '#76b900');
+                setVal('customGlassOpacity', d.glass_opacity || 88);
+                setVal('customLayoutMode', d.layout_mode || 'bento_showcase');
+                setVal('customWarrantyPolicy', d.warranty_policy);
+                setVal('customReturnPolicy', d.return_policy);
+                setVal('customShippingCommitment', d.shipping_commitment);
+
+                const verBadge = document.getElementById('studioCurrentVerBadge');
+                if (verBadge) verBadge.textContent = `Phiên bản v${d.policy_version || 1}`;
+                updateLiveStudioPreview();
+                renderStoreAuditLogs(d.audit_logs || []);
+            } catch (e) {}
+        }
+
+        async function saveStoreCustomization(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const sid = getActiveSellerId();
+            const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
+            const payload = {
+                seller_id: sid,
+                changed_by: u ? (u.full_name || u.username) : 'Chủ Gian Hàng',
+                store_name: document.getElementById('customStoreName')?.value.trim() || '',
+                slogan: document.getElementById('customStoreSlogan')?.value.trim() || '',
+                shop_tier: document.getElementById('customStoreTier')?.value || 'mall',
+                theme_color: document.getElementById('customStoreThemeColor')?.value || '',
+                specialty: document.getElementById('customStoreSpecialty')?.value.trim() || '',
+                welcome_msg: document.getElementById('customStoreWelcome')?.value.trim() || '',
+                bg_image_url: document.getElementById('customBgImageUrl')?.value.trim() || '',
+                accent_color: document.getElementById('customAccentColor')?.value || '#76b900',
+                glass_opacity: Number(document.getElementById('customGlassOpacity')?.value || 88),
+                layout_mode: document.getElementById('customLayoutMode')?.value || 'bento_showcase',
+                warranty_policy: document.getElementById('customWarrantyPolicy')?.value.trim() || '',
+                return_policy: document.getElementById('customReturnPolicy')?.value.trim() || '',
+                shipping_commitment: document.getElementById('customShippingCommitment')?.value.trim() || '',
+                change_reason: document.getElementById('customChangeReason')?.value.trim() || ''
+            };
+            try {
+                const res = await fetch('/api/seller/store-customization', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (typeof notifyToast === 'function') {
+                    notifyToast(data.message || '🎨 Đã lưu giao diện & ghi log chính sách mới!', 'success');
+                }
+                document.getElementById('customChangeReason').value = '';
+                loadStoreCustomizationData();
+            } catch (err) {}
+        }
+
+        async function checkPolicyByOrderDate() {
+            const sid = getActiveSellerId();
+            const oDate = document.getElementById('matchOrderDateInput')?.value || '';
+            const oId = document.getElementById('matchOrderIdInput')?.value || '';
+            const box = document.getElementById('matchedPolicyResultBox');
+            try {
+                const res = await fetch(`/api/seller/store-customization/match-order?seller_id=${sid}&order_date=${encodeURIComponent(oDate)}&order_id=${encodeURIComponent(oId)}`);
+                const data = await res.json();
+                if (box && data.matched_policy) {
+                    const mp = data.matched_policy;
+                    box.classList.remove('d-none');
+                    box.innerHTML = `
+                        <div class="fw-bold text-info mb-1">☑️ Áp dụng Chính sách Phiên bản v${mp.version || 1} (Ban hành: ${mp.created_at || ''})</div>
+                        <div>• <strong>Bảo hành lúc mua:</strong> ${mp.warranty_policy}</div>
+                        <div>• <strong>Đổi trả lúc mua:</strong> ${mp.return_policy}</div>
+                        <div>• <strong>Cam kết SLA lúc mua:</strong> ${mp.shipping_commitment}</div>
+                    `;
+                }
+            } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', loadStoreCustomizationData);
+    </script>
+</body>
+</html>

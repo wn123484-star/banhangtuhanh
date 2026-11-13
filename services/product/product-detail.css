@@ -1,0 +1,14 @@
+[id="productDetailBox"] {
+    min-height: 430px;
+    padding: 24px !important;
+    border-radius: var(--card-radius);
+}
+
+[id="productDetailBox"] img {
+    max-height: 320px;
+    object-fit: contain;
+}
+
+[id="sameShopProductsGrid"] .product-card {
+    min-height: 340px;
+}

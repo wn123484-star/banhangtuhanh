@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Sản Phẩm &amp; Hồ Sơ Minh Bạch 6 Tiêu Chí - Nvidia Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/product/product-detail.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <nav aria-label="breadcrumb" class="mb-3 small">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/services/home/index.html" class="text-nvidia text-decoration-none fw-bold">🏠 Trang Chủ</a></li>
+                <li class="breadcrumb-item"><a href="/services/compare/compare.html" class="text-decoration-none">⚖️ So Sánh &amp; Wishlist</a></li>
+                <li class="breadcrumb-item active text-muted" aria-current="page" id="breadcrumbProdName">Chi tiết sản phẩm</li>
+            </ol>
+        </nav>
+
+        <div id="productDetailBox">
+            <div class="nv-adaptive-card p-5 text-center">
+                <div class="spinner-border text-success" role="status"></div>
+                <div class="mt-2 small text-muted">Đang tải thông số minh bạch &amp; lịch sử bảo hành của sản phẩm...</div>
+            </div>
+        </div>
+
+        <!-- MODAL PHIẾU CAM KẾT BẢO HÀNH ĐIỆN TỬ & MÃ QR SẢN PHẨM -->
+        <div id="warrantyCertificateModal" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(11,15,25,0.78); z-index: 1080;">
+            <div class="nv-adaptive-card p-4 shadow-lg" style="max-width: 580px; width: 95%; border: 2px solid #76b900 !important;">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <div>
+                        <span class="badge bg-nvidia">CHỨNG NHẬN BẢO HÀNH ĐIỆN TỬ NVIDIA STORE</span>
+                        <h5 class="fw-bold m-0 mt-1">🛡️ Phiếu Cam Kết Bảo Hành &amp; Nguồn Gốc Chính Hãng</h5>
+                    </div>
+                    <button type="button" class="btn-close" onclick="document.getElementById('warrantyCertificateModal').classList.add('d-none')"></button>
+                </div>
+                <div id="warrantyCertificateBody" class="small mb-3"></div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('warrantyCertificateModal').classList.add('d-none')">Đóng</button>
+                    <button type="button" class="btn btn-nvidia btn-sm fw-bold" onclick="window.print()">🖨️ In Phiếu Bảo Hành</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/product/product-detail.js"></script>
+</body>
+</html>

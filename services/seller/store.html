@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gian Hàng Độc Quyền &amp; Hồ Sơ Chính Sách Minh Bạch - Nvidia Store</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <link rel="stylesheet" href="/services/home/home.css">
+    <style>
+        .store-custom-wallpaper-wrap {
+            transition: background-image 0.35s ease;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .store-marquee-bar {
+            overflow: hidden;
+            white-space: nowrap;
+            background: rgba(11, 15, 25, 0.78);
+            border: 1px solid rgba(118, 185, 0, 0.45);
+            border-radius: 10px;
+            padding: 6px 14px;
+        }
+        @keyframes storeMarqueeSlide {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .store-marquee-text {
+            display: inline-block;
+            animation: storeMarqueeSlide 18s linear infinite;
+            font-weight: 600;
+            color: #facc15;
+        }
+    </style>
+</head>
+<body class="store-custom-wallpaper-wrap" id="storePageBody">
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <div id="storeDynamicHeroBanner" class="nv-adaptive-card p-4 mb-3 shadow-lg" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #15803d 100%) !important; color: #fff !important; border: 2px solid #76b900 !important; border-radius: 20px;">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span id="storeTierBadge" class="badge bg-danger px-3 py-1">👑 FLAGSHIP STORE</span>
+                        <span class="badge bg-nvidia px-3 py-1">☑️ Bảo Lãnh Escrow 100%</span>
+                        <span id="storePolicyVerBadge" class="badge bg-info text-dark fw-bold">📜 Chính sách v1 (Đã lưu vết)</span>
+                        <span id="storeRatingBadge" class="badge bg-warning text-dark fw-bold">⭐ 4.9 / 5.0</span>
+                    </div>
+                    <h2 class="fw-bold mb-1" id="storeBannerTitle" style="color: #76b900;">ASUS ROG Official Mall</h2>
+                    <p class="small text-light opacity-90 mb-2" id="storeBannerSlogan">
+                        Gian hàng chính hãng phân phối linh kiện phần cứng cao cấp. Đổi trả miễn phí 15 ngày &amp; Tặng Voucher HOATOC50K nếu giao trễ SLA.
+                    </p>
+                    <div class="store-marquee-bar">
+                        <span class="store-marquee-text" id="storeWelcomeMarquee">🔥 Chào mừng quý khách đến với Gian hàng Chính hãng! Mọi đơn hàng đều được bảo vệ bởi hợp đồng thông minh Nvidia Escrow.</span>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="d-inline-flex flex-wrap gap-2 justify-content-lg-end">
+                        <button type="button" id="btnChatWithStoreHero" class="btn btn-nvidia btn-sm fw-bold px-3" onclick="startChatFromStorePage()">
+                            💬 Trò Chuyện Với Shop
+                        </button>
+                        <a href="/services/seller/store-customization.html" id="editStoreCustomLink" class="btn btn-warning btn-sm fw-bold text-dark d-none">🎨 Tùy Chỉnh Giao Diện &amp; Chính Sách Shop</a>
+                        <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="document.getElementById('storePolicyHistoryPanel').classList.toggle('d-none')">
+                            📜 Lịch Sử Chính Sách &amp; Đối Chiếu Ngày Mua
+                        </button>
+                        <a href="/services/home/index.html" class="btn btn-outline-light btn-sm">🏠 Về Sàn</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4 small">
+            <div class="col-md-4">
+                <div class="nv-adaptive-card p-3 h-100 border-start border-4 border-success">
+                    <div class="fw-bold text-nvidia mb-1">🛡️ 1. Cam Kết Bảo Hành Đang Áp Dụng</div>
+                    <div id="storeLiveWarrantyText" class="text-muted">Bảo hành chính hãng 36 tháng, 1 đổi 1 trong 15 ngày đầu.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="nv-adaptive-card p-3 h-100 border-start border-4 border-info">
+                    <div class="fw-bold text-info mb-1">🔄 2. Chính Sách Đổi Trả &amp; Hoàn Tiền</div>
+                    <div id="storeLiveReturnText" class="text-muted">Hoàn tiền 100% qua Quỹ Escrow nếu sản phẩm không đúng mô tả.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="nv-adaptive-card p-3 h-100 border-start border-4 border-warning">
+                    <div class="fw-bold text-warning mb-1">🚚 3. Cam Kết Giao Vận SLA</div>
+                    <div id="storeLiveShippingText" class="text-muted">Giao hỏa tốc NVX 2H, đền bù Voucher HOATOC50K nếu giao trễ.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="storePolicyHistoryPanel" class="nv-adaptive-card p-4 mb-4 shadow-sm d-none" style="border: 2px solid #38bdf8 !important;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-3">
+                <div>
+                    <span class="badge bg-info text-dark fw-bold">CHỐNG THAY ĐỔI CHÍNH SÁCH ĐỘT NGỘT</span>
+                    <h5 class="fw-bold m-0 mt-1">📜 Nhật Ký Thay Đổi Chính Sách Của Gian Hàng &amp; Khớp Chiếu Theo Ngày Mua Hàng</h5>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('storePolicyHistoryPanel').classList.add('d-none')">Đóng [X]</button>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-5">
+                    <div class="p-3 rounded-3 border h-100">
+                        <div class="fw-bold small text-info mb-2">🔍 Tra Cứu Chính Sách Áp Dụng Cho Đơn Hàng Của Bạn:</div>
+                        <p class="small text-muted mb-2">Nhập ngày bạn đặt mua hoặc Mã đơn hàng để xem chính sách cam kết của Shop tại đúng thời điểm đó:</p>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="date" id="buyerVerifyOrderDate" class="form-control" value="2026-11-10">
+                            <input type="number" id="buyerVerifyOrderId" class="form-control" placeholder="Mã đơn (VD: 1)">
+                            <button type="button" class="btn btn-nvidia fw-bold" onclick="verifyStorePolicyForBuyerOrder()">Tra Cứu</button>
+                        </div>
+                        <div id="buyerPolicyMatchResult" class="p-2 rounded border small mt-2">
+                            Chọn ngày hoặc nhập mã đơn rồi bấm Tra Cứu.
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="fw-bold small text-nvidia mb-2">📋 Toàn Bộ Lịch Sử Sửa Đổi Chính Sách Đã Ghi Log Của Shop:</div>
+                    <div id="publicStorePolicyLogsList" style="max-height: 220px; overflow-y: auto;" class="small"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nv-adaptive-card p-3 mb-4 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold text-nvidia m-0">🎟️ Mã Giảm Giá Độc Quyền Của Gian Hàng Này</h6>
+                <a href="/services/vouchers_deals/vouchers.html" class="small text-info text-decoration-none">Kho Voucher Toàn Sàn ➔</a>
+            </div>
+            <div id="storeVouchersStrip" class="row g-2"></div>
+        </div>
+
+        <div class="nv-adaptive-card p-3 mb-4 shadow-sm">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="search" id="storeSearchInput" class="form-control form-control-sm" placeholder="🔍 Tìm kiếm trong gian hàng này..." oninput="reloadStorefrontProducts()">
+                </div>
+                <div class="col-md-3">
+                    <select id="storeCategoryFilter" class="form-select form-select-sm" onchange="reloadStorefrontProducts()">
+                        <option value="">Tất cả danh mục sản phẩm</option>
+                        <option value="gpu">Card đồ họa (GPU)</option>
+                        <option value="cpu">Vi xử lý (CPU)</option>
+                        <option value="mainboard">Mainboard</option>
+                        <option value="ram">RAM &amp; SSD</option>
+                        <option value="monitor">Màn hình</option>
+                        <option value="keyboard">Bàn phím &amp; Chuột</option>
+                        <option value="headphones">Tai nghe</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="storeSortSelect" class="form-select form-select-sm" onchange="reloadStorefrontProducts()">
+                        <option value="bestseller">Bán chạy nhất</option>
+                        <option value="price_asc">Giá thấp đến cao</option>
+                        <option value="price_desc">Giá cao xuống thấp</option>
+                    </select>
+                </div>
+                <div class="col-md-2 text-md-end">
+                    <span id="storeProductCountBadge" class="badge bg-nvidia p-2 w-100">0 sản phẩm</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="storeProductsGrid" class="row g-3"></div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="/core/main.js"></script>
+    <script src="/services/seller/store.js"></script>
+</body>
+</html>

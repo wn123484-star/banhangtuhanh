@@ -1,0 +1,61 @@
+<footer class="bg-surface border-top mt-5 py-4 small">
+    <div class="container">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <h6 class="fw-bold text-nvidia mb-2">NividaX - Sàn Thương Mại Đời Sống &amp; Công Nghệ</h6>
+                <p class="text-muted mb-1">Nền tảng mua sắm tích hợp bảo vệ dòng tiền tạm giữ Escrow, Nông trại Cây Voucher 0 Xu (Quỹ 10 Tỷ Xu Chiến dịch 20.10) và Trọng tài AI chuẩn đạo đức ACM/IEEE.</p>
+            </div>
+            <div class="col-md-4">
+                <h6 class="fw-bold mb-2">Liên Kết Nhanh</h6>
+                <div class="d-flex flex-column gap-1">
+                    <a href="/services/minigame/farm.html" class="text-decoration-none text-muted">🌱 Nông Trại Cây Voucher (Vốn 0 Xu)</a>
+                    <a href="/services/minigame/minigame.html" class="text-decoration-none text-muted">🎡 Vòng Quay May Mắn 20.10</a>
+                    <a href="/services/order_tracking/tracking.html" class="text-decoration-none text-muted">🚚 Tra Cứu Đơn Hàng &amp; Escrow</a>
+                    <a href="/services/legal/terms.html" class="text-decoration-none text-muted">⚖️ Điều Khoản Dịch Vụ &amp; Quy Tắc ACM/IEEE</a>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <h6 class="fw-bold mb-2">Bảo Vệ Người Tiêu Dùng</h6>
+                <div class="p-2 border rounded">
+                    <div class="fw-bold text-nvidia">100% Đảm Bảo Escrow</div>
+                    <small class="text-muted">Áp dụng 4 Quy trình SOP chuẩn xử lý Bom hàng, Trả hàng, Sai mẫu &amp; Gian lận.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<button type="button" class="store-chat-fab" onclick="toggleGlobalChatDrawer()">
+    <span>💬 Chat Gian Hàng &amp; AI</span>
+    <span id="globalChatUnreadBadge" class="badge bg-danger rounded-pill d-none">0</span>
+</button>
+
+<div id="globalChatDrawer" class="store-chat-drawer d-none">
+    <div class="p-2 px-3 bg-dark text-white d-flex justify-content-between align-items-center border-bottom">
+        <div>
+            <strong class="small text-nvidia d-block">💬 Trung Tâm Chat Gian Hàng</strong>
+            <small class="text-secondary" style="font-size:0.7rem;" id="globalChatSubTitle">Hỗ trợ trực tuyến bởi Shop &amp; Trợ lý AI</small>
+        </div>
+        <button type="button" class="btn-close btn-close-white btn-sm" onclick="toggleGlobalChatDrawer(false)"></button>
+    </div>
+    <div class="p-2 border-bottom d-flex gap-2 align-items-center bg-surface">
+        <small class="fw-semibold text-nowrap">Chọn Shop:</small>
+        <select id="globalChatSellerSelect" class="form-select form-select-sm" onchange="loadGlobalSellerChatMessages()"></select>
+    </div>
+    <div id="globalChatMessagesBox" class="flex-fill p-3" style="overflow-y: auto; font-size: 0.83rem;"></div>
+    <form onsubmit="submitGlobalChatMessage(event)" class="p-2 border-top d-flex gap-1 bg-surface">
+        <input type="text" id="globalChatInput" class="form-control form-control-sm" placeholder="Nhập tin nhắn hỏi Shop về sản phẩm, Set quà..." required>
+        <button type="submit" class="btn btn-nvidia btn-sm px-3">Gửi</button>
+    </form>
+</div>
+
+<div id="nividaxGlobalPopup" class="nividax-modal-overlay d-none" role="dialog" aria-modal="true">
+    <div class="nividax-modal-card text-center">
+        <div id="nividaxPopupIcon" class="fs-1 mb-2">✨</div>
+        <h5 id="nividaxPopupTitle" class="fw-bold text-nvidia mb-2">Thông Báo Hệ Thống</h5>
+        <div id="nividaxPopupBody" class="small mb-4" style="white-space: pre-line; line-height: 1.6;"></div>
+        <button type="button" id="nividaxPopupConfirmBtn" class="btn btn-nvidia w-100 py-2 fw-bold" onclick="closeNividaXPopup()">Đồng Ý</button>
+    </div>
+</div>
+
+<div id="nividaxToastContainer" class="nividax-toast-container"></div>

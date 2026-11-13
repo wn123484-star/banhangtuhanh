@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: ["flask", "run", "--host=0.0.0.0", "--port=5000"]
+    ports:
+      - "127.0.0.1:5050:5000"
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MALLOC_ARENA_MAX=2
+      - FLASK_APP=app.py
+    volumes:
+      - ./database:/app/database
+      - ./data_json:/app/data_json
+      - ./assets/icons:/app/assets/icons
+      - ./assets/uploads:/app/assets/uploads
+      - ./logs:/app/logs
+    restart: always
