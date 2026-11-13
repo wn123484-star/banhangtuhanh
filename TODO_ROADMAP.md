@@ -69,14 +69,15 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 
 ---
 
-## GIAI ĐOẠN 4: XÂY DỰNG SÀN ĐẤU GIÁ KÉP THỜI GIAN THỰC (KÝ QUỸ ANTI-SNIPING 30S & ĐẤU GIÁ NGƯỢC GIẢM TỪNG GIÂY)
+## GIAI ĐOẠN 4: XÂY DỰNG SÀN ĐẤU GIÁ KÉP THỜI GIAN THỰC (KÝ QUỸ ANTI-SNIPING 30S & ĐẤU GIÁ NGƯỢC GIẢM TỪNG GIÂY) + ĐẤU TRƯỜNG PHẢN XẠ ESPORT 30S (ĐÃ HOÀN TẤT)
 
-- [ ] **4.1. Backend & Database Sàn Đấu Giá Kép (`auctions` & `auction_bids`):**
-  - [ ] Tạo bảng `auctions` và `auction_bids` (kèm index `idx_auctions_status_type`, `idx_auction_bids_auction_id`) trong `app.py`, tự động khởi tạo 6 phiên đấu giá mẫu (3 phiên Đấu giá Ký quỹ tiêu chuẩn `standard` + 3 phiên Đấu giá Ngược Flash `dutch`).
-  - [ ] Xử lý API `POST /api/auctions/bid` (Đấu giá lên): Kiểm tra bước giá `min_step_price`, kiểm tra số dư Ví NVIDIA Pay, tạm khóa cọc 10% (`escrow_deposit_pct`), tự động hoàn trả tiền cọc ngay lập tức (`is_refunded = 1`) cho người đặt giá trước đó trong cùng 1 transaction, và **tự động cộng thêm +30 giây nếu lệnh trả giá diễn ra trong 10 giây cuối cùng (Anti-Sniping)**.
-  - [ ] Xử lý API `POST /api/auctions/dutch-buy` (Đấu giá ngược): Giá giảm tự động mỗi 2 giây theo công thức thời gian thực; người đầu tiên bấm **`⚡ Chốt Giá Mua Ngay`** sẽ thắng ở đúng mức giá tại giây đó và tự động tạo phiên thanh toán QR (`pay_token`) để tự trả hoặc nhờ người khác chuyển khoản hộ.
-- [ ] **4.2. Giao diện Sàn Đấu Giá Thời Gian Thực (`services/market_arena/market-arena.html` & `market-arena.js` + Liên kết toàn sàn):**
-  - [ ] Hiển thị đồng hồ đếm ngược từng giây, hiệu ứng nhảy giá trực tiếp, huy hiệu `+30s Anti-Sniping`, sổ cái lịch sử người trả giá minh bạch (kèm trạng thái *Đang giữ cọc 10%* / *Đã hoàn cọc 100%*) và nút chuyển thẳng sang màn hình Xem giá / Chuyển khoản hộ QR khi thắng đấu giá.
+- [x] **4.1. Backend & Database Sàn Đấu Giá Kép (`auctions`, `auction_bids`) & Đấu Trường Phản Xạ Esport 30s (`reflex_arena_scores`):**
+  - [x] Tạo bảng `auctions` và `auction_bids` (kèm index `idx_auctions_status_type`, `idx_auction_bids_auction_id`) trong `app.py`, tự động khởi tạo 6 phiên đấu giá mẫu (3 phiên Đấu giá Ký quỹ tiêu chuẩn `standard` + 3 phiên Đấu giá Ngược Flash `dutch`).
+  - [x] Xử lý API `POST /api/auctions/bid` (Đấu giá lên): Kiểm tra bước giá `min_step_price`, kiểm tra số dư Ví NVIDIA Pay, tạm khóa cọc 10% (`escrow_deposit_pct`), tự động hoàn trả tiền cọc ngay lập tức (`is_refunded = 1`) cho người đặt giá trước đó trong cùng 1 transaction, và **tự động cộng thêm +30 giây nếu lệnh trả giá diễn ra trong 10 giây cuối cùng (Anti-Sniping)**.
+  - [x] Xử lý API `POST /api/auctions/dutch-claim` (`/api/auctions/dutch-buy`) (Đấu giá ngược): Giá giảm tự động mỗi 2 giây theo công thức thời gian thực; người đầu tiên bấm **`⚡ Chốt Giá Mua Ngay`** sẽ thắng ở đúng mức giá tại giây đó và tự động tạo phiên thanh toán QR (`pay_token`) để tự trả hoặc nhờ người khác chuyển khoản hộ.
+  - [x] Xử lý API `POST /api/minigame/reflex-arena/claim` cho **Đấu Trường Phản Xạ Tâm Ngắm Esport 30s**: Đo tốc độ phản xạ ms và thưởng Xu NVIDIA Pay + Vé Miễn Phí Cọc Đấu Giá.
+- [x] **4.2. Giao diện Sàn Đấu Giá Thời Gian Thực (`services/auction/auction.html` & `auction.js` + Liên kết toàn sàn):**
+  - [x] Hiển thị đồng hồ đếm ngược từng giây, hiệu ứng nhảy giá trực tiếp, huy hiệu `+30s Anti-Sniping`, sổ cái lịch sử người trả giá minh bạch (kèm trạng thái *Đang giữ cọc 10%* / *Đã hoàn cọc 100%*), trò chơi Đấu Trường Phản Xạ Esport 30s trên Canvas và nút chuyển thẳng sang màn hình Xem giá / Chuyển khoản hộ QR khi thắng đấu giá.
 
 ---
 

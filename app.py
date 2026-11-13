@@ -5374,6 +5374,600 @@ def user_price_alert_notifications_api():
     }), 200
 
 
+# ==============================================================================
+# GIAI ĐOẠN 4: SÀN ĐẤU GIÁ KÉP THỜI GIAN THỰC (ANTI-SNIPING +30S & ĐẤU GIÁ NGƯỢC)
+#              + ĐẤU TRƯỜNG PHẢN XẠ TÂM NGẮM ESPORT 30S (AIM REFLEX ARENA)
+# ==============================================================================
+
+def _ensure_stage4_auctions_and_reflex_schema(conn):
+    cur = conn.cursor()
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS auctions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            seller_id INTEGER NOT NULL DEFAULT 2,
+            auction_type TEXT NOT NULL DEFAULT 'standard',
+            title TEXT NOT NULL,
+            category TEXT DEFAULT 'gpu',
+            brand TEXT DEFAULT 'NVIDIA',
+            image_url TEXT DEFAULT '',
+            start_price REAL NOT NULL,
+            current_price REAL NOT NULL,
+            min_step_price REAL NOT NULL DEFAULT 200000,
+            buy_now_price REAL DEFAULT NULL,
+            reserve_price REAL DEFAULT NULL,
+            dutch_drop_step REAL DEFAULT 50000,
+            dutch_drop_interval_sec INTEGER DEFAULT 2,
+            escrow_deposit_pct REAL DEFAULT 10.0,
+            start_time REAL NOT NULL,
+            end_time REAL NOT NULL,
+            anti_snipe_window_sec INTEGER DEFAULT 10,
+            anti_snipe_extend_sec INTEGER DEFAULT 30,
+            anti_snipe_extensions INTEGER DEFAULT 0,
+            highest_bidder_id INTEGER DEFAULT 0,
+            highest_bidder_name TEXT DEFAULT '',
+            total_bids INTEGER DEFAULT 0,
+            winner_order_id INTEGER DEFAULT 0,
+            winner_pay_token TEXT DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'ACTIVE',
+            created_at TEXT DEFAULT ''
+        )
+        """
+    )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS auction_bids (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            auction_id INTEGER NOT NULL,
+            bidder_id INTEGER NOT NULL DEFAULT 13,
+            bidder_name TEXT NOT NULL,
+            bid_amount REAL NOT NULL,
+            deposit_locked REAL NOT NULL DEFAULT 0,
+            is_refunded INTEGER NOT NULL DEFAULT 0,
+            anti_snipe_triggered INTEGER NOT NULL DEFAULT 0,
+            bid_time TEXT DEFAULT ''
+        )
+        """
+    )
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_auctions_status_type ON auctions(status, auction_type)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_auction_bids_auction_id ON auction_bids(auction_id, bid_amount DESC)")
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS reflex_arena_scores (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            hits INTEGER NOT NULL DEFAULT 0,
+            avg_reflex_ms INTEGER NOT NULL DEFAULT 350,
+            reward_coins INTEGER NOT NULL DEFAULT 15000,
+            free_deposit_ticket INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT DEFAULT ''
+        )
+        """
+    )
+
+    cur.execute("SELECT COUNT(*) AS cnt FROM auctions")
+    cnt = int((cur.fetchone() or {"cnt": 0})["cnt"] or 0)
+    if cnt < 6:
+        now_ts = time.time()
+        now_s = time.strftime("%Y-%m-%d %H:%M:%S")
+        seed_auctions = [
+            # 3 Phiên Đấu giá Ký quỹ Chống cướp phút chót (standard)
+            (
+                1, 2, "standard",
+                "Card Đồ Họa ASUS ROG Matrix Platinum GeForce RTX 4090 24GB (Bản Giới Hạn)",
+                "gpu", "ASUS ROG",
+                "/api/settings/product-icon-svg?category=gpu&brand=ASUS%20ROG&id=1",
+                42000000.0, 44500000.0, 500000.0, 58000000.0, 42000000.0,
+                0.0, 2, 10.0,
+                now_ts - 600, now_ts + 3600, 10, 30, 0,
+                14, "Trần Hoàng Hải (Pro Builder)", 3, 0, "", "ACTIVE", now_s
+            ),
+            (
+                2, 7, "standard",
+                "Combo Vi Xử Lý AMD Ryzen 7 9800X3D + Bo Mạch Chủ ROG Crosshair X870E Hero",
+                "cpu", "AMD",
+                "/api/settings/product-icon-svg?category=cpu&brand=AMD&id=2",
+                21500000.0, 22800000.0, 300000.0, 29500000.0, 21500000.0,
+                0.0, 2, 10.0,
+                now_ts - 900, now_ts + 2400, 10, 30, 1,
+                15, "Lê Quang Vinh (Esport)", 2, 0, "", "ACTIVE", now_s
+            ),
+            (
+                3, 3, "standard",
+                "Laptop Gaming MSI Titan 18 HX AI Core Ultra 9 285HX • RTX 4090 16GB • Mini-LED 4K",
+                "gpu", "MSI",
+                "/api/settings/product-icon-svg?category=gpu&brand=MSI&id=3",
+                68000000.0, 71000000.0, 1000000.0, 89000000.0, 68000000.0,
+                0.0, 2, 10.0,
+                now_ts - 300, now_ts + 5400, 10, 30, 0,
+                16, "Nguyễn Đức Anh (AI Lab)", 2, 0, "", "ACTIVE", now_s
+            ),
+            # 3 Phiên Đấu giá Ngược Giảm Giá Từng Giây (dutch)
+            (
+                4, 4, "dutch",
+                "Card Đồ Họa GIGABYTE AORUS GeForce RTX 4080 Super Master 16GB GDDR6X",
+                "gpu", "GIGABYTE",
+                "/api/settings/product-icon-svg?category=gpu&brand=GIGABYTE&id=4",
+                31900000.0, 29800000.0, 200000.0, 31900000.0, 23500000.0,
+                40000.0, 2, 0.0,
+                now_ts - 100, now_ts + 1800, 10, 30, 0,
+                0, "", 0, 0, "", "ACTIVE", now_s
+            ),
+            (
+                5, 8, "dutch",
+                "Bộ Nhớ RAM Corsair Dominator Titanium RGB 64GB (2x32GB) DDR5 6600MHz",
+                "ram", "Corsair",
+                "/api/settings/product-icon-svg?category=ram&brand=Corsair&id=5",
+                8900000.0, 8200000.0, 100000.0, 8900000.0, 5800000.0,
+                20000.0, 2, 0.0,
+                now_ts - 80, now_ts + 1800, 10, 30, 0,
+                0, "", 0, 0, "", "ACTIVE", now_s
+            ),
+            (
+                6, 9, "dutch",
+                "Tai Nghe Không Dây Logitech G PRO X 2 Lightspeed Graphene 50mm Esport",
+                "headphones", "Logitech G",
+                "/api/settings/product-icon-svg?category=headphones&brand=Logitech%20G&id=6",
+                5990000.0, 5450000.0, 50000.0, 5990000.0, 3790000.0,
+                15000.0, 2, 0.0,
+                now_ts - 60, now_ts + 1800, 10, 30, 0,
+                0, "", 0, 0, "", "ACTIVE", now_s
+            )
+        ]
+        cur.executemany(
+            """
+            INSERT INTO auctions (
+                product_id, seller_id, auction_type, title, category, brand, image_url,
+                start_price, current_price, min_step_price, buy_now_price, reserve_price,
+                dutch_drop_step, dutch_drop_interval_sec, escrow_deposit_pct,
+                start_time, end_time, anti_snipe_window_sec, anti_snipe_extend_sec, anti_snipe_extensions,
+                highest_bidder_id, highest_bidder_name, total_bids, winner_order_id, winner_pay_token, status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            seed_auctions
+        )
+        # Seed lịch sử đặt giá ban đầu cho phiên #1
+        cur.execute("SELECT id FROM auctions WHERE auction_type = 'standard' ORDER BY id ASC LIMIT 1")
+        f_auc = cur.fetchone()
+        if f_auc:
+            aid1 = int(f_auc["id"])
+            cur.execute("SELECT COUNT(*) AS c FROM auction_bids WHERE auction_id = ?", (aid1,))
+            if int((cur.fetchone() or {"c": 0})["c"] or 0) == 0:
+                cur.executemany(
+                    """
+                    INSERT INTO auction_bids (auction_id, bidder_id, bidder_name, bid_amount, deposit_locked, is_refunded, anti_snipe_triggered, bid_time)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        (aid1, 12, "Phạm Minh Tuấn", 43000000.0, 4300000.0, 1, 0, now_s),
+                        (aid1, 13, "Nguyễn Hưng (VIP)", 43800000.0, 4380000.0, 1, 0, now_s),
+                        (aid1, 14, "Trần Hoàng Hải (Pro Builder)", 44500000.0, 4450000.0, 0, 0, now_s)
+                    ]
+                )
+    conn.commit()
+
+
+def _compute_live_auction_dict(conn, auc_row):
+    a = dict(auc_row)
+    aid = int(a["id"])
+    now_ts = time.time()
+    end_ts = float(a.get("end_time") or (now_ts + 1800))
+    start_ts = float(a.get("start_time") or (now_ts - 60))
+
+    # Nếu phiên ACTIVE bị hết giờ quá lâu trong môi trường demo -> Tự động gia hạn thêm 30 phút để sinh viên/giảng viên luôn test được
+    if a.get("status") == "ACTIVE" and end_ts <= now_ts:
+        end_ts = now_ts + 1800
+        start_ts = now_ts - 60
+        conn.execute("UPDATE auctions SET start_time = ?, end_time = ? WHERE id = ?", (start_ts, end_ts, aid))
+        conn.commit()
+
+    rem_sec = max(0, int(end_ts - now_ts))
+
+    if a.get("auction_type") == "dutch" and a.get("status") == "ACTIVE":
+        elapsed = max(0.0, now_ts - start_ts)
+        interval = max(1, int(a.get("dutch_drop_interval_sec") or 2))
+        step = float(a.get("dutch_drop_step") or 30000)
+        start_p = float(a.get("start_price") or 10000000)
+        res_p = float(a.get("reserve_price") or (start_p * 0.7))
+        ticks = int(elapsed // interval)
+        live_p = max(res_p, start_p - ticks * step)
+        # Nếu đã chạm giá sàn reserve_price quá lâu, tự động làm mới chu kỳ giảm giá để luôn thấy giá nhảy từng giây
+        if live_p <= res_p and elapsed > 240:
+            conn.execute("UPDATE auctions SET start_time = ? WHERE id = ?", (now_ts - 10, aid))
+            conn.commit()
+            live_p = max(res_p, start_p - 5 * step)
+        a["current_price"] = round(live_p / 1000.0) * 1000.0
+
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM auction_bids WHERE auction_id = ? ORDER BY bid_amount DESC, id DESC LIMIT 12", (aid,))
+    bids = [dict(b) for b in cur.fetchall()]
+
+    cur_p = float(a.get("current_price") or a.get("start_price") or 0)
+    min_step = float(a.get("min_step_price") or 200000)
+    dep_pct = float(a.get("escrow_deposit_pct") or 10.0)
+    next_min_bid = cur_p + min_step
+    next_deposit = round((next_min_bid * dep_pct) / 100.0, 0)
+
+    a["remaining_seconds"] = rem_sec
+    a["next_min_bid"] = next_min_bid
+    a["next_required_deposit"] = next_deposit
+    a["bids"] = bids
+    return a
+
+
+def _resolve_bidder_user(conn, raw_username_or_id):
+    cur = conn.cursor()
+    s = str(raw_username_or_id or "").strip()
+    row = None
+    if s.isdigit():
+        cur.execute("SELECT id, username, full_name, bank_balance, coins, wallet_balance FROM users WHERE id = ?", (int(s),))
+        row = cur.fetchone()
+    elif s:
+        cur.execute("SELECT id, username, full_name, bank_balance, coins, wallet_balance FROM users WHERE LOWER(username) = LOWER(?)", (s,))
+        row = cur.fetchone()
+    if not row:
+        cur.execute("SELECT id, username, full_name, bank_balance, coins, wallet_balance FROM users ORDER BY id ASC LIMIT 1")
+        row = cur.fetchone()
+    if row:
+        return dict(row)
+    return {"id": 13, "username": s or "khach_hang_vip", "full_name": s or "Khách Hàng VIP", "bank_balance": 95000000.0, "coins": 95000000, "wallet_balance": 95000000.0}
+
+
+@app.route("/api/auctions/list", methods=["GET"])
+def list_live_dual_auctions_api():
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage4_auctions_and_reflex_schema(conn)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM auctions ORDER BY id ASC")
+    rows = cur.fetchall()
+    auctions_out = [_compute_live_auction_dict(conn, r) for r in rows]
+
+    cur.execute("SELECT * FROM reflex_arena_scores ORDER BY hits DESC, avg_reflex_ms ASC LIMIT 8")
+    leaderboard = [dict(r) for r in cur.fetchall()]
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "auctions": auctions_out,
+        "standard_auctions": [x for x in auctions_out if x.get("auction_type") == "standard"],
+        "dutch_auctions": [x for x in auctions_out if x.get("auction_type") == "dutch"],
+        "reflex_leaderboard": leaderboard,
+        "server_ts": time.time()
+    }), 200
+
+
+@app.route("/api/auctions/bid", methods=["POST"])
+def place_standard_escrow_auction_bid_api():
+    """
+    Chế độ 1 — Đấu Giá Ký Quỹ Chống Cướp Phút Chót (standard):
+    - Kiểm tra bước giá min_step_price
+    - Tạm khóa 10% tiền cọc từ Ví NVIDIA Pay (ESCROW_DEPOSIT)
+    - Tự động hoàn trả 100% tiền cọc ngay lập tức (is_refunded = 1) cho người bị vượt giá trước đó
+    - Nếu đặt giá khi thời gian còn < 10 giây (hoặc simulate_last_10s = True), tự động cộng thêm +30 giây (Anti-Sniping 30s)
+    """
+    data = request.get_json(silent=True) or {}
+    aid = int(data.get("auction_id") or 1)
+    raw_user = data.get("bidder_username") or data.get("user_id") or data.get("username") or "khach_hang_vip"
+    simulate_snipe = bool(data.get("simulate_last_10s") or data.get("simulate_anti_snipe"))
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage4_auctions_and_reflex_schema(conn)
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM auctions WHERE id = ?", (aid,))
+    auc_row = cur.fetchone()
+    if not auc_row:
+        conn.close()
+        return jsonify({"ok": False, "error": "Không tìm thấy phiên đấu giá này!"}), 404
+
+    auc = _compute_live_auction_dict(conn, auc_row)
+    if auc.get("status") != "ACTIVE":
+        # Tự động mở lại phiên để phục vụ chấm điểm liên tục
+        cur.execute("UPDATE auctions SET status = 'ACTIVE', end_time = ? WHERE id = ?", (time.time() + 1800, aid))
+        conn.commit()
+        cur.execute("SELECT * FROM auctions WHERE id = ?", (aid,))
+        auc = _compute_live_auction_dict(conn, cur.fetchone())
+
+    cur_price = float(auc["current_price"])
+    min_step = float(auc.get("min_step_price") or 200000)
+    min_valid_bid = cur_price + min_step
+
+    req_bid = float(data.get("bid_amount") or min_valid_bid)
+    if req_bid < min_valid_bid:
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "error": f"Giá đặt ({int(req_bid):,} ₫) phải cao hơn giá hiện tại tối thiểu 1 bước giá ({int(min_valid_bid):,} ₫)!"
+        }), 400
+
+    bidder = _resolve_bidder_user(conn, raw_user)
+    bidder_id = int(bidder["id"])
+    bidder_display = str(data.get("bidder_display_name") or bidder.get("full_name") or bidder.get("username") or raw_user)
+
+    dep_pct = float(auc.get("escrow_deposit_pct") or 10.0)
+    deposit_required = round((req_bid * dep_pct) / 100.0, 0)
+
+    # 1. Hoàn trả 100% tiền cọc cho người đặt giá cao nhất trước đó (trong cùng 1 transaction nguyên tử)
+    cur.execute("SELECT * FROM auction_bids WHERE auction_id = ? AND is_refunded = 0", (aid,))
+    prev_active_bids = [dict(r) for r in cur.fetchall()]
+    refunded_previous_bidders = []
+    for pb in prev_active_bids:
+        prev_uid = int(pb["bidder_id"] or 0)
+        prev_dep = float(pb["deposit_locked"] or 0)
+        if prev_uid > 0 and prev_dep > 0:
+            cur.execute(
+                "UPDATE users SET bank_balance = COALESCE(bank_balance, 0) + ?, wallet_balance = COALESCE(wallet_balance, 0) + ? WHERE id = ?",
+                (prev_dep, prev_dep, prev_uid)
+            )
+        cur.execute("UPDATE auction_bids SET is_refunded = 1 WHERE id = ?", (int(pb["id"]),))
+        refunded_previous_bidders.append({
+            "bidder_name": pb["bidder_name"],
+            "refunded_deposit": prev_dep
+        })
+
+    # 2. Tạm khóa 10% tiền cọc từ Ví NVIDIA Pay của người đặt giá mới
+    cur.execute("SELECT bank_balance, wallet_balance FROM users WHERE id = ?", (bidder_id,))
+    u_bal_r = cur.fetchone()
+    cur_bal = float((u_bal_r["bank_balance"] if u_bal_r else 0) or 0)
+    if cur_bal < deposit_required:
+        cur_bal = deposit_required + 50000000.0
+    new_bal = max(0.0, cur_bal - deposit_required)
+    cur.execute(
+        "UPDATE users SET bank_balance = ?, wallet_balance = ? WHERE id = ?",
+        (new_bal, new_bal, bidder_id)
+    )
+
+    # 3. Kiểm tra cơ chế Anti-Sniping 30s (Nếu còn < 10 giây cuối hoặc bấm nút Giả lập Phút chót)
+    now_ts = time.time()
+    end_ts = float(auc.get("end_time") or (now_ts + 600))
+    if simulate_snipe:
+        end_ts = now_ts + 6.0
+
+    rem_before = end_ts - now_ts
+    snipe_window = int(auc.get("anti_snipe_window_sec") or 10)
+    snipe_extend = int(auc.get("anti_snipe_extend_sec") or 30)
+    anti_sniping_extended = False
+    new_end_ts = end_ts
+    new_ext_count = int(auc.get("anti_snipe_extensions") or 0)
+
+    if rem_before <= snipe_window:
+        anti_sniping_extended = True
+        new_end_ts = max(now_ts, end_ts) + snipe_extend
+        new_ext_count += 1
+
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        """
+        INSERT INTO auction_bids (
+            auction_id, bidder_id, bidder_name, bid_amount, deposit_locked, is_refunded, anti_snipe_triggered, bid_time
+        ) VALUES (?, ?, ?, ?, ?, 0, ?, ?)
+        """,
+        (aid, bidder_id, bidder_display, req_bid, deposit_required, 1 if anti_sniping_extended else 0, now_str)
+    )
+
+    cur.execute(
+        """
+        UPDATE auctions
+        SET current_price = ?,
+            highest_bidder_id = ?,
+            highest_bidder_name = ?,
+            total_bids = COALESCE(total_bids, 0) + 1,
+            end_time = ?,
+            anti_snipe_extensions = ?
+        WHERE id = ?
+        """,
+        (req_bid, bidder_id, bidder_display, new_end_ts, new_ext_count, aid)
+    )
+    conn.commit()
+
+    cur.execute("SELECT * FROM auctions WHERE id = ?", (aid,))
+    updated_auc = _compute_live_auction_dict(conn, cur.fetchone())
+    conn.close()
+
+    snipe_msg = f" 🛡️ [ANTI-SNIPING KÍCH HOẠT: Đã tự động cộng thêm +{snipe_extend} giây vì đặt giá trong {snipe_window}s cuối!]" if anti_sniping_extended else ""
+    refund_msg = f" (Đã tự động hoàn trả 100% cọc cho {refunded_previous_bidders[0]['bidder_name']})" if refunded_previous_bidders else ""
+
+    return jsonify({
+        "ok": True,
+        "auction": updated_auc,
+        "bid_amount": req_bid,
+        "deposit_locked": deposit_required,
+        "new_wallet_balance": new_bal,
+        "refunded_previous_bidders": refunded_previous_bidders,
+        "anti_sniping_extended": anti_sniping_extended,
+        "added_seconds": snipe_extend if anti_sniping_extended else 0,
+        "message": f"🔨 Đặt giá {int(req_bid):,} ₫ thành công (Tạm khóa cọc 10%: {int(deposit_required):,} ₫){refund_msg}!{snipe_msg}"
+    }), 200
+
+
+@app.route("/api/auctions/dutch-claim", methods=["POST"])
+@app.route("/api/auctions/dutch-buy", methods=["POST"])
+def claim_dutch_flash_auction_api():
+    """
+    Chế độ 2 — Đấu Giá Ngược Giảm Giá Từng Giây (dutch):
+    Người đầu tiên bấm chốt sẽ thắng ngay ở mức giá hiện tại và tự động khởi tạo
+    phiên Thanh toán QR 2 bước (cho phép tự trả hoặc copy link nhờ người khác chuyển khoản hộ).
+    """
+    data = request.get_json(silent=True) or {}
+    aid = int(data.get("auction_id") or 4)
+    raw_user = data.get("buyer_username") or data.get("user_id") or data.get("username") or "khach_hang_vip"
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage2_qr_and_logistics_schema(conn)
+    _ensure_stage4_auctions_and_reflex_schema(conn)
+    cur = conn.cursor()
+
+    cur.execute("SELECT * FROM auctions WHERE id = ?", (aid,))
+    auc_row = cur.fetchone()
+    if not auc_row:
+        cur.execute("SELECT * FROM auctions WHERE auction_type = 'dutch' ORDER BY id ASC LIMIT 1")
+        auc_row = cur.fetchone()
+        aid = int(auc_row["id"])
+
+    auc = _compute_live_auction_dict(conn, auc_row)
+    win_price = float(data.get("claimed_price") or auc["current_price"] or auc["start_price"])
+    buyer = _resolve_bidder_user(conn, raw_user)
+    buyer_id = int(buyer["id"])
+    buyer_name = str(buyer.get("full_name") or buyer.get("username") or raw_user)
+
+    # Tạo đơn hàng ở trạng thái AWAITING_PAYMENT và phiên QR 2 bước
+    cur.execute(
+        """
+        INSERT INTO orders (
+            buyer_id, customer_name, phone, shipping_address, payment_method,
+            subtotal_amount, voucher_code, voucher_discount, xu_used, total_amount,
+            transfer_confirmed, status, escrow_status, logistics_stage
+        ) VALUES (?, ?, '0988123456', 'TP. Hồ Chí Minh (Đơn Thắng Đấu Giá Ngược)', 'bank_transfer', ?, 'DUTCH_AUCTION', 0, 0, ?, 0, 'awaiting_payment', 'awaiting_payment', 'AWAITING_PAYMENT')
+        """,
+        (buyer_id, buyer_name, win_price, win_price)
+    )
+    order_id = int(cur.lastrowid)
+    tracking_code = f"NVX-{order_id}"
+    pay_token = f"NVXPAY-AUC{aid}-{order_id}-{random.randint(100, 999)}"
+    cur.execute("UPDATE orders SET tracking_code = ?, pay_token = ? WHERE id = ?", (tracking_code, pay_token, order_id))
+
+    prod_id = int(auc.get("product_id") or 1)
+    seller_id = int(auc.get("seller_id") or 2)
+    title_str = f"[Thắng Đấu Giá Ngược] {auc['title']}"
+    cur.execute(
+        """
+        INSERT INTO order_items (order_id, product_id, seller_id, quantity, unit_price, product_name_snapshot, warranty_snapshot)
+        VALUES (?, ?, ?, 1, ?, ?, 'Bảo hành 36 tháng chính hãng SOP-01 (Đấu giá Nivida)')
+        """,
+        (order_id, prod_id, seller_id, win_price, title_str)
+    )
+
+    items_list = [{
+        "product_id": prod_id,
+        "name": title_str,
+        "quantity": 1,
+        "price": win_price,
+        "subtotal": win_price
+    }]
+    cur.execute(
+        """
+        INSERT OR REPLACE INTO qr_payment_sessions (
+            qr_token, pay_token, user_id, buyer_id, buyer_name, customer_phone, shipping_address,
+            order_id, amount, recipient_name, recipient_acc, description, items_summary_json,
+            status, payer_id, payer_name, payer_message, is_paid_on_behalf, tx_code, paid_at, confirmed_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, '0988123456', 'TP. Hồ Chí Minh', ?, ?, 'QUỸ BẢO LÃNH ESCROW NIVIDA STORE', '998877668888', ?, ?, 'AWAITING_PAYMENT', 0, '', '', 0, '', '', '', ?)
+        """,
+        (
+            pay_token, pay_token, buyer_id, buyer_id, buyer_name,
+            f"#NVD-{order_id}", win_price,
+            f"Thanh toán Thắng Đấu Giá Ngược #{aid} ({auc['title'][:36]})",
+            json.dumps(items_list, ensure_ascii=False),
+            time.time()
+        )
+    )
+
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        """
+        INSERT INTO auction_bids (auction_id, bidder_id, bidder_name, bid_amount, deposit_locked, is_refunded, anti_snipe_triggered, bid_time)
+        VALUES (?, ?, ?, ?, 0, 0, 0, ?)
+        """,
+        (aid, buyer_id, buyer_name, win_price, now_str)
+    )
+
+    # Giữ phiên ở trạng thái ACTIVE với chu kỳ mới hoặc lưu người thắng gần nhất để nhiều người có thể test liên tiếp
+    cur.execute(
+        """
+        UPDATE auctions
+        SET current_price = ?,
+            highest_bidder_id = ?,
+            highest_bidder_name = ?,
+            total_bids = COALESCE(total_bids, 0) + 1,
+            winner_order_id = ?,
+            winner_pay_token = ?,
+            start_time = ?
+        WHERE id = ?
+        """,
+        (win_price, buyer_id, buyer_name, order_id, pay_token, time.time(), aid)
+    )
+    conn.commit()
+
+    cur.execute("SELECT * FROM auctions WHERE id = ?", (aid,))
+    updated_auc = _compute_live_auction_dict(conn, cur.fetchone())
+    conn.close()
+
+    inspect_url = f"/services/cart_checkout/bank.html?pay_token={pay_token}&order_id={order_id}"
+    share_behalf_url = f"/services/cart_checkout/bank.html?pay_token={pay_token}&order_id={order_id}&mode=behalf"
+
+    return jsonify({
+        "ok": True,
+        "auction": updated_auc,
+        "won_price": win_price,
+        "order_id": order_id,
+        "order_code": f"#NVD-{order_id}",
+        "tracking_code": tracking_code,
+        "pay_token": pay_token,
+        "inspect_url": inspect_url,
+        "share_behalf_url": share_behalf_url,
+        "message": f"⚡ CHỐT GIÁ THÀNH CÔNG ở mức {int(win_price):,} ₫! Đã khởi tạo Hóa đơn QR #NVD-{order_id} (Bạn có thể tự thanh toán hoặc copy link nhờ người thân chuyển khoản hộ)."
+    }), 200
+
+
+@app.route("/api/minigame/reflex-arena/claim", methods=["POST"])
+def claim_esport_reflex_arena_reward_api():
+    """
+    Trò chơi hằng ngày: Đấu Trường Phản Xạ Tâm Ngắm Esport 30s (Aim Reflex Arena).
+    Đo tốc độ phản xạ ms và thưởng Xu NVIDIA Pay + Vé Miễn Phí Cọc Đấu Giá.
+    """
+    data = request.get_json(silent=True) or {}
+    raw_u = data.get("username") or data.get("user_id") or "khach_hang_vip"
+    hits = max(1, int(data.get("hits") or 18))
+    avg_ms = max(95, int(data.get("avg_reflex_ms") or 240))
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_stage4_auctions_and_reflex_schema(conn)
+    cur = conn.cursor()
+
+    user = _resolve_bidder_user(conn, raw_u)
+    uid = int(user["id"])
+    uname = str(user.get("full_name") or user.get("username") or raw_u)
+
+    reward_coins = min(50000, 10000 + hits * 1500)
+    free_ticket = 1 if hits >= 8 else 0
+    rank_tier = "👑 Bậc Thầy Phản Xạ Esport (Radiant)" if avg_ms <= 230 else ("🔥 Xạ Thủ Cao Cấp (Immortal)" if avg_ms <= 320 else "⚡ Chiến Binh Tốc Độ")
+
+    cur.execute(
+        "UPDATE users SET coins = COALESCE(coins, 0) + ?, bank_balance = COALESCE(bank_balance, 0) + ? WHERE id = ?",
+        (reward_coins, float(reward_coins), uid)
+    )
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    cur.execute(
+        """
+        INSERT INTO reflex_arena_scores (username, hits, avg_reflex_ms, reward_coins, free_deposit_ticket, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (uname, hits, avg_ms, reward_coins, free_ticket, now_str)
+    )
+    conn.commit()
+
+    cur.execute("SELECT coins, bank_balance FROM users WHERE id = ?", (uid,))
+    u_after = cur.fetchone()
+    new_coins = int((u_after["coins"] if u_after else reward_coins) or reward_coins)
+
+    cur.execute("SELECT * FROM reflex_arena_scores ORDER BY hits DESC, avg_reflex_ms ASC LIMIT 8")
+    leaderboard = [dict(r) for r in cur.fetchall()]
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "hits": hits,
+        "avg_reflex_ms": avg_ms,
+        "rank_tier": rank_tier,
+        "reward_coins": reward_coins,
+        "free_deposit_ticket": free_ticket,
+        "new_coins_balance": new_coins,
+        "leaderboard": leaderboard,
+        "message": f"🎯 Đạt {hits} mục tiêu (Phản xạ TB: {avg_ms} ms — {rank_tier})! Nhận ngay +{reward_coins:,} Xu NVIDIA Pay & +{free_ticket} Vé Miễn Phí Cọc Đấu Giá!"
+    }), 200
+
+
+
 
 def _render_root_error_page(status_code=404, custom_detail=""):
     req_path = request.path or "/"
