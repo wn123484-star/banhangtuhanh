@@ -5507,13 +5507,14 @@ html[data-nv-skin="tet_festival"] {
 }
 
 /* ==========================================================================
-   CSS DEEP POLISH — LAYER Z-INDEX, LOGO KHÔNG CẮT VIỀN, MÈO AI GÓC PHẢI,
-   LƯỚI CARD THOÁNG RỘNG, TƯƠNG PHẢN LIGHT MODE & RESPONSIVE TOÀN SÀN
+   CSS DEEP POLISH — CHECK-IN MODAL STACKING/OPACITY, ALL MODALS & DROPDOWNS,
+   CARD GRID BREATHABILITY & LIGHT MODE CONTRAST (GIỮ NGUYÊN LOGO & MÈO AI)
    ========================================================================== */
 
-/* 1. Sửa triệt để lỗi cắt Layer Dropdown Topbar & Header */
+/* 1. Layer Header, Topbar & Dropdown nổi hoàn toàn (Không cắt menu, dưới Modal) */
 #header-placeholder {
-    position: relative !important;
+    position: sticky !important;
+    top: 0 !important;
     z-index: 10045 !important;
     overflow: visible !important;
 }
@@ -5551,57 +5552,327 @@ html[data-nv-skin="tet_festival"] {
 .nvx-dropdown-menu {
     position: absolute !important;
     top: calc(100% + 6px) !important;
-    z-index: 10080 !important;
+    z-index: 2147481000 !important;
+    background: #0f172a !important;
+    opacity: 1 !important;
+    border: 1.5px solid #10b981 !important;
     overflow: visible !important;
     max-height: none !important;
     border-radius: 12px !important;
-    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.22) !important;
+    box-shadow: 0 18px 44px rgba(2, 6, 23, 0.5) !important;
 }
 
-/* 2. Logo Nexora Crest luôn hiển thị trọn vẹn 100%, không cắt viền */
-#brandLogoImg,
-#headerBrandLogoImg:not(.d-none),
-.nvx-brand-logo-img,
-#header-placeholder a[href*="index.html"] img:not(.d-none) {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    max-height: 44px !important;
-    object-fit: contain !important;
-    object-position: center !important;
-    padding: 4px !important;
-    border-radius: 10px !important;
-    overflow: visible !important;
-    box-sizing: border-box !important;
+#nvSearchAutocompleteDropdown {
+    z-index: 2147481500 !important;
+    background: #0f172a !important;
+    opacity: 1 !important;
 }
 
-img.nvx-dynamic-slot-icon,
-.nvx-dynamic-slot-icon {
-    width: 18px !important;
-    height: 18px !important;
-    max-width: 18px !important;
-    max-height: 18px !important;
-    object-fit: contain !important;
-    object-position: center !important;
-    padding: 1px !important;
-    display: inline-block !important;
-    vertical-align: middle !important;
+/* 2. Bảng Điểm Danh Hàng Ngày (Gắn document.body, z-index cao nhất, nền ĐẶC 100%) */
+#nvxDailyCheckinGlobalModal,
+.nvx-checkin-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 2147483000 !important;
+    background: rgba(15, 23, 42, 0.78) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
 }
 
-/* 3. Khoảng đệm đáy an toàn & Vị trí Mèo AI góc dưới bên phải */
-body {
-    padding-bottom: 96px !important;
+#nvxDailyCheckinGlobalModal.d-none,
+.nvx-checkin-modal-overlay.d-none {
+    display: none !important;
 }
 
-#nividaCatControlDock.nivida-cat-dock,
-#nividaCatOpenBtn.cat-toggle-pill {
-    left: auto !important;
-    right: 20px !important;
-    bottom: 72px !important;
+.nvx-checkin-modal-dialog {
+    position: relative !important;
+    z-index: 2147483001 !important;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    opacity: 1 !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.4) !important;
+    border-radius: 20px !important;
+    padding: 24px 28px !important;
 }
 
-#nividaCatSpeechBubble:not(:hover) {
-    pointer-events: none !important;
+.nvx-checkin-modal-header {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.nvx-checkin-modal-title {
+    color: #059669 !important;
+}
+
+.nvx-checkin-close-btn {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    z-index: 5 !important;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    line-height: 1;
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    color: #0f172a;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.nvx-checkin-close-btn:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+}
+
+.nvx-checkin-strip-caption {
+    color: #0f172a !important;
+}
+
+.nvx-checkin-total-pill {
+    background: #e2e8f0 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+.nvx-checkin-day-card {
+    min-width: 96px;
+    cursor: pointer;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    opacity: 1 !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.nvx-checkin-day-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12);
+}
+
+.nvx-checkin-day-card.is-claimed {
+    background: #dcfce7 !important;
+    color: #065f46 !important;
+    border: 2px solid #16a34a !important;
+    opacity: 1 !important;
+}
+
+.nvx-checkin-day-card.is-today {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border: 2px solid #f59e0b !important;
+    opacity: 1 !important;
+}
+
+.nvx-checkin-day-title {
+    color: inherit !important;
+}
+
+.nvx-checkin-day-coins {
+    color: #059669 !important;
+}
+
+.nvx-checkin-day-card.is-today .nvx-checkin-day-coins {
+    color: #b45309 !important;
+}
+
+.nvx-checkin-day-sub {
+    color: #475569 !important;
+}
+
+.nvx-checkin-day-card.is-claimed .nvx-checkin-day-sub {
+    color: #065f46 !important;
+}
+
+.nvx-checkin-day-card.is-today .nvx-checkin-day-sub {
+    color: #92400e !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-modal-dialog {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    opacity: 1 !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.78) !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-modal-header {
+    border-bottom-color: #334155;
+}
+
+html[data-theme="dark"] .nvx-checkin-modal-title {
+    color: #84cc16 !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-close-btn {
+    background: #1e293b;
+    color: #f8fafc;
+    border-color: #475569;
+}
+
+html[data-theme="dark"] .nvx-checkin-strip-caption {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-total-pill {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #475569 !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-day-card {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #475569 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-day-card.is-claimed {
+    background: #14532d !important;
+    color: #dcfce7 !important;
+    border: 2px solid #22c55e !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-day-card.is-today {
+    background: #451a03 !important;
+    color: #fef3c7 !important;
+    border: 2px solid #f59e0b !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-day-coins {
+    color: #84cc16 !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-day-card.is-today .nvx-checkin-day-coins {
+    color: #fde047 !important;
+}
+
+html[data-theme="dark"] .nvx-checkin-day-sub {
+    color: #cbd5e1 !important;
+}
+
+/* 3. Toàn bộ Modal, Popup & Notification Drawer trên toàn sàn nổi trên Header & Nền ĐẶC 100% */
+.modal-backdrop {
+    z-index: 2147481990 !important;
+}
+
+.modal,
+.nividax-modal-overlay,
+.confirm-transfer-modal-backdrop,
+.custom-modal-backdrop,
+.admin-modal-overlay,
+#quickTermsPreviewModal,
+#legalHistoryModal,
+#warrantyCertificateModal,
+#createArbitrationModal,
+#harvestCelebrationOverlay {
+    z-index: 2147482000 !important;
+}
+
+.modal-content,
+.nividax-modal-card,
+.confirm-transfer-card,
+.custom-modal-backdrop > .nv-adaptive-card,
+.admin-modal-overlay > .bg-surface,
+#quickTermsPreviewModal > div,
+#legalHistoryModal > .nv-adaptive-card,
+#warrantyCertificateModal > .nv-adaptive-card,
+#createArbitrationModal > .nv-adaptive-card {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    opacity: 1 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35) !important;
+}
+
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .nividax-modal-card,
+html[data-theme="dark"] .confirm-transfer-card,
+html[data-theme="dark"] .custom-modal-backdrop > .nv-adaptive-card,
+html[data-theme="dark"] .admin-modal-overlay > .bg-surface,
+html[data-theme="dark"] #quickTermsPreviewModal > div,
+html[data-theme="dark"] #legalHistoryModal > .nv-adaptive-card,
+html[data-theme="dark"] #warrantyCertificateModal > .nv-adaptive-card,
+html[data-theme="dark"] #createArbitrationModal > .nv-adaptive-card {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    opacity: 1 !important;
+    border: 1.5px solid #334155 !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.78) !important;
+}
+
+html[data-theme="light"] .confirm-transfer-card .text-white,
+html[data-theme="light"] .confirm-transfer-card .text-light,
+html[data-theme="light"] .confirm-transfer-card .form-check-label,
+html[data-theme="light"] #quickTermsPreviewModal .text-white,
+html[data-theme="light"] #quickTermsPreviewModal .text-light {
+    color: #0f172a !important;
+}
+
+html[data-theme="light"] .confirm-transfer-card .text-secondary,
+html[data-theme="light"] #quickTermsPreviewModal .small {
+    color: #334155 !important;
+}
+
+html[data-theme="light"] .confirm-transfer-card > div[style*="rgba"],
+html[data-theme="light"] #quickTermsPreviewModal div[style*="rgba"] {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .confirm-transfer-card .btn-outline-light,
+html[data-theme="light"] #quickTermsPreviewModal .btn-outline-light {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    background: #f1f5f9 !important;
+}
+
+#nvGlobalNotifDrawer,
+.notif-drawer-panel {
+    z-index: 2147482500 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="light"] #nvGlobalNotifDrawer,
+html[data-theme="light"] .notif-drawer-panel {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1.5px solid #059669 !important;
+    box-shadow: 0 20px 54px rgba(15, 23, 42, 0.25) !important;
+}
+
+html[data-theme="light"] #nvGlobalNotifDrawer .nv-notif-item-card {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] #nvGlobalNotifDrawer .nv-notif-item-card .notif-desc,
+html[data-theme="light"] #nvGlobalNotifDrawer .nv-notif-item-card .notif-time {
+    color: #475569 !important;
+}
+
+html[data-theme="dark"] #nvGlobalNotifDrawer,
+html[data-theme="dark"] .notif-drawer-panel {
+    background: #0f172a !important;
+    color: #f8fafc !important;
 }
 
 /* 4. Lưới sản phẩm CSS Grid thoáng rộng & Cân bằng chiều cao mọi Card */
@@ -5697,7 +5968,7 @@ body {
     line-height: 1.4 !important;
 }
 
-/* 5. Đảm bảo tương phản Light Mode (Executive Light & Giao diện sáng) */
+/* 5. Đảm bảo tương phản Light Mode (Home, Auction, RFQ, Tracking, Bank, Forms) */
 html[data-theme="light"] .nv-adaptive-card,
 html[data-nv-skin="executive_light"] .nv-adaptive-card,
 html[data-nv-skin="swiss_finance"] .nv-adaptive-card,
@@ -5711,11 +5982,55 @@ html[data-theme="light"] .admin-tab-section .card:not(.bg-dark) {
 
 html[data-theme="light"] .nv-adaptive-card .text-muted,
 html[data-theme="light"] .nv-adaptive-card .text-secondary,
+html[data-theme="light"] #allProductsSection .text-muted,
+html[data-theme="light"] #recommendationReasonText,
 html[data-theme="light"] .card:not(.bg-dark):not(.hero-mission-side-card):not(#mainHeroBox) .text-muted,
 html[data-theme="light"] .card:not(.bg-dark):not(.hero-mission-side-card):not(#mainHeroBox) .text-secondary,
 html[data-theme="light"] .dashboard-content .text-muted,
 html[data-theme="light"] .admin-tab-section .text-muted {
-    color: #475569 !important;
+    color: #334155 !important;
+}
+
+html[data-theme="light"] .nv-adaptive-card .text-light,
+html[data-theme="light"] .nvx-step-node,
+html[data-theme="light"] .nvx-step-node .text-light {
+    color: #0f172a !important;
+}
+
+html[data-theme="light"] .nvx-step-node {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .nvx-step-node.step-done {
+    background: #dcfce7 !important;
+    border-color: #16a34a !important;
+}
+
+html[data-theme="light"] .nvx-step-node.step-active {
+    background: #ecfdf5 !important;
+    border-color: #059669 !important;
+}
+
+html[data-theme="light"] #dutchWinQrModalBanner,
+html[data-theme="light"] #rfqAwardedQrBanner,
+html[data-theme="light"] #scannedInvoiceDetailPanel,
+html[data-theme="light"] #scannedInvoiceDetailPanel > div[style*="rgba"] {
+    background: #f0fdf4 !important;
+    color: #0f172a !important;
+}
+
+html[data-theme="light"] .nv-adaptive-card div[style*="background: rgba(15, 23, 42"],
+html[data-theme="light"] .nv-adaptive-card div[style*="background:rgba(15,23,42"] {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .nv-adaptive-card .btn-outline-light {
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    background: #f8fafc !important;
 }
 
 html[data-theme="light"] h1:not(.text-white),
@@ -5724,7 +6039,8 @@ html[data-theme="light"] h3:not(.text-white),
 html[data-theme="light"] h4:not(.text-white),
 html[data-theme="light"] h5:not(.text-white),
 html[data-theme="light"] .form-label,
-html[data-theme="light"] label:not(.text-white):not(.text-light) {
+html[data-theme="light"] label:not(.text-white):not(.text-light),
+html[data-theme="light"] .nv-card-6col-title {
     color: #0f172a;
 }
 
@@ -5786,10 +6102,6 @@ html[data-theme="light"] textarea.form-control:focus {
 }
 
 @media (max-width: 640px) {
-    body {
-        padding-bottom: 108px !important;
-    }
-
     #productGrid[data-grid-density="3"],
     #productGrid[data-grid-density="4"],
     #productGrid[data-grid-density="5"],
@@ -5819,12 +6131,6 @@ html[data-theme="light"] textarea.form-control:focus {
         overflow-x: auto !important;
         flex-wrap: nowrap !important;
         -webkit-overflow-scrolling: touch;
-    }
-
-    #nividaCatControlDock.nivida-cat-dock,
-    #nividaCatOpenBtn.cat-toggle-pill {
-        right: 12px !important;
-        bottom: 68px !important;
     }
 }
 

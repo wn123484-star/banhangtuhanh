@@ -48,9 +48,10 @@
         .confirm-transfer-modal-backdrop {
             position: fixed;
             inset: 0;
-            background: rgba(5, 9, 18, 0.84);
-            backdrop-filter: blur(12px);
-            z-index: 1095;
+            background: rgba(15, 23, 42, 0.78);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 2147482000;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -59,11 +60,18 @@
         .confirm-transfer-card {
             width: 100%;
             max-width: 520px;
-            background: #090d16;
-            color: #f8fafc;
-            border: 2px solid #76b900;
+            background: #ffffff;
+            color: #0f172a;
+            opacity: 1;
+            border: 2px solid #059669;
             border-radius: 22px;
             padding: 24px;
+            box-shadow: 0 25px 65px rgba(15, 23, 42, 0.45);
+        }
+        html[data-theme="dark"] .confirm-transfer-card {
+            background: #0f172a;
+            color: #f8fafc;
+            border-color: #76b900;
             box-shadow: 0 25px 65px rgba(0, 0, 0, 0.8), 0 0 40px rgba(118, 185, 0, 0.22);
         }
     </style>

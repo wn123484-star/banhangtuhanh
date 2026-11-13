@@ -142,3 +142,22 @@ body.theme-light #nativeChart4Accounts {
     filter: brightness(1.08);
     transform: translateY(-1px);
 }
+
+.admin-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(15, 23, 42, 0.78) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    z-index: 2147482000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+}
+
+.admin-modal-overlay.d-none {
+    display: none !important;
+}

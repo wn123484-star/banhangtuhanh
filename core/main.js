@@ -615,10 +615,7 @@ function build7DayStreakStripHtml(data, isCompact) {
         var isTodayTarget = !checkedToday && (d === nextDay);
         var isNextPreview = checkedToday && (d === ((streak % 7) + 1));
 
-        var borderCol = isClaimed ? '#76b900' : (isTodayTarget ? '#facc15' : 'rgba(148,163,184,0.25)');
-        var bgCol = isClaimed
-            ? 'rgba(118, 185, 0, 0.16)'
-            : (isTodayTarget ? 'rgba(250, 204, 21, 0.15)' : 'rgba(15, 23, 42, 0.65)');
+        var dayStateClass = isClaimed ? 'is-claimed' : (isTodayTarget ? 'is-today' : 'is-upcoming');
         var statusTag = isClaimed
             ? '<span class="badge bg-success" style="font-size:9.5px;">✔ Đã nhận</span>'
             : (isTodayTarget
@@ -628,34 +625,33 @@ function build7DayStreakStripHtml(data, isCompact) {
                     : '<span class="badge bg-secondary" style="font-size:9.5px;">Mốc ' + d + '</span>'));
 
         return '<div class="col">' +
-            '<div class="p-2 rounded-3 border text-center h-100 d-flex flex-column justify-content-between" ' +
-                 'style="min-width:96px;background:' + bgCol + ';border-color:' + borderCol + '!important;border-width:' + ((isClaimed || isTodayTarget) ? '2px' : '1px') + '!important;cursor:pointer;" ' +
+            '<div class="nvx-checkin-day-card ' + dayStateClass + ' p-2 rounded-3 text-center h-100 d-flex flex-column justify-content-between" ' +
                  'onclick="claimDailyStreakReward(' + (isTodayTarget ? 'false' : 'true') + ')">' +
                 '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                    '<strong class="small ' + (isClaimed ? 'text-nvidia' : (isTodayTarget ? 'text-warning' : 'text-light')) + '">Ngày ' + d + '</strong>' +
+                    '<strong class="small nvx-checkin-day-title">Ngày ' + d + '</strong>' +
                     statusTag +
                 '</div>' +
                 '<div class="my-1" style="font-size:1.25rem;">' + (d === 7 ? '👑' : (item.spins > 0 ? '🎰' : '🪙')) + '</div>' +
-                '<div class="fw-bold text-nvidia" style="font-size:11px;">+' + Number(item.coins).toLocaleString('vi-VN') + ' Xu</div>' +
-                (item.spins > 0 ? '<div class="text-info fw-semibold" style="font-size:10px;">+' + item.spins + ' Lượt quay</div>' : '<div class="text-secondary" style="font-size:10px;">Điểm danh</div>') +
+                '<div class="fw-bold nvx-checkin-day-coins" style="font-size:11.5px;">+' + Number(item.coins).toLocaleString('vi-VN') + ' Xu</div>' +
+                (item.spins > 0 ? '<div class="nvx-checkin-day-sub fw-semibold" style="font-size:10px;">+' + item.spins + ' Lượt quay</div>' : '<div class="nvx-checkin-day-sub" style="font-size:10px;">Điểm danh</div>') +
             '</div>' +
         '</div>';
     }).join('') + '</div>';
 
-    return '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">' +
+    return '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">' +
             '<div class="d-flex flex-wrap align-items-center gap-2">' +
                 '<span class="badge bg-warning text-dark fw-bold px-2 py-1">🔥 CHUỖI ĐĂNG NHẬP: ' + streak + ' NGÀY LIÊN TIẾP</span>' +
-                '<strong class="small">📅 Điểm Danh Hằng Ngày Nhận Xu, Lượt Vòng Quay &amp; Siêu Voucher Mốc 7 Ngày</strong>' +
-                '<span class="badge bg-dark border border-secondary font-monospace">Tổng tích lũy: ' + totalCheckins + ' ngày</span>' +
+                '<strong class="small nvx-checkin-strip-caption">📅 Điểm Danh Hằng Ngày Nhận Xu, Lượt Vòng Quay &amp; Siêu Voucher Mốc 7 Ngày</strong>' +
+                '<span class="badge nvx-checkin-total-pill font-monospace">Tổng tích lũy: ' + totalCheckins + ' ngày</span>' +
             '</div>' +
             '<div class="d-flex flex-wrap gap-2">' +
                 '<button type="button" class="btn btn-sm ' + (checkedToday ? 'btn-success' : 'btn-nvidia') + ' fw-bold px-3" onclick="claimDailyStreakReward(false)">' +
                     (checkedToday ? ('☑️ Đã Điểm Danh Ngày ' + streak + '/7') : ('🎁 Điểm Danh Nhận Thưởng Ngày ' + nextDay + ' Ngay')) +
                 '</button>' +
-                '<button type="button" class="btn btn-outline-warning btn-sm fw-bold" title="Bấm để giả lập qua ngày hôm sau và test nhận thưởng mốc tiếp theo ngay lập tức" onclick="claimDailyStreakReward(true)">' +
+                '<button type="button" class="btn btn-warning text-dark btn-sm fw-bold" title="Bấm để giả lập qua ngày hôm sau và test nhận thưởng mốc tiếp theo ngay lập tức" onclick="claimDailyStreakReward(true)">' +
                     '⚡ Test +1 Ngày Chuỗi Tiếp Theo' +
                 '</button>' +
-                '<button type="button" class="btn btn-outline-secondary btn-sm py-0" title="Đặt lại chuỗi về Ngày 1" onclick="resetDailyStreakCounter()">🔄 Reset</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm py-0 fw-semibold" title="Đặt lại chuỗi về Ngày 1" onclick="resetDailyStreakCounter()">🔄 Reset</button>' +
             '</div>' +
         '</div>' +
         daysGridHtml;
@@ -671,7 +667,7 @@ async function loadAndRenderDailyCheckinStreak() {
 
         updateHeaderCoinsAndStreakDisplay(data);
 
-        /* Hiển thị Thanh Điểm Danh 7 Ngày trực tiếp trên Trang chủ, Minigame Vòng quay, Nông trại & Cài đặt */
+        /* Hiển thị Thanh Điểm Danh 7 Ngày trực tiếp trên Trang chủ, Minigame Vòng quay, Nông trại & Voucher (Không gắn trên Auth) */
         var path = (window.location.pathname || '').toLowerCase();
         var shouldMountInline = path.includes('index.html') || path === '/' || path.includes('minigame.html') || path.includes('farm.html') || path.includes('vouchers.html');
 
@@ -682,7 +678,7 @@ async function loadAndRenderDailyCheckinStreak() {
                 if (!inlineBar) {
                     inlineBar = document.createElement('section');
                     inlineBar.id = 'nvxDailyCheckinStreakInlineBar';
-                    inlineBar.className = 'nv-adaptive-card p-3 mb-4 rounded-4 border shadow-sm';
+                    inlineBar.className = 'nv-adaptive-card nvx-checkin-inline-card p-3 mb-4 rounded-4 border shadow-sm';
                     inlineBar.style.borderLeft = '5px solid #f59e0b';
                     var eventStrip = document.getElementById('nvxMultiEventsLiveStrip');
                     if (eventStrip && eventStrip.nextSibling) {
@@ -748,22 +744,60 @@ async function resetDailyStreakCounter() {
 }
 window.resetDailyStreakCounter = resetDailyStreakCounter;
 
-function openDailyCheckinModal() {
+function closeDailyCheckinModal() {
+    var modal = document.getElementById('nvxDailyCheckinGlobalModal');
+    if (modal) {
+        modal.classList.add('d-none');
+    }
+}
+window.closeDailyCheckinModal = closeDailyCheckinModal;
+
+function openDailyCheckinModal(isAutoTrigger) {
+    var currentPath = (window.location && window.location.pathname ? window.location.pathname : '').toLowerCase();
+    var isAuthRoute = currentPath.indexOf('auth.html') !== -1 || currentPath.indexOf('seller-auth.html') !== -1 || currentPath.indexOf('seller-register.html') !== -1;
+    if (isAutoTrigger === true && isAuthRoute) {
+        return;
+    }
+
     var modal = document.getElementById('nvxDailyCheckinGlobalModal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'nvxDailyCheckinGlobalModal';
-        modal.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(4,7,13,0.82);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px;';
+        modal.className = 'nvx-checkin-modal-overlay d-none';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'nvxDailyCheckinModalTitle');
         modal.innerHTML =
-            '<div class="nv-adaptive-card p-4 rounded-4 border shadow-lg" style="max-width:880px;width:100%;background:#0f172a;border-color:#76b900!important;">' +
-                '<div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-2 mb-3">' +
-                    '<h5 class="fw-bold m-0 text-nvidia">🔥 Trung Tâm Điểm Danh Hằng Ngày &amp; Chuỗi Đăng Nhập 7 Ngày</h5>' +
-                    '<button type="button" class="btn btn-sm btn-outline-light fw-bold px-3" onclick="document.getElementById(\'nvxDailyCheckinGlobalModal\').classList.add(\'d-none\')">✕ Đóng</button>' +
+            '<div class="nvx-checkin-modal-dialog">' +
+                '<button type="button" class="nvx-checkin-close-btn" aria-label="Đóng bảng điểm danh" onclick="closeDailyCheckinModal()">✕</button>' +
+                '<div class="nvx-checkin-modal-header pe-5 pb-2 mb-3">' +
+                    '<h5 id="nvxDailyCheckinModalTitle" class="fw-bold m-0 nvx-checkin-modal-title">🔥 Trung Tâm Điểm Danh Hằng Ngày &amp; Chuỗi Đăng Nhập 7 Ngày</h5>' +
                 '</div>' +
                 '<div id="nvxDailyCheckinModalBody"></div>' +
             '</div>';
+        modal.onclick = function(ev) {
+            if (ev && ev.target === modal) {
+                closeDailyCheckinModal();
+            }
+        };
+    }
+
+    if (modal.parentNode !== document.body) {
         document.body.appendChild(modal);
     }
+
+    if (!window.__nvxCheckinEscBound) {
+        window.__nvxCheckinEscBound = true;
+        document.addEventListener('keydown', function(ev) {
+            if (ev && ev.key === 'Escape') {
+                var activeCheckinModal = document.getElementById('nvxDailyCheckinGlobalModal');
+                if (activeCheckinModal && !activeCheckinModal.classList.contains('d-none')) {
+                    closeDailyCheckinModal();
+                }
+            }
+        });
+    }
+
     modal.classList.remove('d-none');
     if (__nvxStreakState) {
         var body = document.getElementById('nvxDailyCheckinModalBody');
@@ -2760,14 +2794,14 @@ function setupSmartSearchEngineAutocomplete() {
             top: '38px',
             left: '0',
             right: '0',
-            zIndex: '1099',
+            zIndex: '2147481500',
             maxHeight: '390px',
             overflowY: 'auto',
-            background: 'rgba(9, 14, 24, 0.96)',
+            background: '#0f172a',
             color: '#f8fafc',
             border: '2px solid #76b900',
             borderRadius: '14px',
-            backdropFilter: 'blur(18px)'
+            opacity: '1'
         });
         formEl.appendChild(drop);
     }
