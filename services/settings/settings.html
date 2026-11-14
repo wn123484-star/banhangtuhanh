@@ -111,6 +111,10 @@
                                 <input class="form-check-input" type="checkbox" id="settingsReadingRulerSwitch" onchange="toggleReadingFocusRuler(this.checked)">
                                 <label class="form-check-label small fw-bold" for="settingsReadingRulerSwitch">📏 Thước Đọc Tập Trung</label>
                             </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="settingsHoverColorInspectorSwitch" onchange="toggleHoverColorInspector(this.checked)">
+                                <label class="form-check-label small fw-bold text-primary" for="settingsHoverColorInspectorSwitch">🔍 Bật/Tắt Mèo Báo Màu Khi Di Chuột 2 Giây (Hover Color Inspector)</label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -217,11 +221,14 @@
                     </div>
 
                     <form id="settingsPasswordChangeForm" onsubmit="submitSettingsPasswordChange(event)">
-                        <!-- Phương thức OTP -->
+                        <!-- Phương thức OTP [FEAT-AUTH-003.2] & [FEAT-AUTH-003.3] -->
                         <div id="setPwBox_otp" class="p-3 rounded-3 border mb-3" style="background: rgba(118, 185, 0, 0.06);">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small fw-bold">Nhận mã OTP 6 số để xác nhận đổi mật khẩu:</span>
-                                <button type="button" class="btn btn-warning btn-sm fw-bold text-dark py-0" onclick="sendOtpInSettingsPage()">📩 Gửi Mã OTP</button>
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <span class="small fw-bold">Nhận mã OTP 6 số để xác nhận đổi mật khẩu (Tặng +20.000 Xu lần đầu):</span>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button type="button" id="btnSendOtpInSettings" class="btn btn-warning btn-sm fw-bold text-dark py-0" onclick="sendOtpInSettingsPage()">📩 Gửi Mã OTP</button>
+                                    <button type="button" id="btnUnlockOtpInSettingsPage" class="btn btn-outline-info btn-sm fw-bold py-0 d-none" onclick="unlockOtpReverification()">🔄 Yêu cầu xác minh lại (Khi đổi Mật khẩu / Đổi Mã PIN / Đổi Email)</button>
+                                </div>
                             </div>
                             <div id="setSmartOtpBanner" class="p-2 rounded border border-success mb-2 d-none small"></div>
                             <input type="text" id="setOtpInput" class="form-control form-control-sm font-monospace text-center fw-bold fs-6" maxlength="6" placeholder="Nhập mã OTP 6 số...">

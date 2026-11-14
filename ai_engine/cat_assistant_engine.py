@@ -216,6 +216,64 @@ def process_cat_assistant_command(data):
                 "groq_used": False
             }
 
+        # [FEAT-CAT-002.6] LỆNH CẤT MÈO ĐI / MÈO TRỐN SAU KHUNG CHAT & GỌI MÈO RA
+        if any(k in msg_norm for k in ["cat meo", "meo tron di", "cho meo ngu", "tron sau chat"]):
+            return {
+                "action_type": "TUCK_CAT_BEHIND_CHAT",
+                "cat_state": "TUCKED_BEHIND_CHAT",
+                "cat_expr": "uwu",
+                "particle": "zzz",
+                "bubble_text": "🐾 Mèo chạy về trốn sau khung chat đây!",
+                "groq_used": False
+            }
+
+        if any(k in msg_norm for k in ["goi meo ra", "meo ra day", "meo oi ra day"]) or msg_norm in ["meo oi", "meo"]:
+            return {
+                "action_type": "SUMMON_CAT_BACK_OUT",
+                "cat_state": "sit_paw_wave_hi",
+                "cat_expr": "lovestruck_sparkle",
+                "particle": "star",
+                "bubble_text": "😺 Mèo ra rồi đây! Cần Mèo giúp gì nào?",
+                "groq_used": False
+            }
+
+        # [FEAT-ACC-009.4] PHÂN BIỆT THÔNG MINH: HỎI PHIÊN BẢN MÀU SẢN PHẨM vs. KHÓ NHÌN MÀU / MÙ MÀU
+        is_normal_variant_query = any(
+            k in msg_norm for k in [
+                "co mau trang khong", "con mau hong khong", "co may mau",
+                "mau den con hang khong", "phien ban mau", "mau nao dep"
+            ]
+        )
+        is_colorblind_assist_phrase = any(
+            k in msg_norm for k in [
+                "toi khong thay mau", "khong thay mau", "toi bi mu mau", "bi mu mau",
+                "mu mau", "khong phan biet duoc mau", "mau nay la mau gi vay toi nhin khong ro",
+                "nhin khong ro mau", "ho tro xem mau giao dien", "ho tro xem mau",
+                "kho nhin mau qua", "bat bao mau"
+            ]
+        )
+        if is_colorblind_assist_phrase and not is_normal_variant_query:
+            return {
+                "action_type": "ENABLE_COLORBLIND_HOVER_ASSIST",
+                "enable_hover_color_inspector": True,
+                "cat_state": "ai_magic_cape_spin",
+                "cat_expr": "lovestruck_sparkle",
+                "particle": "sparkle",
+                "bubble_text": "🐾 Mèo đã bật chế độ Hỗ Trợ Nhìn Màu & Báo Màu Khi Trỏ Chuột 2 Giây cho bạn rồi nhé! Bạn chỉ cần giữ chuột 2 giây ở bất kỳ nút hay sản phẩm nào, Mèo sẽ đọc rõ màu sắc giúp bạn!",
+                "groq_used": False
+            }
+
+        if is_normal_variant_query:
+            return {
+                "action_type": "CHAT_REPLY",
+                "enable_hover_color_inspector": False,
+                "cat_state": "sit_paw_wave_hi",
+                "cat_expr": "lovestruck_sparkle",
+                "particle": "sparkle",
+                "bubble_text": "🎨 Sản phẩm này hiện có đủ các phiên bản màu: Đen Titan Nhám (#0F172A), Trắng Sương Mù (#F8FAFC) và Xám Không Gian sẵn hàng tại kho Nexora Mall nhé!",
+                "groq_used": False
+            }
+
         if any(k in msg_norm for k in ["doi meo", "doi skin meo", "doi mau long", "giong meo"]):
             return {
                 "action_type": "SWITCH_BREED",

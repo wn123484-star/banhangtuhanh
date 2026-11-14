@@ -41,6 +41,11 @@ async function loadUserSecurityProfileInSettings() {
         const twoFaEl = document.getElementById('setTwoFactorSwitch');
         if (twoFaEl) twoFaEl.checked = prof.has_two_factor !== false;
 
+        /* [FEAT-AUTH-003.3] Làm mờ / khóa nút Gửi OTP nếu Email đã được xác minh bảo mật */
+        if (Number(u.email_verified || 0) === 1 && typeof window.applyVerifiedOtpUiLockState === 'function') {
+            window.applyVerifiedOtpUiLockState(true);
+        }
+
         renderSecurityHealthDashboard(prof);
     } catch (e) {}
 }
@@ -170,7 +175,14 @@ async function submitSettingsPasswordChange(e) {
             if (typeof notifyToast === 'function') notifyToast(data.error || 'Không thể đổi mật khẩu!', 'warning');
             return;
         }
-        if (typeof notifyToast === 'function') notifyToast(data.message, 'success');
+        if (data.new_coins_balance !== undefined) {
+            const cEl = document.getElementById('headerUserCoinsBadge');
+            if (cEl) cEl.textContent = `🪙 ${Number(data.new_coins_balance).toLocaleString('vi-VN')} Xu`;
+        }
+        if (typeof window.applyVerifiedOtpUiLockState === 'function') {
+            window.applyVerifiedOtpUiLockState(true);
+        }
+        if (typeof notifyToast === 'function') notifyToast(data.message || '🎉 Xác thực OTP thành công! Bạn được tặng +20.000 Xu vào Ví Nexora Pay!', 'success');
         document.getElementById('setNewPwInput').value = '';
         document.getElementById('setConfirmPwInput').value = '';
         document.getElementById('setSmartOtpBanner')?.classList.add('d-none');
@@ -235,14 +247,16 @@ function initSettingsAccessibilityControls() {
     const motorSw = document.getElementById('settingsMotorLargeBtnSwitch');
     const flashSw = document.getElementById('settingsDeafVisualFlashSwitch');
     const rulerSw = document.getElementById('settingsReadingRulerSwitch');
+    const hoverColorSw = document.getElementById('settingsHoverColorInspectorSwitch');
 
     if (cvdSel) cvdSel.value = localStorage.getItem('nvx_cvd_mode') || 'normal';
-    if (motorSw) motorSw.checked = localStorage.getItem('nvx_motor_large_buttons') === '1';
-    if (flashSw) flashSw.checked = localStorage.getItem('nvx_deaf_visual_flash') === '1';
-    if (rulerSw) rulerSw.checked = localStorage.getItem('nvx_reading_ruler') === '1';
+    if (motorSw) motorSw.checked = localStorage.getItem('nvx_acc_large_buttons') === '1' || localStorage.getItem('nvx_motor_large_buttons') === '1';
+    if (flashSw) flashSw.checked = localStorage.getItem('nvx_acc_visual_flash') === '1' || localStorage.getItem('nvx_deaf_visual_flash') === '1';
+    if (rulerSw) rulerSw.checked = localStorage.getItem('nvx_acc_reading_ruler') === '1' || localStorage.getItem('nvx_reading_ruler') === '1';
+    if (hoverColorSw) hoverColorSw.checked = localStorage.getItem('nvx_color_hover_assist_enabled') === '1';
 
     if (typeof renderLiveUiColorPreviewBox === 'function') {
-        renderLiveUiColorPreviewBox(localStorage.getItem('nvx_cvd_mode') || 'normal');
+        renderLiveUiColorPreviewBox(localStorage.getItem('nvx_cvd_mode') || 'standard');
     }
 }
 

@@ -4190,11 +4190,227 @@ function syncAccessibilityPreferencesToDb() {
             cvd_mode: localStorage.getItem('nvx_cvd_mode') || 'standard',
             large_buttons: localStorage.getItem('nvx_acc_large_buttons') === '1',
             visual_flash: localStorage.getItem('nvx_acc_visual_flash') === '1',
-            reading_ruler: localStorage.getItem('nvx_acc_reading_ruler') === '1'
+            reading_ruler: localStorage.getItem('nvx_acc_reading_ruler') === '1',
+            hover_color_inspector: localStorage.getItem('nvx_color_hover_assist_enabled') === '1'
         })
     }).catch(() => {});
 }
 window.syncAccessibilityPreferencesToDb = syncAccessibilityPreferencesToDb;
+
+/* ==========================================================================
+   [FEAT-ACC-009.4] HỖ TRỢ MÙ MÀU: BẬT/TẮT DI CHUỘT 2 GIÂY BÁO MÀU (2000ms)
+   Mặc định: TẮT (OFF). Chỉ hoạt động khi bật công tắc hoặc nhờ Mèo AI bật.
+   ========================================================================== */
+function parseCssColorToRgbTuple(cssColorStr) {
+    if (!cssColorStr) return [15, 23, 42];
+    const s = String(cssColorStr).trim().toLowerCase();
+    if (s.startsWith('#')) {
+        const hex = s.slice(1);
+        if (hex.length === 3) {
+            return [
+                parseInt(hex[0] + hex[0], 16) || 0,
+                parseInt(hex[1] + hex[1], 16) || 0,
+                parseInt(hex[2] + hex[2], 16) || 0
+            ];
+        }
+        if (hex.length >= 6) {
+            return [
+                parseInt(hex.slice(0, 2), 16) || 0,
+                parseInt(hex.slice(2, 4), 16) || 0,
+                parseInt(hex.slice(4, 6), 16) || 0
+            ];
+        }
+    }
+    const m = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([0-9.]+))?\s*\)/);
+    if (m) {
+        const a = m[4] !== undefined ? parseFloat(m[4]) : 1;
+        if (a <= 0.05) return null;
+        return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+    }
+    return [15, 23, 42];
+}
+
+function rgbTupleToHex(rgb) {
+    const r = Math.max(0, Math.min(255, Math.round(rgb[0] || 0)));
+    const g = Math.max(0, Math.min(255, Math.round(rgb[1] || 0)));
+    const b = Math.max(0, Math.min(255, Math.round(rgb[2] || 0)));
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
+function getVietnameseColorNameFromRgb(rgb) {
+    const r = rgb[0], g = rgb[1], b = rgb[2];
+    const palette = [
+        { rgb: [255, 255, 255], name: 'Trắng Tinh' },
+        { rgb: [248, 250, 252], name: 'Trắng Sáng Ngọc Trai' },
+        { rgb: [241, 245, 249], name: 'Xám Trắng Sương Mù' },
+        { rgb: [203, 213, 225], name: 'Xám Bạc Nhạt' },
+        { rgb: [148, 163, 184], name: 'Xám Đá Trung Tính' },
+        { rgb: [51, 65, 85], name: 'Xám Xanh Đậm' },
+        { rgb: [30, 41, 59], name: 'Xanh Đen Slate' },
+        { rgb: [15, 23, 42], name: 'Đen Xanh Vũ Trụ' },
+        { rgb: [0, 0, 0], name: 'Đen Tuyền' },
+        { rgb: [118, 185, 0], name: 'Xanh Lá Nexora' },
+        { rgb: [16, 185, 129], name: 'Xanh Lục Bảo' },
+        { rgb: [5, 150, 105], name: 'Xanh Lục Bảo Đậm' },
+        { rgb: [163, 230, 53], name: 'Xanh Cốm Sáng' },
+        { rgb: [2, 132, 199], name: 'Xanh Dương Lam Đậm' },
+        { rgb: [56, 189, 248], name: 'Xanh Dương Băng Sáng' },
+        { rgb: [13, 148, 136], name: 'Xanh Ngọc Lam (Teal)' },
+        { rgb: [245, 158, 11], name: 'Vàng Hổ Phách' },
+        { rgb: [250, 204, 21], name: 'Vàng Kim Rực Rỡ' },
+        { rgb: [217, 119, 6], name: 'Cam Vàng Đậm' },
+        { rgb: [239, 68, 68], name: 'Đỏ Cảnh Báo' },
+        { rgb: [225, 29, 72], name: 'Đỏ Hồng Cánh Sen' },
+        { rgb: [168, 85, 247], name: 'Tím Neon' }
+    ];
+    let bestName = 'Xanh Lục Bảo Đậm';
+    let bestDist = Infinity;
+    for (let i = 0; i < palette.length; i++) {
+        const p = palette[i].rgb;
+        const dist = Math.pow(r - p[0], 2) + Math.pow(g - p[1], 2) + Math.pow(b - p[2], 2);
+        if (dist < bestDist) {
+            bestDist = dist;
+            bestName = palette[i].name;
+        }
+    }
+    return bestName;
+}
+
+function computeWcagContrastRatio(rgb1, rgb2) {
+    const lum = (rgb) => {
+        const a = rgb.map(v => {
+            v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+    };
+    const l1 = lum(rgb1);
+    const l2 = lum(rgb2);
+    const brightest = Math.max(l1, l2);
+    const darkest = Math.min(l1, l2);
+    return ((brightest + 0.05) / (darkest + 0.05)).toFixed(1);
+}
+
+function resolveEffectiveBackgroundColorRgb(el) {
+    let cur = el;
+    while (cur && cur !== document.documentElement) {
+        const cs = window.getComputedStyle(cur);
+        const rgb = parseCssColorToRgbTuple(cs.backgroundColor);
+        if (rgb) return rgb;
+        cur = cur.parentElement;
+    }
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return isDark ? [15, 23, 42] : [248, 250, 252];
+}
+
+function updateHoverColorInspectorUiButtons(isOn) {
+    const hubBtn = document.getElementById('catHoverColorToggleBtn');
+    if (hubBtn) {
+        hubBtn.innerHTML = isOn
+            ? '🟢 Đang Bật: Báo Màu Khi Trỏ Chuột 2 Giây (Bấm để Tắt)'
+            : '🔍 Bật/Tắt Báo Màu Khi Di Chuột 2 Giây';
+        hubBtn.style.borderColor = isOn ? '#facc15' : '#10b981';
+        hubBtn.style.color = isOn ? '#fde047' : '#6ee7b7';
+    }
+    const modalBtn = document.getElementById('modalHoverColorInspectorBtn');
+    if (modalBtn) {
+        modalBtn.className = `btn btn-sm w-100 fw-bold py-2 ${isOn ? 'btn-nvidia' : 'btn-outline-info'}`;
+        modalBtn.innerHTML = isOn
+            ? '🟢 Đang Bật: Mèo Báo Màu Khi Di Chuột 2 Giây (Hover 2s ON)'
+            : '🔍 Bật/Tắt Mèo Báo Màu Khi Di Chuột 2 Giây (Hover Color Inspector)';
+    }
+    const settingsChk = document.getElementById('settingsHoverColorInspectorSwitch');
+    if (settingsChk && settingsChk.checked !== isOn) {
+        settingsChk.checked = isOn;
+    }
+}
+window.updateHoverColorInspectorUiButtons = updateHoverColorInspectorUiButtons;
+
+function toggleHoverColorInspector(forceState = undefined, saveToDb = true) {
+    const cur = localStorage.getItem('nvx_color_hover_assist_enabled') === '1';
+    const nextState = forceState !== undefined ? Boolean(forceState) : !cur;
+    localStorage.setItem('nvx_color_hover_assist_enabled', nextState ? '1' : '0');
+    document.body.classList.toggle('nv-hover-color-inspector-active', nextState);
+    updateHoverColorInspectorUiButtons(nextState);
+    initHover2sColorInspectorEngine();
+
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        const msg = nextState
+            ? '🐾 Đã BẬT chế độ Mèo Báo Màu Khi Di Chuột 2 Giây! Hãy giữ chuột 2 giây trên bất kỳ nút, thẻ sản phẩm hay nến giá nào để Mèo đọc màu sắc.'
+            : 'Đã TẮT chế độ Mèo Báo Màu Khi Di Chuột 2 Giây.';
+        notifyToast(msg, nextState ? 'success' : 'info');
+        if (nextState && window.__nividaCatInstance && typeof window.__nividaCatInstance.showSpeechBubble === 'function') {
+            window.__nividaCatInstance.showSpeechBubble('🎨 Đã bật Báo Màu 2 Giây! Giữ chuột 2s ở nút hoặc SP bất kỳ nhé!', 4200);
+        }
+    }
+    return nextState;
+}
+window.toggleHoverColorInspector = toggleHoverColorInspector;
+
+function inspectElementColorAndAnnounce(targetEl) {
+    if (!targetEl) return null;
+    const cs = window.getComputedStyle(targetEl);
+    const bgRgb = resolveEffectiveBackgroundColorRgb(targetEl);
+    const fgRgb = parseCssColorToRgbTuple(cs.color) || [255, 255, 255];
+    const bgHex = rgbTupleToHex(bgRgb);
+    const fgHex = rgbTupleToHex(fgRgb);
+    const bgName = getVietnameseColorNameFromRgb(bgRgb);
+    const fgName = getVietnameseColorNameFromRgb(fgRgb);
+    const ratio = computeWcagContrastRatio(bgRgb, fgRgb);
+    const ratioQuality = Number(ratio) >= 7.0 ? 'Rất Tốt (AAA)' : (Number(ratio) >= 4.5 ? 'Tốt (AA)' : 'Trung Bình');
+
+    const cardEl = targetEl.closest('.product-card, .nv-product-card');
+    if (cardEl) {
+        const titleEl = cardEl.querySelector('h6, h5, .fw-bold, .card-title');
+        const pTitle = titleEl ? titleEl.textContent.trim().slice(0, 34) : 'Sản phẩm Nexora';
+        const cat = cardEl.dataset.nvProductType || cardEl.dataset.nvBrand || 'gpu';
+        const prodSpec = getProductColorAccessibilityDescription(cat, pTitle);
+        const report = `🎨 Thẻ SP [${pTitle}]: Nền ${bgName} (${bgHex}) • Chữ ${fgName} (${fgHex}) • Tương phản ${ratio}:1 • Ngoại hình: ${prodSpec}`;
+        notifyToast(report, 'info');
+        if (window.__nividaCatInstance && typeof window.__nividaCatInstance.showSpeechBubble === 'function') {
+            window.__nividaCatInstance.showSpeechBubble(report, 5200);
+        }
+        return report;
+    }
+
+    const rawText = (targetEl.getAttribute('aria-label') || targetEl.getAttribute('title') || targetEl.textContent || targetEl.tagName || 'Phần tử').replace(/\s+/g, ' ').trim().slice(0, 28);
+    const tagType = targetEl.matches('button, .btn, [role="button"]') ? 'Nút' : (targetEl.matches('.badge') ? 'Huy hiệu' : 'Mục');
+    const report = `🎨 ${tagType} [${rawText || 'Giao diện'}]: Nền ${bgName} (${bgHex}) • Chữ ${fgName} (${fgHex}) • Tương phản ${ratioQuality} (${ratio}:1)`;
+    notifyToast(report, 'info');
+    if (window.__nividaCatInstance && typeof window.__nividaCatInstance.showSpeechBubble === 'function') {
+        window.__nividaCatInstance.showSpeechBubble(report, 4500);
+    }
+    return report;
+}
+window.inspectElementColorAndAnnounce = inspectElementColorAndAnnounce;
+
+function initHover2sColorInspectorEngine() {
+    if (window.__nvHover2sColorInspectorBound) return;
+    window.__nvHover2sColorInspectorBound = true;
+    let hoverTimer = null;
+    let lastInspectedEl = null;
+
+    document.addEventListener('mouseover', (e) => {
+        if (localStorage.getItem('nvx_color_hover_assist_enabled') !== '1') return;
+        const target = e.target.closest('button, a.btn, .btn, .badge, .nv-hub-seg-btn, .cat-action-chip, .product-card, .nv-product-card, img, [data-nv-slot]');
+        if (!target || target === lastInspectedEl) return;
+        if (hoverTimer) clearTimeout(hoverTimer);
+        hoverTimer = setTimeout(() => {
+            if (localStorage.getItem('nvx_color_hover_assist_enabled') !== '1') return;
+            lastInspectedEl = target;
+            inspectElementColorAndAnnounce(target);
+        }, 2000);
+    }, { passive: true });
+
+    document.addEventListener('mouseout', () => {
+        if (hoverTimer) {
+            clearTimeout(hoverTimer);
+            hoverTimer = null;
+        }
+    }, { passive: true });
+}
+window.initHover2sColorInspectorEngine = initHover2sColorInspectorEngine;
 
 function getProductColorAccessibilityDescription(catKey = 'gpu', prodName = '') {
     const k = inferSmartCategoryKey(catKey, prodName);
@@ -4225,6 +4441,9 @@ function describeVisibleProductColorByCat(targetCardEl = null) {
     }
     const colorDesc = getProductColorAccessibilityDescription(cat, title);
     notifyToast(`🎨 Mô tả màu cho người mù màu [${title.slice(0, 28)}]: ${colorDesc}`, 'info');
+    if (window.__nividaCatInstance && typeof window.__nividaCatInstance.showSpeechBubble === 'function') {
+        window.__nividaCatInstance.showSpeechBubble(`🎨 [${title.slice(0, 24)}]: ${colorDesc}`, 5000);
+    }
     return colorDesc;
 }
 window.describeVisibleProductColorByCat = describeVisibleProductColorByCat;
@@ -4233,6 +4452,7 @@ function openColorblindPreviewModal() {
     let modal = document.getElementById('nvxColorblindPreviewModal');
     if (modal) modal.remove();
     const curMode = localStorage.getItem('nvx_cvd_mode') || 'standard';
+    const isHover2sOn = localStorage.getItem('nvx_color_hover_assist_enabled') === '1';
 
     modal = document.createElement('div');
     modal.id = 'nvxColorblindPreviewModal';
@@ -4269,6 +4489,19 @@ function openColorblindPreviewModal() {
             </div>
 
             <div class="nvx-live-color-preview-container mb-3"></div>
+
+            <!-- [FEAT-ACC-009.4] Công tắc chủ động Bật/Tắt Mèo Báo Màu Khi Di Chuột 2 Giây -->
+            <div class="p-3 rounded-3 mb-3 border border-info border-opacity-50" style="background:rgba(30,41,59,0.75);">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <div class="fw-bold small text-warning">🔍 Trợ Lý Mèo Báo Màu Khi Di Chuột 2 Giây (Hover 2s Color Inspector)</div>
+                        <div class="small text-secondary">Khi bật: Giữ chuột 2 giây ở bất kỳ Nút bấm, Huy hiệu hay Thẻ sản phẩm nào, Mèo sẽ đọc Tên màu Tiếng Việt + Mã Hex + Độ tương phản.</div>
+                    </div>
+                    <button type="button" id="modalHoverColorInspectorBtn" class="btn btn-sm ${isHover2sOn ? 'btn-nvidia' : 'btn-outline-info'} fw-bold py-2 px-3" onclick="toggleHoverColorInspector()">
+                        ${isHover2sOn ? '🟢 Đang Bật: Mèo Báo Màu Khi Di Chuột 2 Giây (Hover 2s ON)' : '🔍 Bật/Tắt Mèo Báo Màu Khi Di Chuột 2 Giây (Hover Color Inspector)'}
+                    </button>
+                </div>
+            </div>
 
             <div class="row g-2 mb-3 small">
                 <div class="col-md-4">
@@ -4312,6 +4545,10 @@ function initGlobalAccessibilityFromSaved() {
     if (localStorage.getItem('nvx_acc_reading_ruler') === '1') {
         toggleReadingFocusRuler(true, false);
     }
+    initHover2sColorInspectorEngine();
+    const isHoverOn = localStorage.getItem('nvx_color_hover_assist_enabled') === '1';
+    document.body.classList.toggle('nv-hover-color-inspector-active', isHoverOn);
+    updateHoverColorInspectorUiButtons(isHoverOn);
 }
 window.initGlobalAccessibilityFromSaved = initGlobalAccessibilityFromSaved;
 

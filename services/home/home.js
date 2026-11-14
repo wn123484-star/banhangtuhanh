@@ -1,3 +1,4 @@
+/* [FEAT-HDR-001.2] & [FEAT-MKT-006.1] Kệ hàng 3/4/5/6 cột trong suốt Glassmorphism & Sàn TMĐT Đa Ngành Nexora */
 let __homeAllProductsCache = [];
 let __homeFeaturedStoresCache = [];
 
@@ -25,11 +26,13 @@ function buildProductCardHtml(p) {
         : '<span class="badge bg-warning text-dark" style="font-size:9.5px;">⭐ Yêu thích</span>';
     const promo = getShopPromotionMetaForProduct(p);
     const detailUrl = `/services/product/product-detail.html?id=${p.id}`;
+    const catKey = (p.category || 'gpu').replace(/"/g, '&quot;');
 
     return `
-        <div class="col-6 col-sm-4 col-md-3 col-lg-3 nv-product-col">
+        <div class="col-6 col-sm-4 col-md-3 col-lg-3 nv-product-col" style="background:transparent !important;">
             <div class="nv-adaptive-card h-100 overflow-hidden d-flex flex-column justify-content-between nv-product-card product-card position-relative"
                  data-product-id="${p.id}"
+                 data-nv-product-type="${catKey}"
                  data-product-name="${(p.name || '').replace(/"/g, '&quot;')}">
                 <div class="d-flex flex-column flex-fill">
                     <div class="position-relative nv-prod-thumb-wrap product-img-wrap product-card-img nvx-card-thumb">

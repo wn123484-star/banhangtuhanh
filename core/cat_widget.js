@@ -166,12 +166,17 @@
             this.softBody = new CohesiveSoftBody(startX, startY);
             this.breedKey = saved.breedKey && CAT_BREEDS[saved.breedKey] ? saved.breedKey : 'ginger_boba';
             this.breed = CAT_BREEDS[this.breedKey];
-            this.state = saved.state || 'sitting';
+            this.state = (saved.state && saved.state !== 'TUCKED_BEHIND_CHAT') ? saved.state : 'sitting';
             this.expr = saved.expr || 'normal';
             this.direction = saved.direction || -1;
             this.surfaceMode = saved.surfaceMode || 'floor';
             this.stateTimer = 4.0;
             this.animTime = 0;
+
+            /* [FEAT-CAT-002.6] Trạng thái Cất Mèo Đi / Lấp Ló Sau Khung Chat */
+            this.peekNextGestureTimer = 6.5;
+            this.peekActiveGesture = 'ears_only'; // 'ears_only' | 'tail' | 'face' | 'paws'
+            this.peekGestureDurationLeft = 0;
 
             this.targetX = null;
             this.targetY = null;
@@ -367,15 +372,19 @@
         showBubble(text, durationMs = 2500, broadcast = true) {
             if (!this.bubbleEl) return;
             const raw = String(text || '').trim();
-            const concise = raw.length > 52 ? (raw.slice(0, 49) + '...') : raw;
+            const concise = raw.length > 96 ? (raw.slice(0, 93) + '...') : raw;
             this.currentBubbleText = concise;
             this.bubbleEl.textContent = concise;
             this.bubbleEl.classList.remove('d-none');
             if (this.bubbleTimeout) clearTimeout(this.bubbleTimeout);
             this.bubbleTimeout = setTimeout(() => {
                 this.bubbleEl.classList.add('d-none');
-            }, Math.min(2800, Math.max(1800, durationMs)));
+            }, Math.min(4800, Math.max(1800, durationMs)));
             if (broadcast) this.saveCatState(concise);
+        }
+
+        showSpeechBubble(text, durationMs = 3000) {
+            return this.showBubble(text, durationMs, true);
         }
 
         /* 4.2: ĐỔI MÈO 5 GIỐNG HOẠT ĐỘNG 100% */
@@ -642,7 +651,80 @@
             this.softBody.triggerSquish(0.92, 1.15);
             await this.moveToPointAsync(rx, ry, 'walking', 'content_purr', 460);
             this.setCatState('sitting', 5.0, 'content_purr', true);
+            if (typeof window.updateCatTuckToggleButtonLabel === 'function') {
+                window.updateCatTuckToggleButtonLabel(false);
+            }
             this.showBubble('🏠 Mèo đã về chỗ nghỉ ngơi!', 2500, true);
+        }
+
+        /* ======================================================================
+           [FEAT-CAT-002.6] CẤT MÈO ĐI / GỌI MÈO RA (`tuckCatBehindChat` & `summonCatBackOut`)
+           VÀ VÒNG LẶP LẤP LÓ SAU KHUNG CHAT (`TUCKED_BEHIND_CHAT`)
+           ====================================================================== */
+        getChatTopHideCoords() {
+            const btn = document.getElementById('nvUnifiedHubToggleBtn');
+            const dock = document.getElementById('nvUnifiedHubDock');
+            if (dock && !dock.classList.contains('d-none')) {
+                const dr = dock.getBoundingClientRect();
+                if (dr.width > 0) {
+                    return {
+                        x: Math.max(this.leftWallX, Math.min(this.rightWallX, dr.left + dr.width * 0.52)),
+                        y: Math.max(this.ceilingY + 24, dr.top + 8)
+                    };
+                }
+            }
+            if (btn) {
+                const br = btn.getBoundingClientRect();
+                if (br.width > 0) {
+                    return {
+                        x: Math.max(this.leftWallX, Math.min(this.rightWallX, br.left + br.width * 0.52)),
+                        y: Math.max(this.ceilingY + 24, br.top + 8)
+                    };
+                }
+            }
+            return {
+                x: Math.max(this.leftWallX, window.innerWidth - 135),
+                y: Math.max(this.ceilingY + 24, window.innerHeight - 54)
+            };
+        }
+
+        async tuckCatBehindChat() {
+            this.choreographyBusy = false;
+            this.foodAnim = null;
+            this.magicCastState = null;
+            this.carryingLabel = '';
+            const coords = this.getChatTopHideCoords();
+            this.showBubble('🐾 Mèo chạy về trốn sau khung chat đây!', 2200, true);
+            this.softBody.triggerSquish(1.18, 0.82);
+            await this.moveToPointAsync(coords.x, coords.y, 'walking', 'uwu', 560);
+            this.surfaceMode = 'tucked_chat';
+            this.peekNextGestureTimer = 6.0 + Math.random() * 3.0;
+            this.peekActiveGesture = 'ears_only';
+            this.peekGestureDurationLeft = 0;
+            this.setCatState('TUCKED_BEHIND_CHAT', 999999, 'uwu', true);
+            if (typeof window.updateCatTuckToggleButtonLabel === 'function') {
+                window.updateCatTuckToggleButtonLabel(true);
+            }
+        }
+
+        async summonCatBackOut() {
+            this.choreographyBusy = false;
+            this.surfaceMode = 'floor';
+            this.peekActiveGesture = 'ears_only';
+            this.peekGestureDurationLeft = 0;
+            const rx = Math.round(window.innerWidth * 0.68);
+            const ry = this.floorY;
+            this.spawnDomMagicSparklesAt(this.softBody.x, this.softBody.y);
+            this.spawnParticle('star');
+            this.spawnParticle('heart');
+            this.softBody.triggerSquish(0.88, 1.24);
+            await this.moveToPointAsync(rx, ry, 'jump_starfish_soar', 'starry_hyped_grin', 560);
+            this.softBody.triggerSquish(1.28, 0.74);
+            this.setCatState('sit_paw_wave_hi', 5.0, 'lovestruck_sparkle', true);
+            if (typeof window.updateCatTuckToggleButtonLabel === 'function') {
+                window.updateCatTuckToggleButtonLabel(false);
+            }
+            this.showBubble('😺 Mèo ra rồi đây! Cần Mèo giúp gì nào?', 3000, true);
         }
 
         async huntSuperSaleDeal() {
@@ -856,6 +938,12 @@
 
             this.hitbox.addEventListener('mousedown', (e) => {
                 if (e.button !== 0) return;
+                if (this.state === 'TUCKED_BEHIND_CHAT') {
+                    this.isDragging = false;
+                    this.dragMoved = false;
+                    this.summonCatBackOut();
+                    return;
+                }
                 this.isDragging = true;
                 this.dragMoved = false;
                 this.targetX = null;
@@ -863,6 +951,19 @@
                 this.hideBubbleImmediate();
                 this.softBody.triggerSquish(0.92, 1.15);
                 this.setCatState('drag', 2.0, 'shocked', false);
+            });
+
+            /* [FEAT-CAT-002.6] Nháy đúp chuột (dblclick) vào Mèo để Cất Mèo Đi / Gọi Mèo Ra */
+            this.hitbox.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.isDragging = false;
+                this.dragMoved = false;
+                if (this.state === 'TUCKED_BEHIND_CHAT') {
+                    this.summonCatBackOut();
+                } else {
+                    this.tuckCatBehindChat();
+                }
             });
 
             window.addEventListener('mouseup', () => {
@@ -900,6 +1001,10 @@
         }
 
         onCatClicked() {
+            if (this.state === 'TUCKED_BEHIND_CHAT') {
+                this.summonCatBackOut();
+                return;
+            }
             this.spawnParticle('heart');
             this.spawnParticle('sparkle');
             this.softBody.triggerSquish(1.25, 0.78);
@@ -1036,6 +1141,52 @@
             const low = rawMsg.toLowerCase();
             this.hideBubbleImmediate();
 
+            /* [FEAT-CAT-002.6] Lệnh Cất Mèo Đi / Mèo Trốn Đi / Cho Mèo Ngủ */
+            if (low.includes('cất mèo') || low.includes('cat meo') || low.includes('mèo trốn đi') || low.includes('meo tron di') || low.includes('cho mèo ngủ') || low.includes('trốn sau chat')) {
+                await this.tuckCatBehindChat();
+                return;
+            }
+
+            /* [FEAT-CAT-002.6] Lệnh Gọi Mèo Ra trực tiếp */
+            if (low.includes('gọi mèo ra') || low.includes('goi meo ra') || low.includes('mèo ra đây') || low.includes('meo ra day') || low === 'mèo ơi' || low === 'meo oi') {
+                await this.summonCatBackOut();
+                return;
+            }
+
+            /* [FEAT-CAT-002.6] Nếu Mèo đang trốn (TUCKED_BEHIND_CHAT) mà người dùng gõ lệnh bất kỳ gọi Mèo -> Nhảy vọt ra trước khi thực thi */
+            if (this.state === 'TUCKED_BEHIND_CHAT') {
+                await this.summonCatBackOut();
+            }
+
+            /* [FEAT-ACC-009.4] NLP PHÂN BIỆT THÔNG MINH: HỎI MÀU SẢN PHẨM THÔNG THƯỜNG vs. KHÓ NHÌN MÀU / MÙ MÀU */
+            const isNormalProductVariantColorQuery = /(có màu trắng không|co mau trang khong|còn màu hồng không|con mau hong khong|có mấy màu|co may mau|màu đen còn hàng không|phiên bản màu|màu nào đẹp)/i.test(low);
+            const isColorblindDifficultyPhrase = /(tôi không thấy màu|khong thay mau|tôi bị mù màu|bi mu mau|mù màu|mu mau|không phân biệt được màu|khong phan biet duoc mau|màu này là màu gì vậy tôi nhìn không rõ|nhìn không rõ màu|hỗ trợ xem màu giao diện|ho tro xem mau|khó nhìn màu quá|kho nhin mau qua|bật báo màu|bat bao mau)/i.test(low);
+
+            if (isColorblindDifficultyPhrase && !isNormalProductVariantColorQuery) {
+                if (typeof window.toggleHoverColorInspector === 'function') {
+                    window.toggleHoverColorInspector(true, true);
+                }
+                if (typeof window.openColorblindPreviewModal === 'function') {
+                    window.openColorblindPreviewModal();
+                }
+                const assistReply = '🐾 Mèo đã bật chế độ Hỗ Trợ Nhìn Màu & Báo Màu Khi Trỏ Chuột 2 Giây cho bạn rồi nhé! Bạn chỉ cần giữ chuột 2 giây ở bất kỳ nút hay sản phẩm nào, Mèo sẽ đọc rõ màu sắc giúp bạn!';
+                this.showBubble(assistReply, 4800, true);
+                if (typeof window.notifyToast === 'function') {
+                    window.notifyToast(assistReply, 'success');
+                }
+                return;
+            }
+
+            if (isNormalProductVariantColorQuery) {
+                const variantReply = '🎨 Sản phẩm này hiện có đủ các phiên bản màu: Đen Titan Nhám (#0F172A), Trắng Sương Mù (#F8FAFC) và Xám Không Gian sẵn hàng tại kho Nexora Mall nhé!';
+                this.setCatState('sit_paw_wave_hi', 4.5, 'lovestruck_sparkle', true);
+                this.showBubble(variantReply, 4200, true);
+                if (typeof window.notifyToast === 'function') {
+                    window.notifyToast(variantReply, 'info');
+                }
+                return;
+            }
+
             /* Xử lý trực tiếp các lệnh hoạt ảnh đặc trưng ngay lập tức */
             if (low.includes('ăn cá') || low.includes('an ca') || low === 'fish') {
                 await this.performEatFishAnimation();
@@ -1102,6 +1253,27 @@
             const act = data.action_type || 'CHAT_REPLY';
             const st = data.cat_state || 'sit_paw_wave_hi';
             const ex = data.cat_expr || 'uwu';
+
+            if (act === 'TUCK_CAT_BEHIND_CHAT') {
+                await this.tuckCatBehindChat();
+                return;
+            }
+
+            if (act === 'SUMMON_CAT_BACK_OUT') {
+                await this.summonCatBackOut();
+                return;
+            }
+
+            if (act === 'ENABLE_COLORBLIND_HOVER_ASSIST') {
+                if (typeof window.toggleHoverColorInspector === 'function') {
+                    window.toggleHoverColorInspector(true, true);
+                }
+                if (typeof window.openColorblindPreviewModal === 'function') {
+                    window.openColorblindPreviewModal();
+                }
+                this.showBubble(data.bubble_text || '🐾 Mèo đã bật chế độ Hỗ Trợ Nhìn Màu & Báo Màu Khi Trỏ Chuột 2 Giây cho bạn rồi nhé!', 4500);
+                return;
+            }
 
             if (act === 'SWITCH_BREED') {
                 await this.cycleCatBreed();
@@ -1193,6 +1365,44 @@
                 this.bodyTilt = lerpVal(this.bodyTilt, 0, dt * 10);
             }
 
+            /* [FEAT-CAT-002.6] VÒNG LẶP LẤP LÓ SAU KHUNG CHAT (TUCKED_BEHIND_CHAT PEEK LOOP) */
+            if (this.state === 'TUCKED_BEHIND_CHAT') {
+                const hideCoords = this.getChatTopHideCoords();
+                this.softBody.x = lerpVal(this.softBody.x, hideCoords.x, dt * 12);
+                this.softBody.y = lerpVal(this.softBody.y, hideCoords.y, dt * 12);
+
+                if (this.peekGestureDurationLeft > 0) {
+                    this.peekGestureDurationLeft -= dt;
+                    if (this.peekGestureDurationLeft <= 0) {
+                        this.peekActiveGesture = 'ears_only';
+                    }
+                } else {
+                    this.peekNextGestureTimer -= dt;
+                    if (this.peekNextGestureTimer <= 0) {
+                        /* Cứ mỗi 6 – 9 giây, Mèo tự động diễn ngẫu nhiên 1 trong 3 động tác lén lút */
+                        this.peekNextGestureTimer = 6.0 + Math.random() * 3.0;
+                        const gestures = ['tail', 'face', 'paws'];
+                        const picked = gestures[Math.floor(Math.random() * gestures.length)];
+                        this.peekActiveGesture = picked;
+                        this.peekGestureDurationLeft = picked === 'face' ? 1.5 : 2.2;
+                    }
+                }
+
+                this.softBody.stepShape(dt);
+                if (this.hitbox) {
+                    this.hitbox.style.left = (this.softBody.x - 52) + 'px';
+                    this.hitbox.style.top = (this.softBody.y - 44) + 'px';
+                }
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const p = this.particles[i];
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+                    p.life -= dt * 0.85;
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                }
+                return;
+            }
+
             if (!this.isDragging) {
                 if (this.targetX !== null && this.targetY !== null) {
                     const dx = this.targetX - this.softBody.x;
@@ -1279,6 +1489,112 @@
             const t = this.animTime;
             const scX = this.softBody.smoothScaleX;
             const scY = this.softBody.smoothScaleY;
+
+            /* [FEAT-CAT-002.6] VẼ TRẠNG THÁI LẤP LÓ SAU KHUNG CHAT (TUCKED_BEHIND_CHAT) */
+            if (st === 'TUCKED_BEHIND_CHAT') {
+                ctx.save();
+                ctx.translate(cx, cy);
+                const gesture = this.peekActiveGesture || 'ears_only';
+                const earTwitch = Math.sin(t * 7.5) * 0.08;
+                const headPeekOffsetY = gesture === 'face' ? -14 : -2;
+
+                /* 1. Động tác 'tail': Thò cái đuôi cong vẫy qua lại ở mép bên khung Chat */
+                if (gesture === 'tail') {
+                    const tailWag = Math.sin(t * 10) * 14;
+                    ctx.save();
+                    ctx.lineCap = 'round';
+                    ctx.strokeStyle = b.stroke;
+                    ctx.lineWidth = 11;
+                    ctx.beginPath();
+                    ctx.moveTo(26, 2);
+                    ctx.bezierCurveTo(44, -6, 56, -24 + tailWag, 64, -12 + tailWag);
+                    ctx.stroke();
+                    ctx.strokeStyle = b.pCol;
+                    ctx.lineWidth = 7;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                /* Ló 2 tai mèo vểnh lên nhúc nhích & chỏm đầu phía trên viền nút Chat */
+                ctx.save();
+                ctx.translate(0, headPeekOffsetY);
+
+                [-1, 1].forEach(side => {
+                    ctx.save();
+                    ctx.translate(side * 12, -12);
+                    ctx.rotate(side * 0.22 + (side === 1 ? earTwitch : -earTwitch));
+                    const earP = new Path2D();
+                    earP.moveTo(-9, 4);
+                    earP.quadraticCurveTo(-5, -15, 0, -18);
+                    earP.quadraticCurveTo(5, -15, 9, 4);
+                    earP.closePath();
+                    ctx.fillStyle = b.pattern === 'points' ? b.pCol : b.body;
+                    ctx.fill(earP);
+                    ctx.lineWidth = 3.5;
+                    ctx.strokeStyle = b.stroke;
+                    ctx.stroke(earP);
+
+                    const innerP = new Path2D();
+                    innerP.moveTo(-4, 2);
+                    innerP.quadraticCurveTo(0, -10.5, 4, 2);
+                    innerP.closePath();
+                    ctx.fillStyle = 'rgb(251, 207, 232)';
+                    ctx.fill(innerP);
+                    ctx.restore();
+                });
+
+                /* Chỏm đầu (hoặc nửa khuôn mặt nếu gesture === 'face') */
+                ctx.beginPath();
+                ctx.arc(0, 2, 20, Math.PI, 0, false);
+                ctx.fillStyle = b.body;
+                ctx.fill();
+                ctx.lineWidth = 3.6;
+                ctx.strokeStyle = b.stroke;
+                ctx.stroke();
+
+                /* 2. Động tác 'face': Nhô nửa khuôn mặt và đôi mắt tròn xoe lên nhìn lén người dùng 1.5 giây */
+                if (gesture === 'face') {
+                    [-7.5, 7.5].forEach((ex, idxE) => {
+                        ctx.fillStyle = idxE === 0 ? b.eyeColor : b.eyeColor2;
+                        ctx.beginPath();
+                        ctx.arc(ex, -3, 5.2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#090d16';
+                        ctx.beginPath();
+                        ctx.arc(ex, -3, 3.3, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(ex - 1.5, -4.5, 1.6, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+                ctx.restore();
+
+                /* 3. Động tác 'paws': Thò 2 bàn chân măng cụt bám lên gờ trên của thanh Chat */
+                if (gesture === 'paws') {
+                    [-16, 16].forEach(px => {
+                        ctx.save();
+                        ctx.translate(px, 0);
+                        ctx.fillStyle = b.belly || '#ffffff';
+                        ctx.strokeStyle = b.stroke;
+                        ctx.lineWidth = 2.6;
+                        ctx.beginPath();
+                        ctx.roundRect(-6.5, -5, 13, 10, 5);
+                        ctx.fill();
+                        ctx.stroke();
+                        /* Đệm thịt hồng măng cụt */
+                        ctx.fillStyle = 'rgb(244, 114, 182)';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 2.2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    });
+                }
+
+                ctx.restore();
+                return;
+            }
 
             ctx.save();
             ctx.translate(cx, cy);
