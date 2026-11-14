@@ -2208,7 +2208,8 @@ def _resolve_clean_resend_config(custom_key="", custom_from=""):
     if not chosen_from:
         chosen_from = DEFAULT_WORKING_RESEND_FROM
     chosen_from = (
-        chosen_from.replace("NVIDIA Store", "Nexora Mall")
+        chosen_from
+        .replace("NVIDIA Store", "Nexora Mall")
         .replace("Nivida Store", "Nexora Mall")
         .replace("Nexora Tech", "Nexora Mall")
         .replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud")
@@ -2216,7 +2217,11 @@ def _resolve_clean_resend_config(custom_key="", custom_from=""):
     )
 
     reply_to = (env_map.get("RESEND_REPLY_TO") or os.environ.get("RESEND_REPLY_TO") or db_cfg.get("resend_reply_to") or DEFAULT_WORKING_RESEND_REPLY).strip()
-    reply_to = reply_to.replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud").replace("@nexora.castle-tech.cloud", "@mail.castle-tech.cloud")
+    reply_to = (
+        reply_to
+        .replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud")
+        .replace("@nexora.castle-tech.cloud", "@mail.castle-tech.cloud")
+    )
     return chosen_key, chosen_from, reply_to
 
 
@@ -2254,56 +2259,77 @@ def _resolve_recipient_display_name_safe(to_email, explicit_name="", user_id=Non
     return prefix.replace(".", " ").replace("_", " ").title() or "Quý khách"
 
 
-def _build_light_theme_no_icon_otp_html(recipient_name, otp_code, purpose_label, from_email, reward_note=""):
+def _build_resend_otp_html_template(recipient_name, otp_code, purpose_label, from_email, reward_note=""):
     safe_name = str(recipient_name or "Nguyễn Hưng").replace("<", "&lt;").replace(">", "&gt;")
     safe_from = str(from_email or DEFAULT_WORKING_RESEND_FROM).replace("<", "&lt;").replace(">", "&gt;")
-    safe_purpose = str(purpose_label or "XÁC THỰC MÃ OTP TÀI KHOẢN").replace("<", "&lt;").replace(">", "&gt;")
+    safe_purpose = str(purpose_label or "XÁC THỰC BẢO MẬT TÀI KHOẢN").replace("<", "&lt;").replace(">", "&gt;")
 
     reward_html = ""
     if reward_note:
         safe_reward = str(reward_note).replace("<", "&lt;").replace(">", "&gt;")
         reward_html = f"""
-        <div style="margin-top:18px;padding:12px 16px;background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;color:#166534;font-size:13px;line-height:1.5;">
-            <strong>Quyền lợi kích hoạt sau khi xác minh:</strong> {safe_reward}
+        <div style="margin-top:18px;padding:14px 18px;background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;color:#166534;font-size:13.5px;line-height:1.55;">
+            <strong>🎁 Quyền lợi kích hoạt sau khi xác minh:</strong> {safe_reward}
         </div>
         """
 
-    return f"""
-    <div style="background-color:#f4f7fa;padding:32px 16px;font-family:'Segoe UI',Roboto,Arial,sans-serif;color:#1e293b;">
-        <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:14px;padding:32px;border:1px solid #dce4ec;box-shadow:0 6px 20px rgba(15,23,42,0.06);">
-            <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #eef2f6;padding-bottom:16px;margin-bottom:24px;">
-                <strong style="color:#059669;font-size:19px;letter-spacing:0.5px;">NEXORA MALL SECURITY</strong>
-                <span style="background-color:#d1fae5;color:#065f46;font-weight:700;padding:5px 12px;border-radius:6px;font-size:11px;text-transform:uppercase;letter-spacing:0.4px;">{safe_purpose}</span>
+    return f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[Nexora Mall] Mã xác thực bảo mật tài khoản của bạn</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+    <div style="background-color:#f1f5f9;padding:36px 16px;">
+        <div style="max-width:560px;margin:0 auto;background-color:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 12px 32px rgba(15,23,42,0.08);">
+            <!-- Dải màu nhận diện NEXORA MALL • FINTECH ESCROW -->
+            <div style="background:linear-gradient(135deg,#059669 0%,#047857 55%,#1e3a8a 100%);padding:22px 28px;color:#ffffff;">
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <div style="font-size:18px;font-weight:800;letter-spacing:0.8px;">NEXORA MALL • FINTECH ESCROW</div>
+                    <span style="background:rgba(255,255,255,0.18);color:#ecfdf5;font-weight:700;padding:4px 12px;border-radius:99px;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">{safe_purpose}</span>
+                </div>
+                <div style="font-size:12px;color:#d1fae5;margin-top:4px;">Hệ thống Bảo vệ Tài khoản &amp; Thanh toán Bảo lãnh Đa tầng</div>
             </div>
 
-            <p style="font-size:16px;color:#0f172a;margin-top:0;margin-bottom:12px;">
-                Xin chào <strong>{safe_name}</strong>,
-            </p>
+            <div style="padding:30px 28px;">
+                <p style="font-size:16px;color:#0f172a;margin-top:0;margin-bottom:12px;">
+                    Kính chào <strong>{safe_name}</strong>,
+                </p>
 
-            <p style="font-size:14px;color:#334155;line-height:1.65;margin-bottom:22px;">
-                Hệ thống Nexora Mall gửi đến bạn mã xác thực một lần (OTP) để hoàn tất yêu cầu <strong>{safe_purpose.lower()}</strong> trên tài khoản của bạn. Vui lòng nhập dãy 6 chữ số bên dưới vào màn hình xác nhận:
-            </p>
+                <p style="font-size:14.5px;color:#334155;line-height:1.65;margin-top:0;margin-bottom:22px;">
+                    Trung tâm An ninh <strong>Nexora Mall</strong> vừa nhận được yêu cầu <strong>{safe_purpose.lower()}</strong> liên kết với địa chỉ email này. Để đảm bảo an toàn tuyệt đối cho tài khoản và Ví Nexora Pay của bạn, vui lòng nhập mã xác thực một lần (OTP) gồm 6 chữ số dưới đây:
+                </p>
 
-            <div style="text-align:center;margin:24px 0;padding:24px 16px;background-color:#f8fafc;border-radius:12px;border:1px dashed #059669;">
-                <div style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1.2px;font-weight:700;margin-bottom:8px;">
-                    MÃ XÁC THỰC OTP CỦA BẠN
+                <div style="margin:24px 0;text-align:center;">
+                    <div style="font-size:11px;color:#475569;text-transform:uppercase;letter-spacing:1.4px;font-weight:700;margin-bottom:10px;">
+                        MÃ XÁC THỰC BẢO MẬT (6 CHỮ SỐ)
+                    </div>
+                    <div style="font-size:34px;font-weight:800;letter-spacing:10px;font-family:'Courier New',monospace;color:#059669;background:#ecfdf5;border:2px dashed #10b981;border-radius:14px;padding:18px 28px;text-align:center;">
+                        {otp_code}
+                    </div>
                 </div>
-                <div style="font-size:38px;font-weight:900;letter-spacing:10px;color:#047857;font-family:'Courier New',Consolas,monospace;">
-                    {otp_code}
+
+                {reward_html}
+
+                <!-- Khung thông tin bảo mật -->
+                <div style="margin-top:22px;padding:14px 18px;background-color:#f8fafc;border-left:4px solid #f59e0b;border-radius:10px;font-size:13px;color:#334155;line-height:1.6;">
+                    <div>⏱️ <strong>Thời hạn hiệu lực:</strong> Mã xác thực này có hiệu lực trong vòng <strong>5 phút</strong> kể từ thời điểm cấp.</div>
+                    <div style="margin-top:4px;">🛡️ <strong>Cảnh báo an ninh:</strong> <em>Tuyệt đối không chia sẻ mã này cho bất kỳ ai</em> (kể cả nhân viên hỗ trợ). Nexora Mall không bao giờ yêu cầu bạn cung cấp mã OTP qua điện thoại hoặc tin nhắn.</div>
                 </div>
-                <div style="font-size:12px;color:#64748b;margin-top:8px;">
-                    Hiệu lực trong 10 phút • Tuyệt đối không chia sẻ mã này cho bất kỳ ai
+
+                <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:26px;font-size:12px;color:#64748b;line-height:1.6;">
+                    <div>Đơn vị phát hành: <strong>{safe_from}</strong></div>
+                    <div>Cổng thương mại điện tử chính thức: <strong>Nexora Mall (nexora.castle-tech.cloud)</strong></div>
                 </div>
             </div>
-
-            {reward_html}
-
-            <p style="font-size:12px;color:#64748b;border-top:1px solid #eef2f6;padding-top:14px;margin-top:24px;margin-bottom:0;line-height:1.6;">
-                Gửi từ: <strong>{safe_from}</strong> • Máy chủ: <code>nexora.castle-tech.cloud</code>
-            </p>
         </div>
     </div>
-    """
+</body>
+</html>"""
+
+
+_build_light_theme_no_icon_otp_html = _build_resend_otp_html_template
 
 
 def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpose_label="XÁC THỰC OTP RESEND", reward_note="", custom_key="", custom_from=""):
@@ -2313,7 +2339,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
 
     resend_key, from_email, reply_to = _resolve_clean_resend_config(custom_key=custom_key, custom_from=custom_from)
 
-    html_body = _build_light_theme_no_icon_otp_html(
+    html_body = _build_resend_otp_html_template(
         recipient_name=recipient_name,
         otp_code=otp_code,
         purpose_label=purpose_label,
@@ -2322,13 +2348,14 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
     )
 
     ssl_ctx = ssl.create_default_context()
+    safe_subject = "[Nexora Mall] Mã xác thực bảo mật tài khoản của bạn"
 
     def _call_resend_http(sender_address):
         payload_bytes = json.dumps({
             "from": sender_address,
             "to": [to_email],
             "reply_to": reply_to,
-            "subject": f"[{otp_code}] Mã xác thực OTP Nexora Mall dành cho {recipient_name}",
+            "subject": safe_subject,
             "html": html_body
         }).encode("utf-8")
         req = urllib.request.Request(
@@ -2352,10 +2379,11 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
             "provider": "Resend API",
             "message_id": msg_id,
             "from_email": from_email,
+            "subject": safe_subject,
             "recipient_email": to_email,
             "recipient_name": recipient_name,
             "otp_code": otp_code,
-            "message": f"Đã gửi thành công mã OTP [{otp_code}] tới {to_email} (Xin chào {recipient_name})!"
+            "message": f"Đã gửi thành công email xác thực bảo mật tới {to_email} (Kính chào {recipient_name})!"
         }, 200
     except urllib.error.HTTPError as http_err:
         err_body = ""
@@ -2366,7 +2394,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
 
         if http_err.code in (400, 403, 422) and "onboarding@resend.dev" not in from_email:
             try:
-                fallback_sender = "Nexora Tech CSKH <onboarding@resend.dev>"
+                fallback_sender = "Nexora Mall CSKH <onboarding@resend.dev>"
                 _, resp2 = _call_resend_http(fallback_sender)
                 msg_id2 = resp2.get("id") or "RESEND-SANDBOX-OK"
                 return True, {
@@ -2374,10 +2402,11 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
                     "provider": "Resend Sandbox",
                     "message_id": msg_id2,
                     "from_email": fallback_sender,
+                    "subject": safe_subject,
                     "recipient_email": to_email,
                     "recipient_name": recipient_name,
                     "otp_code": otp_code,
-                    "message": f"Đã gửi mã OTP [{otp_code}] tới {to_email} (Xin chào {recipient_name}) thành công!"
+                    "message": f"Đã gửi email xác thực bảo mật tới {to_email} (Kính chào {recipient_name}) thành công!"
                 }, 200
             except Exception:
                 pass
@@ -2385,6 +2414,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
         return False, {
             "ok": False,
             "otp_code": otp_code,
+            "subject": safe_subject,
             "recipient_name": recipient_name,
             "from_email": from_email,
             "recipient_email": to_email,
@@ -2394,6 +2424,7 @@ def _send_otp_email_via_resend_engine(to_email, recipient_name, otp_code, purpos
         return False, {
             "ok": False,
             "otp_code": otp_code,
+            "subject": safe_subject,
             "recipient_name": recipient_name,
             "error": f"Lỗi kết nối Resend: {ex}"
         }, 500

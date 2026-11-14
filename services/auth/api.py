@@ -665,19 +665,32 @@ def send_password_reset_otp():
     if recipient_email and "@" in recipient_email:
         try:
             from services.legal.api import send_transactional_email_v2
-            subject = f"[Nivida] Mã xác thực đặt lại mật khẩu của bạn: {otp_code}"
-            plain_body = f"Xin chào {u_name},\nMã xác thực 6 chữ số của bạn là: {otp_code} (Hiệu lực 5 phút)."
-            html_body = f"""
-            <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:560px;margin:0 auto;padding:22px;border:1px solid #cbd5e1;border-radius:12px;background:#ffffff;color:#0f172a;">
-                <h3 style="color:#76b900;margin-top:0;">MÃ XÁC THỰC BẢO MẬT — NIVIDA</h3>
-                <p>Xin chào <strong>{u_name}</strong>,</p>
-                <p>Mã xác thực 6 số để đổi mật khẩu của bạn là:</p>
-                <div style="text-align:center;margin:18px 0;padding:14px;background:#f8fafc;border:2px dashed #76b900;border-radius:10px;">
-                    <span style="font-size:28px;font-weight:900;letter-spacing:6px;color:#15803d;font-family:monospace;">{otp_code}</span>
+            subject = "[Nexora Mall] Mã xác thực bảo mật tài khoản của bạn"
+            plain_body = f"Kính chào {u_name},\nMã xác thực bảo mật 6 chữ số của bạn trên Nexora Mall là: {otp_code} (Hiệu lực 5 phút - Tuyệt đối không chia sẻ mã này cho bất kỳ ai)."
+            html_body = f"""<!DOCTYPE html>
+            <html lang="vi">
+            <head><meta charset="UTF-8"><title>[Nexora Mall] Mã xác thực bảo mật tài khoản của bạn</title></head>
+            <body style="margin:0;padding:24px 12px;background:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;">
+                <div style="max-width:560px;margin:0 auto;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#ffffff;box-shadow:0 10px 28px rgba(15,23,42,0.08);">
+                    <div style="background:linear-gradient(135deg,#059669 0%,#1e3a8a 100%);padding:18px 24px;color:#ffffff;font-weight:800;font-size:17px;letter-spacing:0.6px;">
+                        NEXORA MALL • FINTECH ESCROW
+                    </div>
+                    <div style="padding:26px 24px;">
+                        <p style="margin-top:0;font-size:15.5px;">Kính chào <strong>{u_name}</strong>,</p>
+                        <p style="color:#334155;font-size:14px;line-height:1.6;">Hệ thống Nexora Mall nhận được yêu cầu xác thực bảo mật và đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhập mã OTP 6 chữ số dưới đây:</p>
+                        <div style="margin:22px 0;font-size:34px;font-weight:800;letter-spacing:10px;font-family:'Courier New',monospace;color:#059669;background:#ecfdf5;border:2px dashed #10b981;border-radius:14px;padding:18px 28px;text-align:center;">
+                            {otp_code}
+                        </div>
+                        <div style="padding:12px 16px;background:#f8fafc;border-left:4px solid #f59e0b;border-radius:8px;font-size:12.5px;color:#334155;line-height:1.55;">
+                            ⏱️ Hiệu lực trong <strong>5 phút</strong> • 🛡️ <em>Tuyệt đối không chia sẻ mã này cho bất kỳ ai</em>.
+                        </div>
+                        <p style="font-size:12px;color:#64748b;margin-top:20px;margin-bottom:0;border-top:1px solid #e2e8f0;padding-top:12px;">
+                            Nexora Mall (nexora.castle-tech.cloud) • Nexora Mall CSKH &lt;noreply@mail.castle-tech.cloud&gt;
+                        </p>
+                    </div>
                 </div>
-                <p style="font-size:12px;color:#64748b;">Mã có hiệu lực trong 5 phút.</p>
-            </div>
-            """
+            </body>
+            </html>"""
             res_mail = send_transactional_email_v2(recipient_email, subject, html_body, plain_body, tag_ref="NVX-OTP")
             if res_mail.get("sent"):
                 delivery_channel = "Email đã đăng ký"

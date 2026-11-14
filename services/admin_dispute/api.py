@@ -174,8 +174,8 @@ def ensure_admin_dispute_tables():
             google_app_password TEXT DEFAULT '',
             enable_legal_email_notify INTEGER DEFAULT 1,
             resend_api_key TEXT DEFAULT '',
-            resend_from_email TEXT DEFAULT 'NVIDIA Store CSKH <noreply@nvidia.castle-tech.cloud>',
-            resend_reply_to TEXT DEFAULT 'cskh@nvidia.castle-tech.cloud',
+            resend_from_email TEXT DEFAULT 'Nexora Mall CSKH <noreply@mail.castle-tech.cloud>',
+            resend_reply_to TEXT DEFAULT 'cskh@mail.castle-tech.cloud',
             enable_smtp_fallback INTEGER DEFAULT 0,
             google_client_id TEXT DEFAULT '',
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -188,8 +188,8 @@ def ensure_admin_dispute_tables():
         "google_app_password TEXT DEFAULT ''",
         "enable_legal_email_notify INTEGER DEFAULT 1",
         "resend_api_key TEXT DEFAULT ''",
-        "resend_from_email TEXT DEFAULT 'NVIDIA Store CSKH <noreply@nvidia.castle-tech.cloud>'",
-        "resend_reply_to TEXT DEFAULT 'cskh@nvidia.castle-tech.cloud'",
+        "resend_from_email TEXT DEFAULT 'Nexora Mall CSKH <noreply@mail.castle-tech.cloud>'",
+        "resend_reply_to TEXT DEFAULT 'cskh@mail.castle-tech.cloud'",
         "enable_smtp_fallback INTEGER DEFAULT 0",
         "google_client_id TEXT DEFAULT ''"
     ]:

@@ -98,9 +98,12 @@
                                 <span class="badge bg-warning text-dark fw-bold mb-1" style="font-size: 10.5px;">KÊNH NGƯỜI BÁN NEXORA</span>
                                 <h4 class="fw-bold m-0 fs-5" id="sellerAuthTitle">Đăng Nhập Gian Hàng</h4>
                             </div>
-                            <div class="auth-segmented-tabs" role="group">
-                                <button type="button" id="selTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchSellerAuthTab('login')">Đăng nhập</button>
-                                <button type="button" id="selTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchSellerAuthTab('register')">Mở Shop</button>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm rounded-pill px-2 py-1 fw-bold nvx-quick-theme-btn" title="Chuyển đổi nhanh Nền Sáng / Nền Tối gốc" onclick="toggleTheme()">🌙</button>
+                                <div class="auth-segmented-tabs" role="group">
+                                    <button type="button" id="selTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchSellerAuthTab('login')">Đăng nhập</button>
+                                    <button type="button" id="selTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchSellerAuthTab('register')">Mở Shop</button>
+                                </div>
                             </div>
                         </div>
 
@@ -650,13 +653,13 @@
                 ctx.restore();
             }
 
-            function renderSellerScene1PodiumCargo(w, h, horizonY, t) {
+            function renderSellerScene1PodiumCargo(w, h, horizonY, t, isLightMode) {
                 const podiums = [
                     { xPct: 0.09, rx: 36, baseH: 95, item: 'box', label: 'KHO HÀNG' },
                     { xPct: 0.18, rx: 40, baseH: 145, item: 'gold', label: 'VỐN 0Đ' },
                     { xPct: 0.28, rx: 46, baseH: 205, item: 'box_big', label: 'TOP DOANH THU' },
                     { xPct: 0.38, rx: 40, baseH: 160, item: 'gold', label: 'ESCROW 100%' },
-                    { xPct: 0.47, rx: 36, baseH: 115, item: 'box', label: 'NVX 2H' }
+                    { xPct: 0.47, rx: 36, baseH: 115, item: 'box', label: 'NX 2H' }
                 ];
 
                 podiums.forEach((pd, idx) => {
@@ -685,14 +688,14 @@
                         drawIsometricGoldBar(cx, topCenterY - 22 + floatOffset, 18);
                     }
 
-                    ctx.fillStyle = '#fef9c3';
+                    ctx.fillStyle = isLightMode ? '#0f172a' : '#fef9c3';
                     ctx.font = 'bold 10px sans-serif';
                     ctx.textAlign = 'center';
                     ctx.fillText(pd.label, cx, horizonY + 26);
                 });
             }
 
-            function renderSellerScene2BullChart(w, h, horizonY, t) {
+            function renderSellerScene2BullChart(w, h, horizonY, t, isLightMode) {
                 const chartLeft = w * 0.05;
                 const chartW = w * 0.48;
                 const stepX = chartW / candles.length;
@@ -707,14 +710,14 @@
                     const lowY = horizonY - 55 - (c.low + wave) * 3.5;
                     const isGreen = closeY <= openY;
 
-                    ctx.strokeStyle = isGreen ? '#4ade80' : '#f87171';
+                    ctx.strokeStyle = isGreen ? (isLightMode ? '#059669' : '#4ade80') : '#ef4444';
                     ctx.lineWidth = 1.6;
                     ctx.beginPath();
                     ctx.moveTo(cx, highY);
                     ctx.lineTo(cx, lowY);
                     ctx.stroke();
 
-                    ctx.fillStyle = isGreen ? '#22c55e' : '#ef4444';
+                    ctx.fillStyle = isGreen ? '#10b981' : '#ef4444';
                     const bodyTop = Math.min(openY, closeY);
                     const bodyH = Math.max(5, Math.abs(closeY - openY));
                     ctx.fillRect(cx - stepX * 0.32, bodyTop, stepX * 0.64, bodyH);
@@ -722,7 +725,7 @@
                     trendPts.push({ x: cx, y: (openY + closeY) * 0.5 - 12 });
                 });
 
-                ctx.strokeStyle = '#facc15';
+                ctx.strokeStyle = isLightMode ? '#d97706' : '#facc15';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 trendPts.forEach((pt, i) => {
@@ -739,7 +742,7 @@
                 drawIsometricGoldBar(w * 0.32, horizonY - 107, 19);
             }
 
-            function renderSellerScene3GlobalLogistics(w, h, horizonY, t) {
+            function renderSellerScene3GlobalLogistics(w, h, horizonY, t, isLightMode) {
                 const cx = w * 0.28;
                 const cy = h * 0.44;
                 const rad = Math.min(w, h) * 0.16;
@@ -748,22 +751,22 @@
                 ctx.translate(cx, cy);
                 ctx.save();
                 ctx.rotate(-0.25);
-                ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
+                ctx.strokeStyle = isLightMode ? 'rgba(217, 119, 6, 0.55)' : 'rgba(250, 204, 21, 0.45)';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, rad * 1.48, rad * 0.36, 0, Math.PI, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
 
-                ctx.fillStyle = '#07162c';
-                ctx.strokeStyle = '#38bdf8';
+                ctx.fillStyle = isLightMode ? '#e0f2fe' : '#07162c';
+                ctx.strokeStyle = isLightMode ? '#0284c7' : '#38bdf8';
                 ctx.lineWidth = 2.2;
                 ctx.beginPath();
                 ctx.arc(0, 0, rad, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
 
-                ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+                ctx.strokeStyle = isLightMode ? 'rgba(2, 132, 199, 0.28)' : 'rgba(56, 189, 248, 0.28)';
                 ctx.lineWidth = 1.1;
                 for (let i = 0; i < 6; i++) {
                     const angle = (t * 0.35 + (i * Math.PI) / 6) % Math.PI;
@@ -775,7 +778,7 @@
 
                 ctx.save();
                 ctx.rotate(-0.25);
-                ctx.strokeStyle = 'rgba(250, 204, 21, 0.92)';
+                ctx.strokeStyle = isLightMode ? 'rgba(217, 119, 6, 0.92)' : 'rgba(250, 204, 21, 0.92)';
                 ctx.lineWidth = 3.5;
                 ctx.beginPath();
                 ctx.ellipse(0, 0, rad * 1.48, rad * 0.36, 0, 0, Math.PI);
@@ -797,47 +800,45 @@
                 if (isLightMode) {
                     const g = ctx.createLinearGradient(0, 0, w, h);
                     g.addColorStop(0, '#f8fafc');
-                    g.addColorStop(0.5, '#f0fdf4');
+                    g.addColorStop(0.5, '#ecfdf5');
                     g.addColorStop(1, '#eff6ff');
                     ctx.fillStyle = g;
                     ctx.fillRect(0, 0, w, h);
 
-                    ctx.strokeStyle = 'rgba(15, 23, 42, 0.045)';
+                    ctx.strokeStyle = 'rgba(5, 150, 105, 0.14)';
                     ctx.lineWidth = 1;
-                    const step = 64;
-                    for (let x = 0; x < w; x += step) {
-                        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+                    for (let i = 0; i < 12; i++) {
+                        const x = (i / 11) * w;
+                        ctx.beginPath();
+                        ctx.moveTo(w * 0.28, horizonY - 40);
+                        ctx.lineTo(x, h);
+                        ctx.stroke();
                     }
-                    for (let y = 0; y < h; y += step) {
-                        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                } else {
+                    const g = ctx.createLinearGradient(0, 0, 0, h);
+                    g.addColorStop(0, '#030816');
+                    g.addColorStop(0.55, '#071c18');
+                    g.addColorStop(1, '#040d0c');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.strokeStyle = 'rgba(118, 185, 0, 0.14)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 12; i++) {
+                        const x = (i / 11) * w;
+                        ctx.beginPath();
+                        ctx.moveTo(w * 0.28, horizonY - 40);
+                        ctx.lineTo(x, h);
+                        ctx.stroke();
                     }
-                    requestAnimationFrame(loop);
-                    return;
-                }
-
-                const g = ctx.createLinearGradient(0, 0, 0, h);
-                g.addColorStop(0, '#030816');
-                g.addColorStop(0.55, '#071c18');
-                g.addColorStop(1, '#040d0c');
-                ctx.fillStyle = g;
-                ctx.fillRect(0, 0, w, h);
-
-                ctx.strokeStyle = 'rgba(118, 185, 0, 0.14)';
-                ctx.lineWidth = 1;
-                for (let i = 0; i < 12; i++) {
-                    const x = (i / 11) * w;
-                    ctx.beginPath();
-                    ctx.moveTo(w * 0.28, horizonY - 40);
-                    ctx.lineTo(x, h);
-                    ctx.stroke();
                 }
 
                 if (__sellerSceneMode === 'podium_cargo_bills') {
-                    renderSellerScene1PodiumCargo(w, h, horizonY, t);
+                    renderSellerScene1PodiumCargo(w, h, horizonY, t, isLightMode);
                 } else if (__sellerSceneMode === 'bull_market_gold') {
-                    renderSellerScene2BullChart(w, h, horizonY, t);
+                    renderSellerScene2BullChart(w, h, horizonY, t, isLightMode);
                 } else {
-                    renderSellerScene3GlobalLogistics(w, h, horizonY, t);
+                    renderSellerScene3GlobalLogistics(w, h, horizonY, t, isLightMode);
                 }
 
                 for (const b of banknotes) {

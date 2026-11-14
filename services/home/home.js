@@ -28,13 +28,13 @@ function buildProductCardHtml(p) {
 
     return `
         <div class="col-6 col-sm-4 col-md-3 col-lg-3 nv-product-col">
-            <div class="nv-adaptive-card h-100 overflow-hidden d-flex flex-column justify-content-between nv-product-card position-relative"
+            <div class="nv-adaptive-card h-100 overflow-hidden d-flex flex-column justify-content-between nv-product-card product-card position-relative"
                  data-product-id="${p.id}"
                  data-product-name="${(p.name || '').replace(/"/g, '&quot;')}">
                 <div class="d-flex flex-column flex-fill">
-                    <div class="position-relative nv-prod-thumb-wrap">
-                        <a href="${detailUrl}">
-                            <img src="${imgUrl}" alt="${(p.name || '').replace(/"/g, '&quot;')}" class="w-100 nv-prod-thumb" style="height: 165px; object-fit: cover;">
+                    <div class="position-relative nv-prod-thumb-wrap product-img-wrap product-card-img nvx-card-thumb">
+                        <a href="${detailUrl}" class="d-flex align-items-center justify-content-center w-100 h-100">
+                            <img src="${imgUrl}" alt="${(p.name || '').replace(/"/g, '&quot;')}" class="w-100 h-100 nv-prod-thumb" style="width: 100% !important; height: 100% !important; object-fit: contain !important; object-position: center !important;">
                         </a>
                         <div class="position-absolute top-0 start-0 m-1 d-flex gap-1">
                             ${tierBadge}

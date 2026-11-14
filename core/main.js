@@ -343,6 +343,11 @@ function applyNvidiaVisualSkin(skinKey) {
     document.documentElement.setAttribute('data-theme', found.dark ? 'dark' : 'light');
     localStorage.setItem('nvx_visual_skin', found.key);
     localStorage.setItem('theme', found.dark ? 'dark' : 'light');
+    if (found.dark) {
+        localStorage.setItem('nvx_last_dark_skin', found.key);
+    } else {
+        localStorage.setItem('nvx_last_light_skin', found.key);
+    }
     const sel = document.getElementById('headerThemeSkinSelector') || document.getElementById('settingsThemeSkinSelector');
     if (sel && sel.value !== found.key) sel.value = found.key;
     document.querySelectorAll('[data-theme-card-key]').forEach(function(cardEl) {
@@ -350,14 +355,27 @@ function applyNvidiaVisualSkin(skinKey) {
         cardEl.classList.toggle('border-success', k === found.key);
         cardEl.style.boxShadow = (k === found.key) ? '0 0 0 2px #059669' : 'none';
     });
+    document.querySelectorAll('#quickThemeToggleBtn, .nvx-quick-theme-btn').forEach(function(btnEl) {
+        btnEl.innerHTML = found.dark ? '☀️' : '🌙';
+        btnEl.title = found.dark
+            ? 'Đang ở Chế độ Tối — Bấm để chuyển nhanh sang Chế độ Sáng (Executive Light)'
+            : 'Đang ở Chế độ Sáng — Bấm để chuyển nhanh sang Chế độ Tối (Emerald Tech)';
+    });
+    if (__nvxStreakState && typeof build7DayStreakStripHtml === 'function') {
+        var cModalBody = document.getElementById('nvxDailyCheckinModalBody');
+        if (cModalBody) cModalBody.innerHTML = build7DayStreakStripHtml(__nvxStreakState, false);
+        var cInlineBar = document.getElementById('nvxDailyCheckinStreakInlineBar');
+        if (cInlineBar) cInlineBar.innerHTML = build7DayStreakStripHtml(__nvxStreakState, false);
+    }
     initSeasonalAnimatedCanvas(found.key);
 }
 window.applyNvidiaVisualSkin = applyNvidiaVisualSkin;
 
 function toggleTheme() {
-    const cur = document.documentElement.getAttribute('data-nv-skin') || 'executive_light';
+    const cur = document.documentElement.getAttribute('data-nv-skin') || localStorage.getItem('nvx_visual_skin') || 'executive_light';
     const curObj = NV_SEASONAL_THEMES.find(t => t.key === cur) || NV_SEASONAL_THEMES[0];
-    const nextKey = curObj.dark ? 'executive_light' : 'bloomberg_terminal';
+    const lastDark = localStorage.getItem('nvx_last_dark_skin') || 'emerald_tech';
+    const nextKey = curObj.dark ? 'executive_light' : lastDark;
     applyNvidiaVisualSkin(nextKey);
 }
 window.toggleTheme = toggleTheme;
@@ -555,7 +573,7 @@ function updateHeaderCoinsAndStreakDisplay(streakData) {
     /* 1. Đồng bộ lại số dư Xu trên Header nếu vừa cộng thưởng */
     if (streakData.coins !== undefined && streakData.coins !== null) {
         var coinsFormatted = Number(streakData.coins).toLocaleString('vi-VN') + ' Xu';
-        document.querySelectorAll('header span, header a, header button, .header-coins-badge, #headerUserCoins').forEach(function(el) {
+        document.querySelectorAll('header span, header a, header button, .header-coins-badge, #headerUserCoins, #headerUserCoinsBadge').forEach(function(el) {
             var t = (el.textContent || '').trim();
             if (el.children.length === 0 && t.endsWith('Xu') && t.length < 22) {
                 el.textContent = '🪙 ' + coinsFormatted;
@@ -563,34 +581,31 @@ function updateHeaderCoinsAndStreakDisplay(streakData) {
         });
     }
 
-    /* 2. Gắn hoặc cập nhật nút Huy hiệu "🔥 Chuỗi X Ngày" trên thanh Header toàn sàn */
-    var headerRightArea = document.querySelector('header .d-flex.align-items-center.gap-2, header .header-actions, header nav .d-flex');
-    if (!headerRightArea) {
-        var coinEl = Array.from(document.querySelectorAll('header a, header span, header button')).find(function(x) {
-            return (x.textContent || '').includes('Xu');
-        });
-        if (coinEl && coinEl.parentElement) headerRightArea = coinEl.parentElement;
-    }
+    /* 2. Gỡ bỏ mọi nút Điểm danh cũ nếu vô tình nằm trên thanh Topbar (.nv-header-top-row) */
+    document.querySelectorAll('.nv-header-top-row #nvxHeaderLoginStreakBtn, .nv-header-top-row .nvx-streak-fire-btn').forEach(function(oldBtn) {
+        oldBtn.remove();
+    });
 
+    /* 3. Gắn hoặc cập nhật nút Icon "🔥 + Số ngày" nằm ngay cạnh Chuông thông báo (🔔) trên thanh Header chính (.nvx-main-header) */
     var streakCount = Number(streakData.login_streak || 0);
     var checkedToday = Boolean(streakData.checked_in_today);
+    var badgeBtn = document.getElementById('nvxHeaderLoginStreakBtn');
+    var bellBtn = document.getElementById('headerNotifBellBtn');
 
-    if (headerRightArea) {
-        var badgeBtn = document.getElementById('nvxHeaderLoginStreakBtn');
-        if (!badgeBtn) {
-            badgeBtn = document.createElement('button');
-            badgeBtn.id = 'nvxHeaderLoginStreakBtn';
-            badgeBtn.type = 'button';
-            badgeBtn.onclick = function() { openDailyCheckinModal(); };
-            headerRightArea.insertBefore(badgeBtn, headerRightArea.firstChild);
-        }
-        badgeBtn.className = 'btn btn-sm fw-bold d-inline-flex align-items-center gap-1 rounded-pill px-3 py-1 ' +
-            (checkedToday ? 'btn-outline-success' : 'btn-warning text-dark shadow-sm');
+    if (!badgeBtn && bellBtn && bellBtn.parentNode) {
+        badgeBtn = document.createElement('button');
+        badgeBtn.id = 'nvxHeaderLoginStreakBtn';
+        badgeBtn.type = 'button';
+        badgeBtn.onclick = function() { openDailyCheckinModal(); };
+        bellBtn.parentNode.insertBefore(badgeBtn, bellBtn);
+    }
+
+    if (badgeBtn) {
+        badgeBtn.className = 'btn btn-sm fw-bold d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1 nvx-streak-fire-btn ' +
+            (checkedToday ? 'is-checked-in' : 'is-pending-checkin');
         badgeBtn.style.fontSize = '12px';
-        badgeBtn.title = 'Bấm để mở Bảng Điểm Danh Hằng Ngày & Nhận Thưởng Chuỗi 7 Ngày';
-        badgeBtn.innerHTML = checkedToday
-            ? ('🔥 Chuỗi ' + Math.max(1, streakCount) + ' Ngày ✔')
-            : ('🔥 Chuỗi ' + streakCount + ' Ngày • <span class="text-decoration-underline">Điểm Danh!</span>');
+        badgeBtn.title = 'Chuỗi điểm danh: ' + streakCount + ' ngày — Bấm để nhận thưởng';
+        badgeBtn.innerHTML = '<span class="nvx-fire-icon">🔥</span> <span id="nvxHeaderStreakCount">' + streakCount + '</span>';
     }
 }
 
@@ -608,6 +623,7 @@ function build7DayStreakStripHtml(data, isCompact) {
     var checkedToday = Boolean(data && data.checked_in_today);
     var nextDay = Number((data && data.next_day_to_claim) || ((streak % 7) + 1));
     var totalCheckins = Number((data && data.total_checkins) || 0);
+    var isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
 
     var daysGridHtml = '<div class="row g-2 my-1">' + schedule.map(function(item) {
         var d = Number(item.day);
@@ -615,7 +631,13 @@ function build7DayStreakStripHtml(data, isCompact) {
         var isTodayTarget = !checkedToday && (d === nextDay);
         var isNextPreview = checkedToday && (d === ((streak % 7) + 1));
 
-        var dayStateClass = isClaimed ? 'is-claimed' : (isTodayTarget ? 'is-today' : 'is-upcoming');
+        var dayStateCls = isTodayTarget ? 'nvx-checkin-day-today' : (isClaimed ? 'nvx-checkin-day-claimed' : '');
+        var solidBg = isDarkTheme
+            ? (isTodayTarget ? '#1e293b' : (isClaimed ? '#1e293b' : '#1e293b'))
+            : (isTodayTarget ? '#fef3c7' : (isClaimed ? '#f1f5f9' : '#f1f5f9'));
+        var solidBorder = isTodayTarget ? '#f59e0b' : (isClaimed ? '#059669' : (isDarkTheme ? '#334155' : '#cbd5e1'));
+        var solidText = isDarkTheme ? '#f8fafc' : '#0f172a';
+
         var statusTag = isClaimed
             ? '<span class="badge bg-success" style="font-size:9.5px;">✔ Đã nhận</span>'
             : (isTodayTarget
@@ -625,15 +647,18 @@ function build7DayStreakStripHtml(data, isCompact) {
                     : '<span class="badge bg-secondary" style="font-size:9.5px;">Mốc ' + d + '</span>'));
 
         return '<div class="col">' +
-            '<div class="nvx-checkin-day-card ' + dayStateClass + ' p-2 rounded-3 text-center h-100 d-flex flex-column justify-content-between" ' +
+            '<div class="p-2 rounded-3 text-center h-100 d-flex flex-column justify-content-between nvx-checkin-day-card ' + dayStateCls + '" ' +
+                 'style="min-width:96px;background:' + solidBg + ' !important;color:' + solidText + ' !important;border:' + ((isClaimed || isTodayTarget) ? '2px' : '1px') + ' solid ' + solidBorder + ' !important;opacity:1 !important;cursor:pointer;" ' +
                  'onclick="claimDailyStreakReward(' + (isTodayTarget ? 'false' : 'true') + ')">' +
                 '<div class="d-flex justify-content-between align-items-center mb-1">' +
-                    '<strong class="small nvx-checkin-day-title">Ngày ' + d + '</strong>' +
+                    '<strong class="small nvx-day-title ' + (isClaimed ? 'text-nvidia' : '') + '" style="color:' + (isClaimed ? '#059669' : (isTodayTarget ? (isDarkTheme ? '#facc15' : '#b45309') : solidText)) + ' !important;">Ngày ' + d + '</strong>' +
                     statusTag +
                 '</div>' +
-                '<div class="my-1" style="font-size:1.25rem;">' + (d === 7 ? '👑' : (item.spins > 0 ? '🎰' : '🪙')) + '</div>' +
-                '<div class="fw-bold nvx-checkin-day-coins" style="font-size:11.5px;">+' + Number(item.coins).toLocaleString('vi-VN') + ' Xu</div>' +
-                (item.spins > 0 ? '<div class="nvx-checkin-day-sub fw-semibold" style="font-size:10px;">+' + item.spins + ' Lượt quay</div>' : '<div class="nvx-checkin-day-sub" style="font-size:10px;">Điểm danh</div>') +
+                '<div class="my-1" style="font-size:1.3rem;">' + (d === 7 ? '👑' : (item.spins > 0 ? '🎰' : '🪙')) + '</div>' +
+                '<div class="fw-bold text-nvidia" style="font-size:11.5px;">+' + Number(item.coins).toLocaleString('vi-VN') + ' Xu</div>' +
+                (item.spins > 0
+                    ? '<div class="fw-semibold" style="font-size:10px;color:#0284c7 !important;">+' + item.spins + ' Lượt quay</div>'
+                    : '<div style="font-size:10px;color:' + (isDarkTheme ? '#94a3b8' : '#475569') + ' !important;">Điểm danh</div>') +
             '</div>' +
         '</div>';
     }).join('') + '</div>';
@@ -641,17 +666,17 @@ function build7DayStreakStripHtml(data, isCompact) {
     return '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">' +
             '<div class="d-flex flex-wrap align-items-center gap-2">' +
                 '<span class="badge bg-warning text-dark fw-bold px-2 py-1">🔥 CHUỖI ĐĂNG NHẬP: ' + streak + ' NGÀY LIÊN TIẾP</span>' +
-                '<strong class="small nvx-checkin-strip-caption">📅 Điểm Danh Hằng Ngày Nhận Xu, Lượt Vòng Quay &amp; Siêu Voucher Mốc 7 Ngày</strong>' +
-                '<span class="badge nvx-checkin-total-pill font-monospace">Tổng tích lũy: ' + totalCheckins + ' ngày</span>' +
+                '<strong class="small">📅 Điểm Danh Hằng Ngày Nhận Xu, Lượt Vòng Quay &amp; Siêu Voucher Mốc 7 Ngày</strong>' +
+                '<span class="badge bg-dark text-light border border-secondary font-monospace">Tổng tích lũy: ' + totalCheckins + ' ngày</span>' +
             '</div>' +
             '<div class="d-flex flex-wrap gap-2">' +
                 '<button type="button" class="btn btn-sm ' + (checkedToday ? 'btn-success' : 'btn-nvidia') + ' fw-bold px-3" onclick="claimDailyStreakReward(false)">' +
                     (checkedToday ? ('☑️ Đã Điểm Danh Ngày ' + streak + '/7') : ('🎁 Điểm Danh Nhận Thưởng Ngày ' + nextDay + ' Ngay')) +
                 '</button>' +
-                '<button type="button" class="btn btn-warning text-dark btn-sm fw-bold" title="Bấm để giả lập qua ngày hôm sau và test nhận thưởng mốc tiếp theo ngay lập tức" onclick="claimDailyStreakReward(true)">' +
+                '<button type="button" class="btn btn-outline-warning btn-sm fw-bold" title="Bấm để giả lập qua ngày hôm sau và test nhận thưởng mốc tiếp theo ngay lập tức" onclick="claimDailyStreakReward(true)">' +
                     '⚡ Test +1 Ngày Chuỗi Tiếp Theo' +
                 '</button>' +
-                '<button type="button" class="btn btn-outline-secondary btn-sm py-0 fw-semibold" title="Đặt lại chuỗi về Ngày 1" onclick="resetDailyStreakCounter()">🔄 Reset</button>' +
+                '<button type="button" class="btn btn-outline-secondary btn-sm py-0" title="Đặt lại chuỗi về Ngày 1" onclick="resetDailyStreakCounter()">🔄 Reset</button>' +
             '</div>' +
         '</div>' +
         daysGridHtml;
@@ -667,9 +692,9 @@ async function loadAndRenderDailyCheckinStreak() {
 
         updateHeaderCoinsAndStreakDisplay(data);
 
-        /* Hiển thị Thanh Điểm Danh 7 Ngày trực tiếp trên Trang chủ, Minigame Vòng quay, Nông trại & Voucher (Không gắn trên Auth) */
+        /* Hiển thị Thanh Điểm Danh 7 Ngày trực tiếp trên Minigame Vòng quay & Nông trại */
         var path = (window.location.pathname || '').toLowerCase();
-        var shouldMountInline = path.includes('index.html') || path === '/' || path.includes('minigame.html') || path.includes('farm.html') || path.includes('vouchers.html');
+        var shouldMountInline = path.includes('minigame.html') || path.includes('farm.html');
 
         if (shouldMountInline) {
             var mainContainer = document.querySelector('main .container') || document.querySelector('main');
@@ -678,10 +703,10 @@ async function loadAndRenderDailyCheckinStreak() {
                 if (!inlineBar) {
                     inlineBar = document.createElement('section');
                     inlineBar.id = 'nvxDailyCheckinStreakInlineBar';
-                    inlineBar.className = 'nv-adaptive-card nvx-checkin-inline-card p-3 mb-4 rounded-4 border shadow-sm';
+                    inlineBar.className = 'nv-adaptive-card nvx-checkin-solid-surface p-3 mb-4 rounded-4 border shadow-sm';
                     inlineBar.style.borderLeft = '5px solid #f59e0b';
                     var eventStrip = document.getElementById('nvxMultiEventsLiveStrip');
-                    if (eventStrip && eventStrip.nextSibling) {
+                    if (eventStrip && eventStrip.parentNode === mainContainer && eventStrip.nextSibling) {
                         mainContainer.insertBefore(inlineBar, eventStrip.nextSibling);
                     } else if (mainContainer.firstElementChild) {
                         mainContainer.insertBefore(inlineBar, mainContainer.firstElementChild);
@@ -721,6 +746,9 @@ async function claimDailyStreakReward(forceNextDay) {
             localStorage.setItem('auth_user', JSON.stringify(data.user));
         }
 
+        /* Cập nhật ngay lập tức con số cạnh ngọn lửa 🔥 trên Header mà không cần tải lại trang */
+        updateHeaderCoinsAndStreakDisplay(data);
+
         if (typeof notifyToast === 'function') {
             notifyToast(data.message || '🎁 Đã điểm danh nhận thưởng thành công!', data.ok ? 'success' : 'info');
         }
@@ -738,6 +766,8 @@ async function resetDailyStreakCounter() {
             body: JSON.stringify({ user_id: uid, reset_streak: true })
         });
         var data = await res.json();
+        __nvxStreakState = data;
+        updateHeaderCoinsAndStreakDisplay(data);
         if (typeof notifyToast === 'function') notifyToast(data.message || 'Đã đặt lại chuỗi điểm danh!', 'info');
         await loadAndRenderDailyCheckinStreak();
     } catch (e) {}
@@ -748,50 +778,47 @@ function closeDailyCheckinModal() {
     var modal = document.getElementById('nvxDailyCheckinGlobalModal');
     if (modal) {
         modal.classList.add('d-none');
+        modal.style.setProperty('display', 'none', 'important');
     }
 }
 window.closeDailyCheckinModal = closeDailyCheckinModal;
 
-function openDailyCheckinModal(isAutoTrigger) {
-    var currentPath = (window.location && window.location.pathname ? window.location.pathname : '').toLowerCase();
-    var isAuthRoute = currentPath.indexOf('auth.html') !== -1 || currentPath.indexOf('seller-auth.html') !== -1 || currentPath.indexOf('seller-register.html') !== -1;
-    if (isAutoTrigger === true && isAuthRoute) {
-        return;
-    }
-
+function openDailyCheckinModal() {
     var modal = document.getElementById('nvxDailyCheckinGlobalModal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'nvxDailyCheckinGlobalModal';
-        modal.className = 'nvx-checkin-modal-overlay d-none';
-        modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-modal', 'true');
-        modal.setAttribute('aria-labelledby', 'nvxDailyCheckinModalTitle');
+        modal.className = 'nvx-checkin-modal-backdrop';
         modal.innerHTML =
-            '<div class="nvx-checkin-modal-dialog">' +
-                '<button type="button" class="nvx-checkin-close-btn" aria-label="Đóng bảng điểm danh" onclick="closeDailyCheckinModal()">✕</button>' +
-                '<div class="nvx-checkin-modal-header pe-5 pb-2 mb-3">' +
-                    '<h5 id="nvxDailyCheckinModalTitle" class="fw-bold m-0 nvx-checkin-modal-title">🔥 Trung Tâm Điểm Danh Hằng Ngày &amp; Chuỗi Đăng Nhập 7 Ngày</h5>' +
+            '<div class="nvx-checkin-modal-dialog p-4 rounded-4 shadow-lg" onclick="event.stopPropagation()">' +
+                '<div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3 nvx-checkin-modal-header">' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                        '<span style="font-size:1.45rem;">🔥</span>' +
+                        '<div>' +
+                            '<h5 class="fw-bold m-0 text-nvidia">Trung Tâm Điểm Danh Hằng Ngày &amp; Chuỗi Đăng Nhập 7 Ngày</h5>' +
+                            '<small class="nvx-checkin-subtext">Điểm danh mỗi ngày nhận Xu Nexora Pay, Lượt Quay May Mắn &amp; Siêu Voucher VIP</small>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button type="button" id="nvxCheckinModalCloseBtn" class="nvx-checkin-close-circle-btn" title="Đóng bảng điểm danh (ESC)" onclick="closeDailyCheckinModal()">✕</button>' +
                 '</div>' +
                 '<div id="nvxDailyCheckinModalBody"></div>' +
             '</div>';
-        modal.onclick = function(ev) {
-            if (ev && ev.target === modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
                 closeDailyCheckinModal();
             }
-        };
-    }
-
-    if (modal.parentNode !== document.body) {
+        });
+        document.body.appendChild(modal);
+    } else if (modal.parentNode !== document.body) {
         document.body.appendChild(modal);
     }
 
-    if (!window.__nvxCheckinEscBound) {
-        window.__nvxCheckinEscBound = true;
-        document.addEventListener('keydown', function(ev) {
-            if (ev && ev.key === 'Escape') {
-                var activeCheckinModal = document.getElementById('nvxDailyCheckinGlobalModal');
-                if (activeCheckinModal && !activeCheckinModal.classList.contains('d-none')) {
+    if (!window.__nvxCheckinEscListenerBound) {
+        window.__nvxCheckinEscListenerBound = true;
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                var m = document.getElementById('nvxDailyCheckinGlobalModal');
+                if (m && !m.classList.contains('d-none')) {
                     closeDailyCheckinModal();
                 }
             }
@@ -799,6 +826,8 @@ function openDailyCheckinModal(isAutoTrigger) {
     }
 
     modal.classList.remove('d-none');
+    modal.style.cssText = 'position: fixed !important; inset: 0 !important; z-index: 2147483000 !important; background: rgba(15, 23, 42, 0.78) !important; backdrop-filter: blur(10px) !important; -webkit-backdrop-filter: blur(10px) !important; display: flex !important; align-items: center !important; justify-content: center !important; padding: 16px !important;';
+
     if (__nvxStreakState) {
         var body = document.getElementById('nvxDailyCheckinModalBody');
         if (body) body.innerHTML = build7DayStreakStripHtml(__nvxStreakState, false);
@@ -2276,19 +2305,34 @@ function renderGlobalHeaderAndFooter() {
     const avatarHtml = (user && user.avatar_url)
         ? `<img src="${user.avatar_url}" alt="" class="rounded-circle me-1" style="width:18px;height:18px;object-fit:cover;border:1px solid #059669;">`
         : '👤 ';
+    const streakDaysInit = (__nvxStreakState && __nvxStreakState.login_streak !== undefined) ? Number(__nvxStreakState.login_streak || 0) : 0;
+    const isCheckedTodayInit = Boolean(__nvxStreakState && __nvxStreakState.checked_in_today);
+    const isDarkNow = document.documentElement.getAttribute('data-theme') === 'dark';
+    const quickThemeIcon = isDarkNow ? '☀️' : '🌙';
+    const quickThemeTitle = isDarkNow
+        ? 'Đang ở Chế độ Tối — Bấm để chuyển nhanh sang Chế độ Sáng (Executive Light)'
+        : 'Đang ở Chế độ Sáng — Bấm để chuyển nhanh sang Chế độ Tối (Emerald Tech)';
+
+    const streakAndNotifClusterHtml = `
+        <button type="button" id="nvxHeaderLoginStreakBtn" class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1 nvx-streak-fire-btn ${isCheckedTodayInit ? 'is-checked-in' : 'is-pending-checkin'}" style="font-size: 12px;" title="Chuỗi điểm danh: ${streakDaysInit} ngày — Bấm để nhận thưởng" onclick="openDailyCheckinModal()">
+            <span class="nvx-fire-icon">🔥</span> <span id="nvxHeaderStreakCount">${streakDaysInit}</span>
+        </button>
+        <button type="button" id="headerNotifBellBtn" class="btn btn-outline-warning btn-sm py-1 px-2 rounded-pill fw-bold" style="font-size: 11.5px;" title="Thông báo hệ thống" onclick="toggleGlobalNotificationDrawer()">
+            🔔 <span id="headerNotifCount">${user ? 3 : 2}</span>
+        </button>
+        <button type="button" id="quickThemeToggleBtn" class="btn btn-sm py-1 px-2 rounded-pill fw-bold nvx-quick-theme-btn" style="font-size: 12px;" title="${quickThemeTitle}" onclick="toggleTheme()">
+            ${quickThemeIcon}
+        </button>
+    `;
 
     const userControlsHtml = user ? `
-        <button type="button" id="headerNotifBellBtn" class="btn btn-outline-warning btn-sm py-1 px-2 rounded-pill fw-bold" style="font-size: 11.5px;" onclick="toggleGlobalNotificationDrawer()">
-            🔔 <span id="headerNotifCount">3</span>
-        </button>
+        ${streakAndNotifClusterHtml}
         <span class="badge bg-dark border border-warning text-warning py-1 px-2" style="font-size: 11px;" id="headerUserCoinsBadge">🪙 ${Number(user.coins || 25000).toLocaleString('vi-VN')} Xu</span>
         ${isAdmin ? `<a href="/services/admin_dispute/admin-center.html" class="btn btn-warning text-dark btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 11.5px;">🛠️ Quản Trị</a>` : ''}
         <a href="/services/settings/settings.html" class="btn btn-outline-light btn-sm py-1 px-2 fw-semibold text-nowrap d-inline-flex align-items-center" style="font-size: 11.5px;">${avatarHtml}<span>${displayName}</span></a>
         <button type="button" class="btn btn-outline-danger btn-sm py-1 px-2 text-nowrap" style="font-size: 11px;" onclick="logoutUser()">Thoát</button>
     ` : `
-        <button type="button" id="headerNotifBellBtn" class="btn btn-outline-warning btn-sm py-1 px-2 rounded-pill fw-bold" style="font-size: 11.5px;" onclick="toggleGlobalNotificationDrawer()">
-            🔔 <span id="headerNotifCount">2</span>
-        </button>
+        ${streakAndNotifClusterHtml}
         <a href="/services/auth/seller-auth.html" class="btn btn-outline-info btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 11.5px;">🏪 Kênh Người Bán</a>
         <a href="/services/auth/auth.html?tab=register" class="btn btn-outline-light btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 11.5px;">Đăng Ký</a>
         <a href="/services/auth/auth.html" class="btn btn-warning text-dark btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 11.5px;">Đăng Nhập</a>
@@ -2337,7 +2381,7 @@ function renderGlobalHeaderAndFooter() {
                         </div>
                     </div>
 
-                    <div class="nv-header-main-row">
+                    <div class="nv-header-main-row nvx-main-header">
                         <a href="/services/home/index.html" class="d-flex align-items-center text-decoration-none">
                             <img id="headerBrandLogoImg" data-nv-slot="brand_logo" src="/assets/icons/icon.png" alt="Nexora" class="${useWebIcon ? '' : 'd-none'}">
                             <span id="headerBrandNBox" class="nv-logo-n-box badge bg-nvidia fs-5 me-2 ${useWebIcon ? 'd-none' : ''}">N</span>
@@ -2794,14 +2838,14 @@ function setupSmartSearchEngineAutocomplete() {
             top: '38px',
             left: '0',
             right: '0',
-            zIndex: '2147481500',
+            zIndex: '1099',
             maxHeight: '390px',
             overflowY: 'auto',
-            background: '#0f172a',
+            background: 'rgba(9, 14, 24, 0.96)',
             color: '#f8fafc',
             border: '2px solid #76b900',
             borderRadius: '14px',
-            opacity: '1'
+            backdropFilter: 'blur(18px)'
         });
         formEl.appendChild(drop);
     }

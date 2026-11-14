@@ -43,8 +43,9 @@
     color: #0f172a !important;
 }
 
-/* Chỉ áp dụng nền tối cho thẻ Hero phụ bên phải Banner, tuyệt đối không áp dụng cho .col-lg-4 toàn trang */
-.hero-mission-side-card {
+.hero-mission-side-card,
+.col-lg-4 > .p-3,
+.col-lg-4 > .card {
     background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%) !important;
     color: #f8fafc !important;
     border: 1.5px solid rgba(118, 185, 0, 0.5) !important;
@@ -53,31 +54,73 @@
     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.2) !important;
 }
 
-.hero-mission-side-card h5,
-.hero-mission-side-card h6,
-.hero-mission-side-card .fw-bold {
+.col-lg-4 h5,
+.col-lg-4 h6,
+.col-lg-4 .fw-bold {
     color: #ffffff !important;
 }
 
-.hero-mission-side-card p,
-.hero-mission-side-card .small,
-.hero-mission-side-card .text-muted,
-.hero-mission-side-card .text-secondary {
+.col-lg-4 p,
+.col-lg-4 .small,
+.col-lg-4 .text-muted,
+.col-lg-4 .text-secondary {
     color: #cbd5e1 !important;
 }
 
-.nv-product-card {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    height: 100% !important;
-    border-radius: 14px !important;
-    border: 1px solid rgba(148, 163, 184, 0.24) !important;
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+.nv-product-card,
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
 }
 
-.nv-product-card:hover {
-    transform: translateY(-4px) !important;
-    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.14) !important;
-    border-color: var(--nv-accent, #76b900) !important;
+.nv-product-card:hover,
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16) !important;
+    border-color: #76b900 !important;
 }
+
+.product-img-wrap,
+.product-card-img,
+.nvx-card-thumb,
+.nv-prod-thumb-wrap {
+    aspect-ratio: 4 / 3 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 185px !important;
+    max-height: 250px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+}
+
+.product-img-wrap > a,
+.product-card-img > a,
+.nvx-card-thumb > a,
+.nv-prod-thumb-wrap > a {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.product-img-wrap img,
+.product-img-wrap svg,
+.product-card-img img,
+.product-card-img svg,
+.nvx-card-thumb img,
+.nvx-card-thumb svg,
+.nv-prod-thumb-wrap img,
+.nv-prod-thumb-wrap svg,
+img.nv-prod-thumb {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    aspect-ratio: auto !important;
+}
+

@@ -14,10 +14,8 @@
     --nv-admin-muted: #94a3b8;
 }
 
-html[data-theme="light"],
 body.theme-light,
 body[data-skin*="daylight"],
-body[data-nv-skin="executive_light"],
 body.minimalist-daylight {
     --nv-admin-card-bg: #ffffff;
     --nv-admin-card-border: rgba(15, 23, 42, 0.12);
@@ -25,19 +23,6 @@ body.minimalist-daylight {
     --nv-admin-row-hover: rgba(118, 185, 0, 0.09);
     --nv-admin-text: #0f172a;
     --nv-admin-muted: #475569;
-}
-
-html[data-theme="light"] .nv-admin-card .form-control,
-html[data-theme="light"] .nv-admin-card .form-select,
-html[data-theme="light"] .admin-tab-section .form-control,
-html[data-theme="light"] .admin-tab-section .form-select {
-    background-color: #ffffff !important;
-    color: #0f172a !important;
-    border-color: #cbd5e1 !important;
-}
-
-html[data-theme="light"] .nv-admin-card .form-control::placeholder {
-    color: #64748b !important;
 }
 
 /* 1. Khung Thẻ Quản Trị & Command Hub */
@@ -141,23 +126,4 @@ body.theme-light #nativeChart4Accounts {
 .btn-nvidia:hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
-}
-
-.admin-modal-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(15, 23, 42, 0.78) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
-    z-index: 2147482000 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 16px !important;
-}
-
-.admin-modal-overlay.d-none {
-    display: none !important;
 }

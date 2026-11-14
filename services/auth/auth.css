@@ -61,11 +61,11 @@ html[data-theme="dark"] .auth-art-showcase {
     pointer-events: auto;
 }
 
-/* BANNER MINH HỌA VECTOR HIỆN ĐẠI CỘT TRÁI (SÁNG RÕ & THÍCH ỨNG SÁNG/TỐI) */
+/* BANNER MINH HỌA VECTOR HIỆN ĐẠI CỘT TRÁI (CHỈ HIỂN THỊ Ở LIGHT MODE; DARK MODE KHÔI PHỤC 100% KHUNG CẢNH GỐC TRONG SUỐT) */
 .auth-vector-illustration-card {
-    background: rgba(255, 255, 255, 0.88);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid #cbd5e1;
     border-radius: 20px;
     padding: 18px 20px;
@@ -74,9 +74,7 @@ html[data-theme="dark"] .auth-art-showcase {
 }
 
 html[data-theme="dark"] .auth-vector-illustration-card {
-    background: rgba(15, 23, 42, 0.72);
-    border-color: rgba(118, 185, 0, 0.45);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    display: none !important;
 }
 
 .auth-showcase-heading {

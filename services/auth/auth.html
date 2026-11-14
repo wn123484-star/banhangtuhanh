@@ -122,9 +122,12 @@
                                 <span class="badge bg-nvidia mb-1" style="font-size: 10.5px;">DÀNH CHO KHÁCH MUA HÀNG</span>
                                 <h4 class="fw-bold m-0 fs-5" id="authHeaderTitle">Đăng Nhập Tài Khoản</h4>
                             </div>
-                            <div class="auth-segmented-tabs" role="group">
-                                <button type="button" id="authTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchAuthTab('login')">Đăng nhập</button>
-                                <button type="button" id="authTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchAuthTab('register')">Đăng ký</button>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm rounded-pill px-2 py-1 fw-bold nvx-quick-theme-btn" title="Chuyển đổi nhanh Nền Sáng / Nền Tối gốc" onclick="toggleTheme()">🌙</button>
+                                <div class="auth-segmented-tabs" role="group">
+                                    <button type="button" id="authTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchAuthTab('login')">Đăng nhập</button>
+                                    <button type="button" id="authTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchAuthTab('register')">Đăng ký</button>
+                                </div>
                             </div>
                         </div>
 
@@ -317,7 +320,7 @@
     </main>
 
     <!-- MODAL XEM NHANH ĐIỀU KHOẢN NGAY TẠI TRANG ĐĂNG KÝ (KHÔNG LÀM MẤT DỮ LIỆU ĐANG GÕ) -->
-    <div id="quickTermsPreviewModal" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(15, 23, 42, 0.78); backdrop-filter: blur(10px); z-index: 2147482000;">
+    <div id="quickTermsPreviewModal" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(6, 10, 19, 0.82); z-index: 1095;">
         <div class="p-4 rounded-4 shadow-lg" style="max-width: 620px; width: 94%; max-height: 82vh; overflow-y: auto; background: #090d16; color: #f8fafc; border: 2px solid #76b900;">
             <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
                 <div>

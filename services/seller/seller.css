@@ -1,13 +1,10 @@
 .dashboard-layout {
     display: flex;
-    align-items: stretch;
     min-height: calc(100vh - 140px);
-    width: 100%;
 }
 
 .dashboard-sidebar {
     width: 260px;
-    flex: 0 0 260px;
     background-color: #111317;
     color: #fff;
     flex-shrink: 0;
@@ -17,57 +14,16 @@
 .dashboard-sidebar .nav-pills {
     display: flex !important;
     flex-direction: column !important;
-    flex-wrap: nowrap !important;
     gap: 6px !important;
 }
 
 .dashboard-sidebar .nav-link {
-    color: #e2e8f0;
+    color: #d1d5db;
     font-weight: 600;
     width: 100% !important;
     text-align: left;
     padding: 10px 14px !important;
     border-radius: 10px !important;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.dashboard-sidebar .nav-link:hover,
-.dashboard-sidebar .nav-link.active {
-    background-color: rgba(16, 185, 129, 0.16) !important;
-    color: #34d399 !important;
-}
-
-.dashboard-content {
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow-x: hidden;
-}
-
-@media (max-width: 992px) {
-    .dashboard-layout {
-        flex-direction: column;
-    }
-    .dashboard-sidebar {
-        width: 100%;
-        flex: 0 0 auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-        padding: 12px 16px !important;
-    }
-    .dashboard-sidebar .nav-pills {
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        -webkit-overflow-scrolling: touch;
-    }
-    .dashboard-sidebar .nav-link {
-        width: auto !important;
-        white-space: nowrap;
-        flex-shrink: 0;
-    }
 }
 
 .dashboard-sidebar .nav-link.active {
@@ -89,14 +45,11 @@
 .custom-modal-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(15, 23, 42, 0.76);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 2147482000;
+    background-color: rgba(0, 0, 0, 0.65);
+    z-index: 1060;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
 }
 
 #productQrContainer img,

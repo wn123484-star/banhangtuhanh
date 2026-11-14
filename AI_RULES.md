@@ -87,7 +87,7 @@ Mọi tác nhân AI (4 Argon High / Argon Medium / Flash) khi đọc, phân tíc
 
 ## ĐIỀU 6B: QUY TẮC THƯƠNG HIỆU NEXORA, 12 GIAO DIỆN NỀN SÁNG MẶC ĐỊNH, HEADER TINH GỌN & TRỢ LÝ MÈO AI
 6B.1. **Đổi tên thương hiệu hiển thị sang NEXORA (Chống khóa Resend):**
-- Toàn bộ tên hiển thị trên UI, tiêu đề trang, Footer, Chatbot và mẫu Email OTP phải dùng thương hiệu **NEXORA** (`Nexora Mall — Sàn Thương Mại Công Nghệ & Đời Sống`, Ví `Nexora Pay`, Vận đơn `NX Express`, máy chủ `nexora.castle-tech.cloud`, Email gửi mặc định: `Nexora Tech CSKH <noreply@nexora.castle-tech.cloud>`).
+- Toàn bộ tên hiển thị trên UI, tiêu đề trang, Footer, Chatbot và mẫu Email OTP phải dùng thương hiệu **NEXORA** (`Nexora Mall — Sàn Thương Mại Công Nghệ & Đời Sống`, Ví `Nexora Pay`, Vận đơn `NX Express`, máy chủ `nexora.castle-tech.cloud`, Email gửi mặc định đã xác thực: `Nexora Mall CSKH <noreply@mail.castle-tech.cloud>`). Tuyệt đối không đưa mã OTP ra tiêu đề (`Subject`) của Email.
 - Tuyệt đối không dùng chữ `NVIDIA Store` hay `Nivida` trong nội dung Email gửi qua Resend; giữ nguyên tên các biến kỹ thuật nội bộ (`localStorage` keys, tên bảng/file DB) để đảm bảo tương thích ngược 100%.
 6B.2. **Xử lý dứt điểm lỗi "Ô vuông xanh lá" & Cấm để lại dữ liệu rác sau khi chạy Auto-Test:**
 - Xóa toàn bộ tệp ảnh test màu xanh lá trong `assets/icons/default/`, `set_1/`, `set_2/`, `set_3/` và đặt `icon_sets_manifest.json` về `"active_set": "default"` với `"slots": {}` sạch sẽ.
