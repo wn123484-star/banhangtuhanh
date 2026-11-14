@@ -31,6 +31,17 @@ const NX_CVD_MODES = [
     { id: 'high_contrast_aaa', name: '5. Tương Phản Cao AAA (High Contrast)', buyColor: '#22c55e', sellColor: '#facc15', buyLabel: '[▲] XÁC NHẬN', sellLabel: '[▼] CẢNH BÁO' }
 ];
 
+const NX_WEB_PORTAL_ITEMS = [
+    { title: 'Toàn Sàn Nexora Mall', desc: 'Siêu thị linh kiện AI & GPU chính ngạch', url: '/services/home/index.html', icon: 'web_portal_globe', badge: 'MALL' },
+    { title: 'Sàn Đấu Giá Kép', desc: 'Đấu giá Ký quỹ 10% & Đấu giá ngược', url: '/services/auction/auction.html', icon: 'dual_auction', badge: 'HOT' },
+    { title: 'Biểu Đồ Giá VN-Tech', desc: 'Phân tích nến 30 phiên & Đặt báo động giá', url: '/services/market_tracker/price-tracker.html', icon: 'market_chart', badge: 'LIVE' },
+    { title: 'Đấu Thầu Ngược RFQ', desc: 'Doanh nghiệp đăng yêu cầu - Gian hàng chào giá', url: '/services/rfq/rfq.html', icon: 'reverse_rfq', badge: 'B2B' },
+    { title: 'Tra Cứu Vận Đơn Radar', desc: 'Hành trình GPS & Bảo lãnh Escrow SOP-01', url: '/services/order_tracking/tracking.html', icon: 'radar_truck', badge: 'GPS' },
+    { title: 'Trạm Build PC AI', desc: 'Tự động kiểm tra xung đột phần cứng & PSU', url: '/services/pc_builder/pc-builder.html', icon: 'hardware_garage', badge: 'AI' },
+    { title: 'Ví & Ngân Hàng Liên Kết', desc: 'Cổng thanh toán QR 2 bước & Đối soát', url: '/services/cart_checkout/bank.html', icon: 'utility_wallet', badge: 'PAY' },
+    { title: 'Điều Khoản Bảo Lãnh SOP-01', desc: 'Hợp đồng thông minh & Quy chuẩn hoàn tiền 100%', url: '/services/legal/terms.html', icon: 'check_verified', badge: 'LEGAL' }
+];
+
 function loadSavedMobileAuthUser() {
     try {
         const raw = localStorage.getItem('nexora_mobile_auth_user') || localStorage.getItem('auth_user') || '';
@@ -90,8 +101,22 @@ let __nxState = {
     biometricFaceStream: null,
     biometricCallback: null,
     shakeMode: 'reward',
-    lastShakeTs: 0
+    lastShakeTs: 0,
+    activeSpaView: 'home',
+    qrPage: 1,
+    qrPageSize: 4,
+    qrFilterStatus: 'ALL',
+    txPage: 1,
+    txPageSize: 4,
+    webGatewayUrl: '/services/home/index.html',
+    webGatewayTitle: 'Toàn Sàn Nexora Mall',
+    webGatewayFullscreen: false
 };
+
+function isCleanNexoraRecord(rawText) {
+    const s = String(rawText || '').toLowerCase();
+    return !s.includes('autotest') && !s.includes('nivida');
+}
 
 function nxApiUrl(path) {
     const base = (__nxState.apiBase || window.location.origin).replace(/\/+$/, '');
@@ -121,7 +146,7 @@ function nxToast(msg) {
     if (!box) {
         box = document.createElement('div');
         box.id = 'nxToastBanner';
-        box.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);max-width:460px;width:92%;background:#052e16;color:#fff;padding:11px 16px;border-radius:14px;font-size:0.82rem;font-weight:700;z-index:2200;box-shadow:0 10px 28px rgba(0,0,0,0.35);border:1.5px solid #10b981;text-align:center;transition:opacity 0.2s;';
+        box.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);max-width:480px;width:92%;background:#052e16;color:#fff;padding:11px 16px;border-radius:14px;font-size:0.82rem;font-weight:700;z-index:2400;box-shadow:0 10px 28px rgba(0,0,0,0.35);border:1.5px solid #10b981;text-align:center;transition:opacity 0.2s;';
         document.body.appendChild(box);
     }
     box.textContent = msg;
@@ -220,7 +245,31 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
     gPink.addColorStop(0, '#f43f5e');
     gPink.addColorStop(1, '#d82d8b');
 
-    if (iconName === 'topup_withdraw') {
+    if (iconName === 'google_g_logo') {
+        ctx.lineWidth = 14;
+        ctx.lineCap = 'butt';
+        ctx.strokeStyle = '#EA4335';
+        ctx.beginPath(); ctx.arc(48, 48, 28, Math.PI * 1.12, Math.PI * 1.78); ctx.stroke();
+        ctx.strokeStyle = '#FBBC05';
+        ctx.beginPath(); ctx.arc(48, 48, 28, Math.PI * 0.72, Math.PI * 1.14); ctx.stroke();
+        ctx.strokeStyle = '#34A853';
+        ctx.beginPath(); ctx.arc(48, 48, 28, Math.PI * 0.18, Math.PI * 0.74); ctx.stroke();
+        ctx.strokeStyle = '#4285F4';
+        ctx.beginPath(); ctx.arc(48, 48, 28, -0.05, Math.PI * 0.22); ctx.stroke();
+        ctx.fillStyle = '#4285F4';
+        ctx.fillRect(48, 41, 34, 13);
+    } else if (iconName === 'web_portal_globe') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(48, 48, 34, 0, Math.PI * 2); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(48, 48, 16, 34, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(16, 36); ctx.lineTo(80, 36);
+        ctx.moveTo(16, 60); ctx.lineTo(80, 60);
+        ctx.stroke();
+    } else if (iconName === 'topup_withdraw') {
         ctx.fillStyle = gEmerald;
         ctx.beginPath(); ctx.roundRect(14, 24, 68, 52, 14); ctx.fill();
         ctx.fillStyle = '#064e3b';
@@ -607,7 +656,7 @@ function applyRbacVisibilityAcrossUi() {
 
     const cmdCenter = document.getElementById('nxAdminDefenseCommandCenter');
     if (cmdCenter) {
-        cmdCenter.style.display = __nxState.isAdmin ? 'block' : 'none';
+        cmdCenter.style.display = __nxState.isAdmin ? 'flex' : 'none';
     }
     document.querySelectorAll('[data-admin-only="true"]').forEach(el => {
         el.style.display = __nxState.isAdmin ? '' : 'none';
@@ -852,7 +901,7 @@ function render3DVirtualEmeraldCard() {
     bCtx.textAlign = 'left';
     bCtx.fillStyle = '#ffffff';
     bCtx.font = 'bold 12px sans-serif';
-    bCtx.fillText(`Hạn mức Hoàn tiền Cashback 5%: ${cbEarned.toLocaleString('vi-VN')} /${cbLimit.toLocaleString('vi-VN')} ₫`, 24, 148);
+    bCtx.fillText(`Hạn mức Hoàn tiền Cashback 5%: ${cbEarned.toLocaleString('vi-VN')} / ${cbLimit.toLocaleString('vi-VN')} ₫`, 24, 148);
 
     bCtx.fillStyle = 'rgba(255,255,255,0.18)';
     bCtx.beginPath(); bCtx.roundRect(24, 160, bw - 48, 14, 7); bCtx.fill();
@@ -1072,7 +1121,7 @@ function renderHardwareGarageModalContent() {
         tabsBox.innerHTML = list.map((it, idx) => {
             const act = idx === __nxState.selectedGarageIdx;
             return `<button type="button" class="nx-eye-btn" style="background:${act ? 'var(--nx-primary)' : 'var(--nx-surface-2)'};color:${act ? '#fff' : 'var(--nx-text)'};" onclick="__nxState.selectedGarageIdx=${idx};renderHardwareGarageModalContent();">
-                ${it.brand || 'NX'} •${it.serial_no}
+                ${it.brand || 'NX'} • ${it.serial_no}
             </button>`;
         }).join('');
     }
@@ -1248,7 +1297,7 @@ window.onNexoraPrivacyTilt = function(isTiltedOrFaceDown) {
         __nxState.privacyTiltLocked = nextState;
         const shieldBanner = document.getElementById('nxPrivacyTiltShieldBanner');
         if (shieldBanner) shieldBanner.style.display = nextState ? 'flex' : 'none';
-        renderBridgeDataToUi();
+        if (typeof renderBridgeDataToUi === 'function') renderBridgeDataToUi();
     }
 };
 
@@ -1291,7 +1340,7 @@ async function nxApplyTheme(themeId, syncServer = true) {
     if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.syncTheme === 'function') {
         try { window.NexoraNativeBridge.syncTheme(__nxState.themeId); } catch (e) {}
     }
-    renderThemeModalList();
+    if (typeof renderThemeModalList === 'function') renderThemeModalList();
     renderNexoraCanvasIcons();
     render3DVirtualEmeraldCard();
     if (syncServer) {
@@ -1423,6 +1472,19 @@ async function verifyMobileOtpAndSaveSecurity() {
     }
 }
 
+function persistAuthenticatedUserAcrossStorage(userProfile) {
+    if (!userProfile) return;
+    __nxState.authUser = userProfile;
+    __nxState.isLoggedIn = true;
+    __nxState.previewAsNormalUser = false;
+    __nxState.emailVerified = Boolean(userProfile.email_verified);
+    const serialized = JSON.stringify(userProfile);
+    localStorage.setItem('nexora_mobile_auth_user', serialized);
+    localStorage.setItem('auth_user', serialized);
+    localStorage.setItem('nvx_current_user', serialized);
+    localStorage.setItem('user_info', serialized);
+}
+
 function requireMobileLoginForAction(actionLabel = 'thực hiện chức năng này') {
     if (__nxState.isLoggedIn && __nxState.authUser && __nxState.authUser.id) {
         return true;
@@ -1445,12 +1507,7 @@ async function submitMobileAuthForm(mode = 'login') {
         });
         const data = await res.json();
         if (res.ok && data.ok && data.user_profile) {
-            __nxState.authUser = data.user_profile;
-            __nxState.isLoggedIn = true;
-            __nxState.previewAsNormalUser = false;
-            __nxState.emailVerified = Boolean(data.user_profile.email_verified);
-            localStorage.setItem('nexora_mobile_auth_user', JSON.stringify(data.user_profile));
-            localStorage.setItem('auth_user', JSON.stringify(data.user_profile));
+            persistAuthenticatedUserAcrossStorage(data.user_profile);
             closeNxModal('nxMobileAuthModal');
             nxToast(data.message || 'Đăng nhập thành công!');
             await syncMobileBridge();
@@ -1459,6 +1516,115 @@ async function submitMobileAuthForm(mode = 'login') {
         }
     } catch (e) {
         nxToast('Lỗi kết nối máy chủ khi xác thực tài khoản!');
+    }
+}
+
+function openGoogleAccountChooserModal() {
+    let modal = document.getElementById('nxGoogleAccountChooserModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'nxGoogleAccountChooserModal';
+        modal.className = 'nx-modal-backdrop';
+        modal.innerHTML = `
+            <div class="nx-modal-sheet">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="google_g_logo" width="96" height="96"></canvas>
+                        <strong style="font-size:0.96rem;">Đăng Nhập Bằng Google (OAuth 2.0)</strong>
+                    </div>
+                    <button class="nx-eye-btn" onclick="closeNxModal('nxGoogleAccountChooserModal')">Đóng</button>
+                </div>
+                <div style="font-size:0.76rem;color:var(--nx-muted);margin-bottom:10px;">Chọn nhanh tài khoản Google trên thiết bị hoặc nhập địa chỉ Gmail của bạn (Tặng ngay +20.000 Xu xác thực lần đầu):</div>
+                <div id="nxGoogleAccountsQuickList"></div>
+                <div style="margin-top:10px;padding:12px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);">
+                    <div style="font-size:0.76rem;font-weight:800;margin-bottom:6px;">Hoặc xác thực tài khoản Gmail bất kỳ:</div>
+                    <input type="text" id="nxGoogleCustomNameInput" placeholder="Họ và tên hiển thị Google..." style="width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--nx-border);margin-bottom:6px;background:var(--nx-surface);color:var(--nx-text);">
+                    <input type="email" id="nxGoogleCustomEmailInput" placeholder="Nhập địa chỉ Gmail (VD: tenban@gmail.com)..." style="width:100%;padding:9px 11px;border-radius:10px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface);color:var(--nx-text);">
+                    <button type="button" style="width:100%;padding:11px;border:none;border-radius:12px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="submitGoogleOAuthCustomInput()">
+                        Xác Thực Google OAuth 2.0 &amp; Đồng Bộ Ngay
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    const listBox = document.getElementById('nxGoogleAccountsQuickList');
+    if (listBox) {
+        const presetAccounts = [
+            { email: 'william.nexora.vip@gmail.com', full_name: 'William Nguyễn (Google Verified)', sub: 'goauth_william_01' },
+            { email: 'khachhang.nexora@gmail.com', full_name: 'Khách Hàng Nexora Mall', sub: 'goauth_member_02' },
+            { email: 'admin@mail.castle-tech.cloud', full_name: 'Nexora Chief Commander (Admin)', sub: 'goauth_admin_03' }
+        ];
+        listBox.innerHTML = presetAccounts.map(acc => `
+            <div class="nx-google-account-row" onclick="submitGoogleOAuthDirect('${acc.email}', '${acc.full_name}', '${acc.sub}')">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="google_g_logo" width="96" height="96"></canvas>
+                    <div>
+                        <div style="font-weight:800;font-size:0.82rem;">${acc.full_name}</div>
+                        <div style="font-size:0.72rem;color:var(--nx-muted);">${acc.email}</div>
+                    </div>
+                </div>
+                <span style="font-size:0.72rem;font-weight:800;color:var(--nx-primary);">Tiếp tục &gt;</span>
+            </div>
+        `).join('');
+    }
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+            window.google.accounts.id.prompt();
+        } catch (e) {}
+    }
+    openNxModal('nxGoogleAccountChooserModal');
+    renderNexoraCanvasIcons();
+}
+
+async function handleGoogleIdentityCredentialResponse(response) {
+    if (!response || !response.credential) return;
+    await submitGoogleOAuthDirect('', '', '', response.credential);
+}
+
+function submitGoogleOAuthCustomInput() {
+    const email = (document.getElementById('nxGoogleCustomEmailInput')?.value || '').trim();
+    const fullName = (document.getElementById('nxGoogleCustomNameInput')?.value || '').trim();
+    if (!email || !email.includes('@')) {
+        nxToast('Vui lòng nhập địa chỉ Email Google hợp lệ!');
+        return;
+    }
+    submitGoogleOAuthDirect(email, fullName || email.split('@')[0], 'goauth_' + Date.now());
+}
+
+async function submitGoogleOAuthDirect(email, fullName, googleSub, credentialJwt = '') {
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/auth-google'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                full_name: fullName,
+                google_sub: googleSub,
+                credential: credentialJwt
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok && data.user_profile) {
+            persistAuthenticatedUserAcrossStorage(data.user_profile);
+            closeNxModal('nxGoogleAccountChooserModal');
+            closeNxModal('nxMobileAuthModal');
+            nxToast(data.message || 'Đăng nhập Google OAuth 2.0 thành công!');
+            if (data.soundbox_speech) {
+                speakBalanceChangeByAiSoundbox(data.soundbox_speech);
+            }
+            if (data.reward_coins_added && Number(data.reward_coins_added) > 0) {
+                triggerNativeOrWebLockScreenNotification(
+                    '[GOOGLE OAUTH 2.0] +20.000 Xu Xác Thực Lần Đầu',
+                    data.message || 'Đã cộng +20.000 Xu thưởng vào Ví Lục Bảo Nexora Pay!'
+                );
+            }
+            await syncMobileBridge();
+        } else {
+            nxToast(data.error || 'Không thể xác thực Google OAuth 2.0!');
+        }
+    } catch (e) {
+        nxToast('Lỗi kết nối khi xác thực Google OAuth 2.0!');
     }
 }
 
@@ -1475,6 +1641,8 @@ async function logoutMobileAccount() {
     __nxState.cardCvvUnlocked = false;
     localStorage.removeItem('nexora_mobile_auth_user');
     localStorage.removeItem('auth_user');
+    localStorage.removeItem('nvx_current_user');
+    localStorage.removeItem('user_info');
     closeNxModal('nxThemeModal');
     nxToast('Đã đăng xuất khỏi tài khoản Nexora!');
     await syncMobileBridge();
@@ -1486,18 +1654,22 @@ function toggleBalanceVisibility() {
     localStorage.setItem('nexora_hide_balance', __nxState.hideBalance ? '1' : '0');
     const eyeTxt = document.getElementById('nxEyeToggleLabel');
     if (eyeTxt) eyeTxt.textContent = __nxState.hideBalance ? 'Hiện số dư' : 'Ẩn số dư';
-    renderBridgeDataToUi();
+    if (typeof renderBridgeDataToUi === 'function') renderBridgeDataToUi();
 }
 
 function openNxModal(modalId) {
-    document.querySelectorAll('.nx-modal-backdrop').forEach(m => m.classList.remove('show'));
+    document.querySelectorAll('.nx-modal-backdrop').forEach(m => {
+        if (m.id !== 'nxWebGatewayViewportModal') {
+            m.classList.remove('show');
+        }
+    });
     const target = document.getElementById(modalId);
     if (target) target.classList.add('show');
     renderNexoraCanvasIcons();
 }
 
 function closeNxModal(modalId) {
-    if (modalId === 'nxQrScannerModal') stopMobileCameraQr();
+    if (modalId === 'nxQrScannerModal' && typeof stopMobileCameraQr === 'function') stopMobileCameraQr();
     if (modalId === 'nxBiometricShieldModal') stopBiometricFaceCamera();
     if (modalId === 'nxSmartOtpModal' && __nxState.smartOtpTimer) {
         clearInterval(__nxState.smartOtpTimer);
@@ -1524,19 +1696,373 @@ function saveServerEndpointConfig(modeUrl) {
     updateServerHeaderPill();
     closeNxModal('nxServerConfigModal');
     nxToast('Đã chuyển kết nối máy chủ sang: ' + chosen);
-    syncMobileBridge();
+    if (typeof syncMobileBridge === 'function') syncMobileBridge();
 }
 
 function updateServerHeaderPill() {
     const lbl = document.getElementById('nxServerStatusText');
     if (!lbl) return;
     const roleTag = __nxState.isAdmin ? 'ADMIN COMMANDER' : (__nxState.isLoggedIn ? (__nxState.authUser.username || 'MEMBER') : 'GUEST');
-    lbl.textContent = `Nexora Live • Bảo lãnh Escrow 100% • ${roleTag}`;
+    lbl.textContent = `Nexora Daily V14 • Bảo lãnh Escrow 100% • ${roleTag}`;
+}
+
+function ensureV14SpaAndGatewayDom() {
+    if (!document.getElementById('nxWebGatewayViewportModal')) {
+        const gw = document.createElement('div');
+        gw.id = 'nxWebGatewayViewportModal';
+        gw.className = 'nx-modal-backdrop';
+        gw.innerHTML = `
+            <div class="nx-modal-sheet nx-web-gateway-sheet" id="nxWebGatewaySheet">
+                <div class="nx-web-gateway-topbar">
+                    <button type="button" class="nx-web-gateway-btn" onclick="closeInAppWebGateway()">⬅ Quay Về Daily App</button>
+                    <div style="flex:1;min-width:0;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        <strong style="font-size:0.78rem;" id="nxWebGatewayTitleText">Cổng Web Nexora</strong>
+                        <span style="display:inline-block;margin-left:6px;padding:2px 7px;border-radius:999px;background:rgba(16,185,129,0.28);font-size:0.64rem;font-weight:800;" id="nxWebGatewaySyncBadge">Đã Đồng Bộ Tài Khoản &amp; Ví</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:5px;">
+                        <button type="button" class="nx-web-gateway-btn" id="nxWebGatewayExpandBtn" onclick="toggleInAppWebGatewayFullscreen()">⛶ Kéo Dãn</button>
+                        <button type="button" class="nx-web-gateway-btn" onclick="openWebGatewayExternalBrowser()">↗ Mở Trình Duyệt Ngoài</button>
+                    </div>
+                </div>
+                <iframe id="nxWebGatewayIframe" class="nx-web-gateway-iframe" title="Nexora In-App Web Gateway"></iframe>
+            </div>
+        `;
+        document.body.appendChild(gw);
+    }
+    if (!document.getElementById('nxFallbacksHiddenRegistry')) {
+        const reg = document.createElement('div');
+        reg.id = 'nxFallbacksHiddenRegistry';
+        reg.style.display = 'none';
+        reg.innerHTML = `
+            <div id="nxSpaView_home"></div>
+            <div id="nxSpaView_wallet"></div>
+            <div id="nxSpaView_qr"></div>
+            <div id="nxSpaView_daily"></div>
+            <div id="nxSpaView_portal"></div>
+            <button id="nxBottomNavBtn_home"></button>
+            <button id="nxBottomNavBtn_wallet"></button>
+            <button id="nxBottomNavBtn_qr"></button>
+            <button id="nxBottomNavBtn_daily"></button>
+            <button id="nxBottomNavBtn_portal"></button>
+            <div id="nxDailySnapshotBody"></div>
+            <button id="nxQrFilterBtn_ALL"></button>
+            <button id="nxQrFilterBtn_AWAITING_PAYMENT"></button>
+            <button id="nxQrFilterBtn_APPROVED"></button>
+            <div id="nxPortalGridContainer"></div>
+        `;
+        if (!document.getElementById('nxSpaView_home')) {
+            document.body.appendChild(reg);
+        }
+    }
+}
+
+function switchMobileSpaView(viewId) {
+    const validViews = ['home', 'wallet', 'qr', 'daily', 'portal'];
+    const targetView = validViews.includes(viewId) ? viewId : 'home';
+    __nxState.activeSpaView = targetView;
+
+    validViews.forEach(v => {
+        const sec = document.getElementById('nxSpaView_' + v);
+        if (sec) {
+            if (v === targetView) {
+                sec.classList.add('active');
+                sec.style.display = 'block';
+            } else {
+                sec.classList.remove('active');
+                sec.style.display = 'none';
+            }
+        }
+        const btn = document.getElementById('nxBottomNavBtn_' + v);
+        if (btn) {
+            btn.classList.toggle('active', v === targetView);
+        }
+    });
+
+    if (targetView !== 'qr') {
+        stopMobileCameraQr();
+    }
+    if (targetView === 'wallet') {
+        render3DVirtualEmeraldCard();
+        if (__nxState.bridgeData) {
+            renderSpendingDonut(__nxState.bridgeData.spending_analytics);
+            renderPendingQrSessionsList(__nxState.bridgeData.pending_qr_sessions || []);
+            renderRealTransactionsLedger(__nxState.bridgeData.recent_transactions || []);
+        }
+    } else if (targetView === 'qr') {
+        drawSmartOtpCountdownRing();
+        if (__nxState.isLoggedIn && (__nxState.smartOtpCode === '------' || !__nxState.smartOtpCode)) {
+            generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+        }
+    } else if (targetView === 'daily') {
+        drawCheckin7DaysCanvas();
+        switchMiniGameMode(__nxState.activeMiniGame || 'wheel');
+        if (__nxState.isLoggedIn && (!__nxState.garageList || !__nxState.garageList.length)) {
+            fetch(nxApiUrl('/api/mobile/hardware-garage?_t=' + Date.now()), { headers: nxAuthHeaders() })
+                .then(r => r.json())
+                .then(d => {
+                    if (d && d.ok) {
+                        __nxState.garageList = d.garage_items || [];
+                        renderHardwareGarageModalContent();
+                    }
+                }).catch(() => {});
+        } else {
+            renderHardwareGarageModalContent();
+        }
+    } else if (targetView === 'portal') {
+        renderWebPortalCatalogGrid();
+        renderThemeModalList();
+        renderCvdAccessibilityOptions();
+    }
+
+    renderNexoraCanvasIcons();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderWebPortalCatalogGrid() {
+    const boxes = document.querySelectorAll('#nxPortalGridContainer, .nx-portal-catalog-mount');
+    boxes.forEach(box => {
+        if (!box) return;
+        box.innerHTML = NX_WEB_PORTAL_ITEMS.map(item => `
+            <div class="nx-portal-tile" onclick="openInAppWebGateway('${item.url}', '${item.title}')">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="nx-service-icon-box" style="margin:0;width:44px;height:44px;">
+                        <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="${item.icon}" width="96" height="96"></canvas>
+                    </div>
+                    <div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <strong style="font-size:0.82rem;">${item.title}</strong>
+                            <span style="background:var(--nx-primary);color:#fff;font-size:0.6rem;font-weight:800;padding:1px 6px;border-radius:999px;">${item.badge}</span>
+                        </div>
+                        <div style="font-size:0.71rem;color:var(--nx-muted);">${item.desc}</div>
+                    </div>
+                </div>
+                <span style="font-size:0.78rem;font-weight:900;color:var(--nx-primary);">Mở Cổng &gt;</span>
+            </div>
+        `).join('');
+    });
+    renderNexoraCanvasIcons();
+}
+
+function syncAppStateIntoWebIframe(iframeEl) {
+    try {
+        if (__nxState.isLoggedIn && __nxState.authUser) {
+            const serialized = JSON.stringify(__nxState.authUser);
+            localStorage.setItem('nexora_mobile_auth_user', serialized);
+            localStorage.setItem('auth_user', serialized);
+            localStorage.setItem('nvx_current_user', serialized);
+            localStorage.setItem('user_info', serialized);
+        }
+        if (__nxState.themeId) {
+            localStorage.setItem('nexora_active_theme', __nxState.themeId);
+        }
+    } catch (e) {}
+
+    if (!iframeEl) return;
+    iframeEl.onload = function() {
+        try {
+            const doc = iframeEl.contentDocument || (iframeEl.contentWindow && iframeEl.contentWindow.document);
+            if (!doc) return;
+            if (__nxState.themeId && doc.documentElement) {
+                doc.documentElement.setAttribute('data-nx-theme', __nxState.themeId);
+                if (doc.body) doc.body.setAttribute('data-nx-theme', __nxState.themeId);
+            }
+            let styleEl = doc.getElementById('nxInAppGatewayInjectedStyle');
+            if (!styleEl) {
+                styleEl = doc.createElement('style');
+                styleEl.id = 'nxInAppGatewayInjectedStyle';
+                doc.head.appendChild(styleEl);
+            }
+            let cssRules = `
+                #header-placeholder,
+                header.site-header,
+                .site-header,
+                .top-announcement-bar,
+                .desktop-nav-wrapper,
+                .sub-navbar,
+                .nx-pc-top-header {
+                    display: none !important;
+                }
+                body {
+                    padding-top: 6px !important;
+                    overflow-x: hidden !important;
+                }
+                main, .container, .container-fluid {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    padding-left: clamp(8px, 2vw, 20px) !important;
+                    padding-right: clamp(8px, 2vw, 20px) !important;
+                }
+            `;
+            if (!__nxState.isAdmin) {
+                cssRules += `
+                    [data-admin-only="true"],
+                    .demo-control-panel,
+                    .shipper-demo-box,
+                    #demoStageControlBox {
+                        display: none !important;
+                    }
+                `;
+            }
+            styleEl.textContent = cssRules;
+
+            if (!__nxState.isAdmin && doc.body) {
+                doc.querySelectorAll('div, section, button, a, span').forEach(el => {
+                    const txt = (el.textContent || '').trim();
+                    if (
+                        txt.includes('CHUYỂN NHANH TRẠNG THÁI GIAO HÀNG (DEMO)') ||
+                        (el.tagName === 'BUTTON' && (txt.includes('(Demo)') || txt.includes('(Test)')))
+                    ) {
+                        if (el.tagName === 'BUTTON') {
+                            el.style.display = 'none';
+                        } else if (el.children.length <= 6) {
+                            el.style.display = 'none';
+                        }
+                    }
+                });
+            }
+        } catch (err) {}
+    };
+}
+
+function openInAppWebGateway(targetUrl, title) {
+    ensureV14SpaAndGatewayDom();
+    const cleanUrl = targetUrl || '/services/home/index.html';
+    __nxState.webGatewayUrl = cleanUrl;
+    __nxState.webGatewayTitle = title || 'Cổng Web Chuyên Sâu Nexora';
+
+    const titleEl = document.getElementById('nxWebGatewayTitleText');
+    if (titleEl) titleEl.textContent = __nxState.webGatewayTitle;
+
+    const badgeEl = document.getElementById('nxWebGatewaySyncBadge');
+    if (badgeEl) {
+        badgeEl.textContent = __nxState.isLoggedIn
+            ? `Đã Đồng Bộ: ${__nxState.authUser.username || 'Member'}`
+            : 'Chế Độ Khách (Đã Đồng Bộ Giao Diện)';
+    }
+
+    const modal = document.getElementById('nxWebGatewayViewportModal');
+    const iframeEl = document.getElementById('nxWebGatewayIframe');
+    if (iframeEl) {
+        syncAppStateIntoWebIframe(iframeEl);
+        const sep = cleanUrl.includes('?') ? '&' : '?';
+        iframeEl.src = nxApiUrl(cleanUrl + sep + '_nx_inapp=1&_t=' + Date.now());
+    }
+    if (modal) {
+        modal.classList.add('show');
+    }
+}
+
+function closeInAppWebGateway() {
+    const modal = document.getElementById('nxWebGatewayViewportModal');
+    if (modal) modal.classList.remove('show');
+    const iframeEl = document.getElementById('nxWebGatewayIframe');
+    if (iframeEl) iframeEl.src = 'about:blank';
+    syncMobileBridge();
+}
+
+function toggleInAppWebGatewayFullscreen() {
+    __nxState.webGatewayFullscreen = !__nxState.webGatewayFullscreen;
+    const sheet = document.getElementById('nxWebGatewaySheet');
+    const btn = document.getElementById('nxWebGatewayExpandBtn');
+    if (sheet) {
+        sheet.classList.toggle('is-fullscreen', __nxState.webGatewayFullscreen);
+    }
+    if (btn) {
+        btn.textContent = __nxState.webGatewayFullscreen ? '⛶ Thu Nhỏ Khung' : '⛶ Kéo Dãn 100%';
+    }
+}
+
+function openWebGatewayExternalBrowser() {
+    const url = nxApiUrl(__nxState.webGatewayUrl || '/services/home/index.html');
+    window.open(url, '_blank');
 }
 
 async function syncMobileBridge() {
     try {
-        const q = (__nxState.authUser && __nxState.authUser.id) ? `?user_id=${encodeURIComponent(__nxState.authUser.id)}&_t=${Date.now()}` : `?_t=${Date.now()}`; const res = await fetch(nxApiUrl('/api/mobile/bridge-sync' + q), { headers: nxAuthHeaders(), cache: 'no-store' }); const data = await res.json(); if (data && data.ok) { __nxState.bridgeData = data; __nxState.isLoggedIn = Boolean(data.authenticated && data.user_profile && data.user_profile.id > 0); if (__nxState.isLoggedIn) { __nxState.authUser = data.user_profile; __nxState.emailVerified = Boolean(data.user_profile.email_verified); __nxState.garageList = data.hardware_garage || []; updateOtpSendButtonLockState(__nxState.emailVerified); const otpEm = document.getElementById('nxOtpEmailInput'); if (otpEm && !otpEm.value && data.user_profile.email) otpEm.value = data.user_profile.email; } else { __nxState.garageList = []; updateOtpSendButtonLockState(false); } if (!localStorage.getItem('nexora_active_theme') && data.active_theme) { await nxApplyTheme(data.active_theme, false); } applyRbacVisibilityAcrossUi(); updateServerHeaderPill(); renderBridgeDataToUi(); } } catch (err) { const lbl = document.getElementById('nxServerStatusText'); if (lbl) lbl.textContent = 'Chế độ Offline/LAN • Chạm để đổi cấu hình'; } }  async function refreshLiveAuctionsList() { try { const res = await fetch(nxApiUrl('/api/auctions/list?_t=' + Date.now()), { cache: 'no-store' }); const data = await res.json(); if (data && Array.isArray(data.auctions)) { renderLiveAuctionsPreview(data.auctions); } } catch (e) {} }  function renderBridgeDataToUi() { const d = __nxState.bridgeData || {}; const prof = d.user_profile || {}; const pockets = d.multi_pockets || {};  const wEl = document.getElementById('nxPocketWalletVal'); const eEl = document.getElementById('nxPocketEscrowVal'); const aEl = document.getElementById('nxPocketAuctionVal'); const uNameEl = document.getElementById('nxHeaderUserName'); const uCoinsEl = document.getElementById('nxHeaderCoinsBadge'); const authActionBtn = document.getElementById('nxHeaderAuthBtn'); const notifDot = document.getElementById('nxUnreadNotifBadge'); const garageCntEl = document.getElementById('nxGarageCountSummary');  if (notifDot) { const unread = Number(d.unread_notifications_count || (d.live_counters && d.live_counters.unread_notifications) || 0); notifDot.textContent = unread > 99 ? '99+' : String(unread); notifDot.style.display = unread > 0 ? 'flex' : 'none'; }  if (__nxState.isLoggedIn) { if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 0); if (eEl) eEl.textContent = nxFormatVnd(pockets.escrow_protection_bag ?? prof.escrow_locked_balance ?? 0); if (aEl) aEl.textContent = nxFormatVnd(pockets.auction_margin_10pct ?? prof.auction_deposit_balance ?? 0); if (uNameEl) uNameEl.textContent = prof.full_name || prof.username; if (uCoinsEl) uCoinsEl.textContent = (__nxState.hideBalance || __nxState.privacyTiltLocked) ? '•••• Xu' : (Number(prof.coins || 0).toLocaleString('vi-VN') + ' Xu'); if (authActionBtn) { authActionBtn.textContent = 'Đăng Xuất'; authActionBtn.onclick = logoutMobileAccount; } if (garageCntEl) { const gCnt = (__nxState.garageList && __nxState.garageList.length) || 0; garageCntEl.textContent = `${gCnt} thiết bị bảo hành số SHA-256 đang hoạt động`;
+        const q = (__nxState.authUser && __nxState.authUser.id)
+            ? `?user_id=${encodeURIComponent(__nxState.authUser.id)}&_t=${Date.now()}`
+            : `?_t=${Date.now()}`;
+        const res = await fetch(nxApiUrl('/api/mobile/bridge-sync' + q), {
+            headers: nxAuthHeaders(),
+            cache: 'no-store'
+        });
+        const data = await res.json();
+        if (data && data.ok) {
+            __nxState.bridgeData = data;
+            __nxState.isLoggedIn = Boolean(data.authenticated && data.user_profile && data.user_profile.id > 0);
+            if (__nxState.isLoggedIn) {
+                __nxState.authUser = data.user_profile;
+                __nxState.emailVerified = Boolean(data.user_profile.email_verified);
+                __nxState.garageList = data.hardware_garage || [];
+                updateOtpSendButtonLockState(__nxState.emailVerified);
+                const otpEm = document.getElementById('nxOtpEmailInput');
+                if (otpEm && !otpEm.value && data.user_profile.email) {
+                    otpEm.value = data.user_profile.email;
+                }
+            } else {
+                __nxState.garageList = [];
+                updateOtpSendButtonLockState(false);
+            }
+            if (!localStorage.getItem('nexora_active_theme') && data.active_theme) {
+                await nxApplyTheme(data.active_theme, false);
+            }
+            applyRbacVisibilityAcrossUi();
+            updateServerHeaderPill();
+            renderBridgeDataToUi();
+        }
+    } catch (err) {
+        const lbl = document.getElementById('nxServerStatusText');
+        if (lbl) lbl.textContent = 'Chế độ Offline/LAN • Chạm để đổi cấu hình';
+    }
+}
+
+async function refreshLiveAuctionsList() {
+    try {
+        const res = await fetch(nxApiUrl('/api/auctions/list?_t=' + Date.now()), { cache: 'no-store' });
+        const data = await res.json();
+        if (data && Array.isArray(data.auctions)) {
+            renderLiveAuctionsPreview(data.auctions);
+        }
+    } catch (e) {}
+}
+
+function renderBridgeDataToUi() {
+    const d = __nxState.bridgeData || {};
+    const prof = d.user_profile || {};
+    const pockets = d.multi_pockets || {};
+
+    const wEl = document.getElementById('nxPocketWalletVal');
+    const eEl = document.getElementById('nxPocketEscrowVal');
+    const aEl = document.getElementById('nxPocketAuctionVal');
+    const uNameEl = document.getElementById('nxHeaderUserName');
+    const uCoinsEl = document.getElementById('nxHeaderCoinsBadge');
+    const authActionBtn = document.getElementById('nxHeaderAuthBtn');
+    const notifDot = document.getElementById('nxUnreadNotifBadge');
+    const garageCntEl = document.getElementById('nxGarageCountSummary');
+
+    if (notifDot) {
+        const unread = Number(d.unread_notifications_count || (d.live_counters && d.live_counters.unread_notifications) || 0);
+        notifDot.textContent = unread > 99 ? '99+' : String(unread);
+        notifDot.style.display = unread > 0 ? 'flex' : 'none';
+    }
+
+    if (__nxState.isLoggedIn) {
+        if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 0);
+        if (eEl) eEl.textContent = nxFormatVnd(pockets.escrow_protection_bag ?? prof.escrow_locked_balance ?? 0);
+        if (aEl) aEl.textContent = nxFormatVnd(pockets.auction_margin_10pct ?? prof.auction_deposit_balance ?? 0);
+        if (uNameEl) uNameEl.textContent = prof.full_name || prof.username;
+        if (uCoinsEl) {
+            uCoinsEl.textContent = (__nxState.hideBalance || __nxState.privacyTiltLocked)
+                ? '•••• Xu'
+                : (Number(prof.coins || 0).toLocaleString('vi-VN') + ' Xu');
+        }
+        if (authActionBtn) {
+            authActionBtn.textContent = 'Đăng Xuất';
+            authActionBtn.onclick = logoutMobileAccount;
+        }
+        if (garageCntEl) {
+            const gCnt = (__nxState.garageList && __nxState.garageList.length) || 0;
+            garageCntEl.textContent = `${gCnt} thiết bị bảo hành số SHA-256 đang hoạt động`;
         }
     } else {
         if (wEl) wEl.textContent = 'Đăng nhập để xem';
@@ -1545,7 +2071,7 @@ async function syncMobileBridge() {
         if (uNameEl) uNameEl.textContent = 'Khách vãng lai • Bấm để Đăng nhập';
         if (uCoinsEl) uCoinsEl.textContent = 'Đăng Nhập';
         if (authActionBtn) {
-            authActionBtn.textContent = 'Đăng Nhập / Đăng Ký';
+            authActionBtn.textContent = 'Đăng Nhập / Google';
             authActionBtn.onclick = () => openNxModal('nxMobileAuthModal');
         }
         if (garageCntEl) {
@@ -1553,11 +2079,109 @@ async function syncMobileBridge() {
         }
     }
 
+    renderDailySnapshotCard(d);
     render3DVirtualEmeraldCard();
     renderSpendingDonut(d.spending_analytics);
     renderPendingQrSessionsList(d.pending_qr_sessions || []);
     renderLiveAuctionsPreview(d.active_auctions || []);
     renderRealTransactionsLedger(d.recent_transactions || []);
+    renderWebPortalCatalogGrid();
+}
+
+function renderDailySnapshotCard(bridgePayload) {
+    const snapBox = document.getElementById('nxDailySnapshotBody');
+    if (!snapBox) return;
+    const d = bridgePayload || __nxState.bridgeData || {};
+    const prof = d.user_profile || {};
+    const streak = __nxState.isLoggedIn ? Number(prof.streak_days || 1) : 0;
+
+    const cleanQrs = (d.pending_qr_sessions || []).filter(item =>
+        isCleanNexoraRecord(item.buyer_name) &&
+        isCleanNexoraRecord(item.order_code) &&
+        isCleanNexoraRecord(item.pay_token)
+    );
+    const latestWaitingQr = cleanQrs.find(item => item.status === 'AWAITING_PAYMENT') || cleanQrs[0] || null;
+
+    const cleanTxs = (d.recent_transactions || []).filter(tx =>
+        isCleanNexoraRecord(tx.note) && isCleanNexoraRecord(tx.tx_code)
+    );
+    const latestTx = cleanTxs[0] || null;
+
+    const qrHtml = latestWaitingQr
+        ? `<div class="nx-pending-qr-item" style="margin-bottom:0;" onclick="inspectQrTokenInvoice('${latestWaitingQr.pay_token}')">
+            <div>
+                <div style="font-weight:800;font-size:0.8rem;">01 Hóa đơn QR mới nhất: ${latestWaitingQr.order_code} • ${latestWaitingQr.buyer_name}</div>
+                <div style="font-size:0.7rem;color:var(--nx-muted);">Mã: <code>${latestWaitingQr.pay_token}</code> (${latestWaitingQr.status})</div>
+            </div>
+            <strong style="font-size:0.84rem;color:var(--nx-primary);">${Number(latestWaitingQr.amount || 0).toLocaleString('vi-VN')} ₫</strong>
+        </div>`
+        : `<div style="font-size:0.76rem;color:var(--nx-muted);padding:8px 10px;border-radius:12px;background:var(--nx-surface-2);">Hiện không có hóa đơn QR nào đang chờ thanh toán.</div>`;
+
+    let txHtml = `<div style="font-size:0.76rem;color:var(--nx-muted);padding:8px 10px;border-radius:12px;background:var(--nx-surface-2);">Đăng nhập để xem giao dịch gần nhất của bạn.</div>`;
+    if (__nxState.isLoggedIn) {
+        if (latestTx) {
+            const amt = Number(latestTx.amount || 0);
+            const isPlus = amt >= 0;
+            const safeNote = String(latestTx.note || latestTx.tx_type || 'Giao dịch ví').replace(/'/g, '');
+            txHtml = `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 11px;border-radius:12px;background:var(--nx-surface-2);border:1px solid var(--nx-border);cursor:pointer;" onclick="openReceiptForTransaction('${latestTx.tx_code || 'NXPAY'}', ${Math.abs(amt)}, '${safeNote}', '${latestTx.created_at || ''}')">
+                <div style="max-width:65%;">
+                    <div style="font-weight:800;font-size:0.78rem;">01 GD gần nhất: ${latestTx.tx_code || 'NXPAY'}</div>
+                    <div style="font-size:0.7rem;color:var(--nx-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${latestTx.note || ''}</div>
+                </div>
+                <strong style="font-size:0.84rem;color:${isPlus ? '#10b981' : '#ef4444'};">${isPlus ? '+' : ''}${amt.toLocaleString('vi-VN')} ₫</strong>
+            </div>`;
+        } else {
+            txHtml = `<div style="font-size:0.76rem;color:var(--nx-muted);padding:8px 10px;border-radius:12px;background:var(--nx-surface-2);">Sổ cái hiện tại: 0 giao dịch.</div>`;
+        }
+    }
+
+    snapBox.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="daily_fire" width="96" height="96"></canvas>
+                <div>
+                    <div style="font-weight:800;font-size:0.8rem;">Điểm danh Hằng ngày: Chuỗi ${streak} ngày liên tiếp</div>
+                    <div style="font-size:0.7rem;color:var(--nx-muted);">Chạm 1 lần để nhận ngay Xu thưởng hôm nay vào SQLite</div>
+                </div>
+            </div>
+            <button type="button" class="nx-eye-btn" style="background:var(--nx-primary);color:#fff;" onclick="triggerMobileDailyCheckin()">Điểm Danh Ngay</button>
+        </div>
+        <div style="margin-bottom:8px;">${qrHtml}</div>
+        <div style="margin-bottom:8px;">${txHtml}</div>
+        <div style="display:flex;justify-content:flex-end;">
+            <button type="button" class="nx-eye-btn" style="color:var(--nx-primary);font-weight:800;" onclick="switchMobileSpaView('wallet')">
+                Xem toàn bộ &amp; Phân trang -&gt;
+            </button>
+        </div>
+    `;
+    renderNexoraCanvasIcons();
+}
+
+function setQrFilterStatus(status) {
+    __nxState.qrFilterStatus = status || 'ALL';
+    __nxState.qrPage = 1;
+    ['ALL', 'AWAITING_PAYMENT', 'APPROVED'].forEach(st => {
+        const b = document.getElementById('nxQrFilterBtn_' + st);
+        if (b) {
+            const act = st === __nxState.qrFilterStatus;
+            b.style.background = act ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = act ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    const list = (__nxState.bridgeData && __nxState.bridgeData.pending_qr_sessions) || [];
+    renderPendingQrSessionsList(list);
+}
+
+function changeQrPage(delta) {
+    __nxState.qrPage = Math.max(1, (__nxState.qrPage || 1) + Number(delta || 0));
+    const list = (__nxState.bridgeData && __nxState.bridgeData.pending_qr_sessions) || [];
+    renderPendingQrSessionsList(list);
+}
+
+function changeTxPage(delta) {
+    __nxState.txPage = Math.max(1, (__nxState.txPage || 1) + Number(delta || 0));
+    const list = (__nxState.bridgeData && __nxState.bridgeData.recent_transactions) || [];
+    renderRealTransactionsLedger(list);
 }
 
 function renderRealTransactionsLedger(txList) {
@@ -1567,17 +2191,27 @@ function renderRealTransactionsLedger(txList) {
         box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;">Vui lòng đăng nhập để xem sổ cái lịch sử giao dịch thực tế trong SQLite.</div>`;
         return;
     }
-    if (!txList || !txList.length) {
+    const cleanList = (txList || []).filter(tx =>
+        isCleanNexoraRecord(tx.note) && isCleanNexoraRecord(tx.tx_code)
+    );
+    if (!cleanList.length) {
         box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;background:var(--nx-surface-2);border-radius:14px;">Sổ cái sạch (0 giao dịch). Mọi giao dịch nạp/rút hoặc thanh toán QR mới sẽ hiển thị tại đây.</div>`;
         return;
     }
-    box.innerHTML = txList.map(tx => {
+
+    const pageSize = __nxState.txPageSize || 4;
+    const totalPages = Math.max(1, Math.ceil(cleanList.length / pageSize));
+    if (__nxState.txPage > totalPages) __nxState.txPage = totalPages;
+    const startIdx = (__nxState.txPage - 1) * pageSize;
+    const pageItems = cleanList.slice(startIdx, startIdx + pageSize);
+
+    const rowsHtml = pageItems.map(tx => {
         const amt = Number(tx.amount || 0);
         const isPlus = amt >= 0;
         const safeNote = String(tx.note || tx.tx_type || 'Giao dịch ví').replace(/'/g, '');
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:7px;cursor:pointer;" onclick="openReceiptForTransaction('${tx.tx_code || 'NXPAY'}',${Math.abs(amt)}, '${safeNote}', '${tx.created_at || ''}')">
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:7px;cursor:pointer;" onclick="openReceiptForTransaction('${tx.tx_code || 'NXPAY'}', ${Math.abs(amt)}, '${safeNote}', '${tx.created_at || ''}')">
             <div style="max-width:65%;">
-                <div style="font-weight:800;font-size:0.79rem;">${tx.tx_code || 'NXPAY'} •${tx.tx_type || 'TX'}</div>
+                <div style="font-weight:800;font-size:0.79rem;">${tx.tx_code || 'NXPAY'} • ${tx.tx_type || 'TX'}</div>
                 <div style="font-size:0.71rem;color:var(--nx-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.note || ''}</div>
                 <div style="font-size:0.66rem;color:var(--nx-muted);">${tx.created_at || ''} (Chạm xuất biên lai PNG)</div>
             </div>
@@ -1587,6 +2221,15 @@ function renderRealTransactionsLedger(txList) {
             </div>
         </div>`;
     }).join('');
+
+    const pagerHtml = `
+        <div class="nx-pagination-bar">
+            <button type="button" class="nx-page-btn" ${__nxState.txPage <= 1 ? 'disabled' : ''} onclick="changeTxPage(-1)">◀ Trước</button>
+            <span>Trang ${__nxState.txPage} / ${totalPages} (${cleanList.length} GD)</span>
+            <button type="button" class="nx-page-btn" ${__nxState.txPage >= totalPages ? 'disabled' : ''} onclick="changeTxPage(1)">Sau ▶</button>
+        </div>
+    `;
+    box.innerHTML = rowsHtml + pagerHtml;
 }
 
 async function clearRealTransactionsHistory() {
@@ -1760,17 +2403,32 @@ function renderSpendingDonut(analytics) {
 }
 
 function renderPendingQrSessionsList(list) {
+    const cleanAll = (list || []).filter(item =>
+        isCleanNexoraRecord(item.buyer_name) &&
+        isCleanNexoraRecord(item.order_code) &&
+        isCleanNexoraRecord(item.pay_token)
+    );
+    const filtered = __nxState.qrFilterStatus === 'ALL'
+        ? cleanAll
+        : cleanAll.filter(item => item.status === __nxState.qrFilterStatus);
+
+    const pageSize = __nxState.qrPageSize || 4;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if (__nxState.qrPage > totalPages) __nxState.qrPage = totalPages;
+    const startIdx = (__nxState.qrPage - 1) * pageSize;
+    const pageItems = filtered.slice(startIdx, startIdx + pageSize);
+
     const containers = [
         document.getElementById('nxAwaitingQrQuickList'),
         document.getElementById('nxModalPendingQrList')
     ];
     containers.forEach(box => {
         if (!box) return;
-        if (!list.length) {
-            box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;background:var(--nx-surface-2);border-radius:14px;">Hiện chưa có hóa đơn QR nào đang chờ thanh toán trong SQLite.</div>`;
+        if (!pageItems.length) {
+            box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;background:var(--nx-surface-2);border-radius:14px;">Hiện chưa có hóa đơn QR nào khớp bộ lọc trong SQLite.</div>`;
             return;
         }
-        box.innerHTML = list.map(item => {
+        const rowsHtml = pageItems.map(item => {
             const isWait = item.status === 'AWAITING_PAYMENT';
             const badgeHtml = isWait
                 ? `<span style="background:#f59e0b;color:#000;font-size:0.65rem;font-weight:800;padding:2px 7px;border-radius:999px;">AWAITING_PAYMENT</span>`
@@ -1786,6 +2444,15 @@ function renderPendingQrSessionsList(list) {
                 </div>
             </div>`;
         }).join('');
+
+        const pagerHtml = `
+            <div class="nx-pagination-bar">
+                <button type="button" class="nx-page-btn" ${__nxState.qrPage <= 1 ? 'disabled' : ''} onclick="changeQrPage(-1)">◀ Trước</button>
+                <span>Trang ${__nxState.qrPage} / ${totalPages} (${filtered.length} đơn)</span>
+                <button type="button" class="nx-page-btn" ${__nxState.qrPage >= totalPages ? 'disabled' : ''} onclick="changeQrPage(1)">Sau ▶</button>
+            </div>
+        `;
+        box.innerHTML = rowsHtml + pagerHtml;
     });
 }
 
@@ -2330,7 +2997,11 @@ async function loadNotificationsByTab(tab = 'deal') {
             return;
         }
         listEl.innerHTML = rows.map(n => {
-            return `<div style="padding:11px 12px;border-radius:14px;background:var(--nx-surface-2);border:1.5px solid ${n.is_read ? 'var(--nx-border)' : 'var(--nx-primary)'};margin-bottom:8px;cursor:pointer;" onclick="window.location.href='${n.target_url || '/services/mobile/mobile-app.html'}'">
+            const tUrl = n.target_url || '/services/mobile/mobile-app.html';
+            const clickAction = tUrl.includes('mobile-app.html')
+                ? `closeNxModal('nxNotificationCenterModal')`
+                : `closeNxModal('nxNotificationCenterModal');openInAppWebGateway('${tUrl}', '${String(n.title || 'Nexora').replace(/'/g, '')}')`;
+            return `<div style="padding:11px 12px;border-radius:14px;background:var(--nx-surface-2);border:1.5px solid ${n.is_read ? 'var(--nx-border)' : 'var(--nx-primary)'};margin-bottom:8px;cursor:pointer;" onclick="${clickAction}">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                     <strong style="font-size:0.82rem;color:var(--nx-primary);">${n.title}</strong>
                     <span style="font-size:0.65rem;color:var(--nx-muted);">${n.created_at || ''}</span>
@@ -2378,7 +3049,7 @@ async function submitAgreeTermsV12() {
             body: JSON.stringify({})
         });
         const data = await res.json();
-        nxToast(data.message || 'Đã xác nhận đồng ý Điều khoản & Chính sách V13!');
+        nxToast(data.message || 'Đã xác nhận đồng ý Điều khoản & Chính sách V14!');
         triggerNativeOrWebLockScreenNotification('[NEXORA SOP-01] Đã Đồng Ý Điều Khoản', data.message);
         await loadNotificationsByTab('terms');
     } catch (e) {}
@@ -2795,12 +3466,22 @@ function handleQuickSearchInput(ev) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    ensureV14SpaAndGatewayDom();
     renderNexoraCanvasIcons();
     render3DVirtualEmeraldCard();
+    renderWebPortalCatalogGrid();
     initHardwareSensorsListeners();
     await nxApplyTheme(__nxState.themeId, false);
     await nxApplyCvdMode(__nxState.cvdMode, false);
     applyRbacVisibilityAcrossUi();
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+        try {
+            window.google.accounts.id.initialize({
+                client_id: '777888999-nexorasuperappv14.apps.googleusercontent.com',
+                callback: handleGoogleIdentityCredentialResponse
+            });
+        } catch (e) {}
+    }
     if ('Notification' in window && Notification.permission === 'default') {
         try { Notification.requestPermission(); } catch (e) {}
     }

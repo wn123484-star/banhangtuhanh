@@ -7597,6 +7597,30 @@ def _ensure_account_security_and_settings_schema(conn):
                 """,
                 seed_notifs
             )
+        cur.execute(
+            """
+            DELETE FROM qr_payment_sessions
+            WHERE LOWER(COALESCE(buyer_name, '')) LIKE '%william autotest%'
+               OR LOWER(COALESCE(buyer_name, '')) LIKE '%nivida%'
+               OR LOWER(COALESCE(buyer_name, '')) LIKE '%autotest%'
+            """
+        )
+        cur.execute(
+            """
+            DELETE FROM orders
+            WHERE LOWER(COALESCE(customer_name, '')) LIKE '%william autotest%'
+               OR LOWER(COALESCE(customer_name, '')) LIKE '%nivida%'
+               OR LOWER(COALESCE(customer_name, '')) LIKE '%autotest%'
+            """
+        )
+        cur.execute(
+            """
+            DELETE FROM bank_transactions
+            WHERE LOWER(COALESCE(note, '')) LIKE '%william autotest%'
+               OR LOWER(COALESCE(note, '')) LIKE '%nivida%'
+               OR LOWER(COALESCE(note, '')) LIKE '%autotest%'
+            """
+        )
         conn.commit()
     except Exception:
         pass
@@ -7981,6 +8005,190 @@ def nexora_mobile_auth_logout_api():
     except Exception:
         pass
     return jsonify({"ok": True, "authenticated": False, "message": "[NEXORA AUTH] Đã đăng xuất khỏi Nexora Mobile App!"}), 200
+
+
+@app.route("/api/mobile/auth-google", methods=["POST"])
+def nexora_mobile_auth_google_api():
+    import base64
+    from werkzeug.security import generate_password_hash
+    data = request.get_json(silent=True) or {}
+    credential_jwt = str(data.get("credential") or "").strip()
+    email = str(data.get("email") or "").strip().lower()
+    full_name = str(data.get("full_name") or data.get("name") or "").strip()
+    google_sub = str(data.get("google_sub") or data.get("sub") or "").strip()
+    avatar_url = str(data.get("avatar_url") or data.get("picture") or "").strip()
+
+    if credential_jwt and "." in credential_jwt:
+        try:
+            parts = credential_jwt.split(".")
+            if len(parts) >= 2:
+                payload_b64 = parts[1]
+                pad_len = (4 - len(payload_b64) % 4) % 4
+                payload_bytes = base64.urlsafe_b64decode(payload_b64 + ("=" * pad_len))
+                jwt_obj = json.loads(payload_bytes.decode("utf-8", errors="ignore"))
+                if isinstance(jwt_obj, dict):
+                    email = str(jwt_obj.get("email") or email).strip().lower()
+                    full_name = str(jwt_obj.get("name") or full_name).strip()
+                    google_sub = str(jwt_obj.get("sub") or google_sub).strip()
+                    avatar_url = str(jwt_obj.get("picture") or avatar_url).strip()
+        except Exception:
+            pass
+
+    if not email or "@" not in email:
+        return jsonify({
+            "ok": False,
+            "error": "[GOOGLE OAUTH 2.0] Không nhận diện được địa chỉ Email Google hợp lệ!"
+        }), 400
+
+    if not full_name:
+        full_name = email.split("@")[0].replace(".", " ").title()
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_account_security_and_settings_schema(conn)
+    cur = conn.cursor()
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    cur.execute(
+        "SELECT * FROM users WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?) LIMIT 1",
+        (email, email.split("@")[0])
+    )
+    existing_row = cur.fetchone()
+
+    if existing_row:
+        u = dict(existing_row)
+        uid = int(u["id"])
+        try:
+            cur.execute(
+                "UPDATE users SET email_verified = 1, email = COALESCE(NULLIF(email, ''), ?) WHERE id = ?",
+                (email, uid)
+            )
+            cur.execute(
+                """
+                INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
+                VALUES (?, ?, 'GOOGLE_OAUTH_LOGIN', ?, ?, ?)
+                """,
+                (uid, str(u.get("username") or ""), f"Đăng nhập Google OAuth 2.0 ({email})", str(request.remote_addr or "127.0.0.1"), now_str)
+            )
+            conn.commit()
+            cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (uid,))
+            u = dict(cur.fetchone())
+        except Exception:
+            pass
+        conn.close()
+        try:
+            flask.session["user_id"] = uid
+        except Exception:
+            pass
+        is_adm = _is_admin_user_row(u)
+        bal = float(u.get("bank_balance") if u.get("bank_balance") is not None else (u.get("wallet_balance") or 0.0))
+        return jsonify({
+            "ok": True,
+            "authenticated": True,
+            "is_new_user": False,
+            "reward_coins_added": 0,
+            "user_profile": {
+                "id": uid,
+                "username": str(u.get("username") or ""),
+                "full_name": str(u.get("full_name") or full_name),
+                "role": "admin" if is_adm else "user",
+                "is_admin": is_adm,
+                "email": str(u.get("email") or email),
+                "phone": str(u.get("phone") or ""),
+                "shipping_address": str(u.get("shipping_address") or u.get("address") or ""),
+                "wallet_balance": bal,
+                "coins": int(u.get("coins") or 0),
+                "email_verified": 1,
+                "cvd_mode": str(u.get("cvd_mode") or "standard"),
+                "avatar_url": avatar_url,
+                "virtual_card": _build_virtual_card_metadata(u)
+            },
+            "message": f"[GOOGLE OAUTH 2.0] Xin chào {u.get('full_name') or full_name}! Đã đồng bộ tài khoản Google [{email}]."
+        }), 200
+
+    base_uname = re.sub(r"[^a-zA-Z0-9_]", "_", email.split("@")[0]).strip("_") or "google_user"
+    if len(base_uname) < 3:
+        base_uname = f"{base_uname}_nx"
+    uname = base_uname
+    cur.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1", (uname,))
+    if cur.fetchone():
+        uname = f"{base_uname}_{int(time.time()) % 10000}"
+
+    random_pw = f"GAuth_{google_sub or int(time.time())}"
+    pw_hash = generate_password_hash(random_pw)
+    welcome_bonus = 20000.0
+    welcome_coins = 20000
+
+    cur.execute(
+        """
+        INSERT INTO users (
+            username, password, password_hash, full_name, email, phone, role,
+            wallet_balance, bank_balance, coins, email_verified, two_factor_enabled,
+            preferred_theme, cvd_mode
+        ) VALUES (?, ?, ?, ?, ?, '', 'user', ?, ?, ?, 1, 1, 'emerald_fintech_light', 'standard')
+        """,
+        (uname, random_pw, pw_hash, full_name, email, welcome_bonus, welcome_bonus, welcome_coins)
+    )
+    new_uid = int(cur.lastrowid)
+    tx_code = f"GOAUTH-BONUS-{new_uid}-{int(time.time()) % 100000}"
+    try:
+        cur.execute(
+            """
+            INSERT INTO bank_transactions (user_id, tx_code, tx_type, amount, balance_after, note, created_at)
+            VALUES (?, ?, 'GOOGLE_OAUTH_BONUS', ?, ?, ?, ?)
+            """,
+            (new_uid, tx_code, welcome_bonus, welcome_bonus, f"[GOOGLE OAUTH 2.0] Thưởng +20.000 Xu liên kết tài khoản Google ({email}) lần đầu", now_str)
+        )
+        cur.execute(
+            """
+            INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
+            VALUES (?, ?, 'GOOGLE_OAUTH_REGISTER', ?, ?, ?)
+            """,
+            (new_uid, uname, f"Tạo mới tài khoản qua Google OAuth 2.0 ({email}) +20.000 Xu", str(request.remote_addr or "127.0.0.1"), now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+    _push_mobile_notification_row(
+        conn,
+        new_uid,
+        "balance",
+        "[GOOGLE OAUTH 2.0] Tặng +20.000 Xu Xác Thực Google Lần Đầu",
+        f"Tài khoản Google [{email}] đã được kích hoạt kèm Thẻ Kim Loại 3D và +20.000 Xu thưởng!",
+        "/services/mobile/mobile-app.html"
+    )
+    cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (new_uid,))
+    u_dict = dict(cur.fetchone())
+    conn.close()
+    try:
+        flask.session["user_id"] = new_uid
+    except Exception:
+        pass
+    is_adm = _is_admin_user_row(u_dict)
+    return jsonify({
+        "ok": True,
+        "authenticated": True,
+        "is_new_user": True,
+        "reward_coins_added": welcome_coins,
+        "soundbox_speech": "Nexora Pay thông báo: Xác thực tài khoản Google thành công, tặng ngay 20 nghìn xu thưởng vào ví Lục Bảo!",
+        "user_profile": {
+            "id": new_uid,
+            "username": str(u_dict.get("username") or uname),
+            "full_name": str(u_dict.get("full_name") or full_name),
+            "role": "admin" if is_adm else "user",
+            "is_admin": is_adm,
+            "email": email,
+            "phone": "",
+            "shipping_address": "",
+            "wallet_balance": float(u_dict.get("bank_balance") or welcome_bonus),
+            "coins": int(u_dict.get("coins") or welcome_coins),
+            "email_verified": 1,
+            "cvd_mode": "standard",
+            "avatar_url": avatar_url,
+            "virtual_card": _build_virtual_card_metadata(u_dict)
+        },
+        "message": f"[GOOGLE OAUTH 2.0] Đã tạo tài khoản Google [{email}] và cộng ngay +20.000 Xu thưởng xác thực lần đầu!"
+    }), 200
 
 
 @app.route("/api/mobile/admin/defense-action", methods=["POST"])
@@ -8732,7 +8940,7 @@ def nexora_send_account_security_otp_api():
     user = _resolve_authenticated_mobile_user(conn, data)
     cur = conn.cursor()
 
-    raw_e = str(data.get("email") or data.get("email_or_username") or (user.get("email") if user else "") or "khach_hang_vip").strip().lower(); email = raw_e if "@" in raw_e else f"{raw_e}@mail.castle-tech.cloud"
+    email = str(data.get("email") or (user.get("email") if user else "") or "").strip().lower()
     if not email or "@" not in email:
         conn.close()
         return jsonify({"ok": False, "error": "Vui lòng nhập địa chỉ Email hợp lệ để nhận mã OTP 6 số!"}), 400
@@ -8928,7 +9136,7 @@ def nexora_verify_otp_and_change_password_api():
 
 
 @app.route("/api/account/update-settings", methods=["POST"])
-@app.route("/api/account/update-profile-and-settings", methods=["GET", "POST"])
+@app.route("/api/account/update-profile-and-settings", methods=["POST"])
 def nexora_update_account_settings_api():
     data = request.get_json(silent=True) or {}
     conn = _get_direct_sqlite_conn()
@@ -9094,7 +9302,8 @@ def _build_enriched_mobile_bridge_payload():
         qr_rows = [dict(r) for r in cur.fetchall()]
         for qr in qr_rows:
             ptok = str(qr.get("pay_token") or qr.get("qr_token") or "").strip()
-            if not ptok or ptok == "NVXPAY-DEMO-888":
+            b_name_low = str(qr.get("buyer_name") or "").strip().lower()
+            if not ptok or ptok == "NVXPAY-DEMO-888" or "autotest" in b_name_low or "nivida" in b_name_low:
                 continue
             st = str(qr.get("status") or "AWAITING_PAYMENT").upper()
             items_arr = []
@@ -9185,7 +9394,7 @@ def _build_enriched_mobile_bridge_payload():
         "ok": True,
         "authenticated": is_authenticated,
         "platform": "NEXORA Super-App & E-Commerce Ecosystem",
-        "bridge_version": "v13.0-RBAC-PURE-CANVAS",
+        "bridge_version": "v14.0-DAILY-SUPERAPP-GATEWAY",
         "server_timestamp": int(time.time() * 1000),
         "active_theme": theme_state["theme_id"],
         "theme_detail": theme_obj,
@@ -9245,6 +9454,7 @@ def _build_enriched_mobile_bridge_payload():
             "bridge_sync": "/api/mobile/bridge-sync",
             "theme_sync": "/api/mobile/theme-sync",
             "auth_login": "/api/mobile/auth-login",
+            "auth_google": "/api/mobile/auth-google",
             "auth_logout": "/api/mobile/auth-logout",
             "admin_defense_action": "/api/mobile/admin/defense-action",
             "hardware_garage": "/api/mobile/hardware-garage",

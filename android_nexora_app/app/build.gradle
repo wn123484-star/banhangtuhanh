@@ -8,8 +8,8 @@ android {
         applicationId "cloud.castletech.nexora.mobile"
         minSdk 24
         targetSdk 34
-        versionCode 130
-        versionName "13.0-NEXORA-RBAC-CANVAS"
+        versionCode 140
+        versionName "14.0-NEXORA-SUPERAPP-GATEWAY"
     }
 
     buildTypes {

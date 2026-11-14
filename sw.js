@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexora-mobile-pwa-v13-rbac';
+const CACHE_NAME = 'nexora-mobile-pwa-v14-gateway';
 const CORE_ASSETS = [
     '/services/mobile/mobile-app.html',
     '/services/mobile/mobile-app.css',
@@ -48,7 +48,7 @@ self.addEventListener('fetch', event => {
         return;
     }
     event.respondWith(
-        fetch(event.request)
+        fetch(event.request, { cache: 'no-store' })
             .then(networkResp => {
                 if (networkResp && networkResp.status === 200 && event.request.method === 'GET') {
                     const respClone = networkResp.clone();
