@@ -917,13 +917,15 @@ async function verifyMobileSecurityOtpOnly() {
         });
         const data = await res.json();
         if (res.ok && data.ok) {
-            nxToast('✅ ' + (data.message || 'Xác minh mã OTP 6 số thành công!'));
+            nxToast('🎉 ' + (data.message || 'Xác thực OTP thành công! Bạn được tặng +20.000 Xu vào Ví Nexora Pay!'));
             if (statusBox) {
                 statusBox.style.display = 'block';
                 statusBox.style.borderColor = '#10b981';
                 statusBox.style.color = '#10b981';
-                statusBox.textContent = '✅ Mã OTP 6 số hợp lệ! Bạn có thể đặt mật khẩu mới và mã PIN Ví ngay bên dưới.';
+                statusBox.textContent = data.message || '🎉 Xác thực OTP thành công! Bạn được tặng +20.000 Xu vào Ví Nexora Pay!';
             }
+            /* [FEAT-AUTH-003.3] Làm mờ / khóa nút Gửi OTP sau khi xác minh thành công */
+            lockOrUnlockMobileOtpSendUi(true);
             await syncMobileBridge();
             populateSettingsCenterFromBridge();
         } else {
@@ -933,6 +935,38 @@ async function verifyMobileSecurityOtpOnly() {
         nxToast('❌ Lỗi kết nối khi xác minh mã OTP!');
     }
 }
+
+function lockOrUnlockMobileOtpSendUi(locked) {
+    if (__nxOtpCountdownTimer) {
+        clearInterval(__nxOtpCountdownTimer);
+        __nxOtpCountdownTimer = null;
+    }
+    const sendBtn = document.getElementById('nxBtnSendSecurityOtp');
+    const unlockBtn = document.getElementById('nxBtnUnlockOtpReverify');
+    if (sendBtn) {
+        sendBtn.disabled = Boolean(locked);
+        sendBtn.style.opacity = locked ? '0.55' : '1';
+        sendBtn.style.cursor = locked ? 'not-allowed' : 'pointer';
+        sendBtn.textContent = locked ? '✅ Email Đã Được Xác Minh Bảo Mật' : '📨 Gửi Mã OTP Xác Thực (6 Số)';
+    }
+    for (let i = 0; i < 6; i++) {
+        const b = document.getElementById('nxOtpBox' + i);
+        if (b) {
+            b.disabled = Boolean(locked);
+            b.style.opacity = locked ? '0.55' : '1';
+        }
+    }
+    if (unlockBtn) {
+        unlockBtn.style.display = locked ? 'block' : 'none';
+    }
+}
+
+function unlockMobileOtpReverification() {
+    lockOrUnlockMobileOtpSendUi(false);
+    nxToast('🔓 Đã mở khóa gửi mã OTP xác minh lại để đổi Mật khẩu / Mã PIN / Email!');
+}
+window.unlockMobileOtpReverification = unlockMobileOtpReverification;
+window.unlockOtpReverification = unlockMobileOtpReverification;
 
 function toggleNxPasswordVisibility(inputId, btnEl) {
     const inp = document.getElementById(inputId);

@@ -165,3 +165,28 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
   - [x] **Thuật toán 3 (Real-Time Fraud Risk Scoring 0-100) & Admin Mission Control:** `GET /api/admin-dispute/fraud-risk-radar` và `POST /api/admin-dispute/mission-control/action` (Khóa/Mở khóa User, Cấp tiền Ví, Kiểm tra toàn vẹn SQLite) trên `admin-center.html`.
 - [x] **10.7. Nhiệm vụ 7 & 8 — Nâng Cấp Đội Quân 9 Bot Kiểm Thử Tự Động (`QA Bot Squad V11.0`) Đạt 100% PASS & Đẩy Lên GitHub (`ver10`):**
   - [x] Nâng cấp `_deep_synchronized_qa_bot_audit()` thành **Đội Quân 9 Bot QA (`V11.0-9-BOTS`)** kiểm tra toàn diện 25 trang, RBAC, 5 chế độ Mù màu CVD, 3 Thuật toán và 10 mã `[FEAT-xxx]` đạt 100% PASS (0 lỗi) và đồng bộ lên GitHub.
+
+---
+
+## GIAI ĐOẠN 11: SỬA TẬN GỐC HEADER/CHAT FIXED, KỆ 3 CỘT GLASSMORPHISM, CẤT/GỌI MÈO THẬP THÒ, MÈO BÁO MÀU DI CHUỘT 2 GIÂY, ĐIỂM DANH 7 NGÀY, THƯỞNG OTP +20.000 XU, 45 MÃ `[FEAT-xxx.y]`, CHIẾN DỊCH DIỆT 100 BUG & ĐỘI QUÂN 10 BOT QA V12.0 (`ver11`)
+
+- [x] **11.1. Nhiệm vụ 1 — Sửa tận gốc lỗi `filter`/`transform` trên `html, body` làm hỏng `position: fixed` của Header & Khung Chat + Kệ 3 Cột Trong Suốt (`[FEAT-HDR-001.1]` & `[FEAT-HDR-001.2]`):**
+  - [x] Khóa `html, body { filter: none !important; transform: none !important; perspective: none !important; backdrop-filter: none !important; overflow-x: clip !important; }` trong `core/global.css`.
+  - [x] Khóa Header 3 tầng ở `position: fixed; top: 0; width: 100vw; z-index: 2147483000` và Khung Chat `#nvUnifiedHubDock, #nvUnifiedHubPanel` ở `right: 18px; bottom: 68px; width: 390px`.
+  - [x] Làm trong suốt khoảng trống giữa Kệ 3 Cột (`gap: 32px`, `background: transparent !important`) kèm thẻ sản phẩm `.product-card` hiệu ứng kính mờ Glassmorphism cho cả Light Mode và Dark Mode.
+- [x] **11.2. Nhiệm vụ 2 — Tính năng "Cất Mèo Đi / Gọi Mèo Ra" & Hoạt ảnh Mèo Thò Đầu Thập Thò Sau Khung Chat (`[FEAT-CAT-002.6]`):**
+  - [x] Xây dựng `tuckCatBehindChat()`, `summonCatBackOut()`, `toggleTuckOrSummonCat()` kèm nút `#catTuckToggleBtn` (`🙈 Cất Mèo Đi (Trốn Sau Chat)` ↔ `📣 Gọi Mèo Ra`) trong Nhóm 1 Mèo AI, hỗ trợ nhấp đúp chuột (`dblclick`) vào Mèo hoặc gõ lệnh chat `"cất mèo"`, `"gọi mèo ra"`.
+  - [x] Thiết kế vòng lặp `TUCKED_BEHIND_CHAT` trong `core/cat_widget.js`: Mèo chạy ra sau thanh Chat góc phải dưới, luôn lộ 2 tai vểnh cử động nhẹ và cứ mỗi 6-9 giây ngẫu nhiên thò đuôi ngoắc nhẹ / nhô nửa mặt + đôi mắt tròn xoe / bám 2 chân măng cụt lên mép thanh Chat.
+- [x] **11.3. Nhiệm vụ 3 — Tính năng Mèo AI Báo Màu Khi Di Chuột 2 Giây, Nút Xem Màu Chi Tiết SP & Nhận Diện Ngôn Ngữ Tự Nhiên Thông Minh (`[FEAT-ACC-009.4]`):**
+  - [x] Xây dựng `toggleHoverColorInspector()`, `inspectElementColorAndAnnounce()`, `initHover2sColorInspectorEngine()` (mặc định `TẮT` để không làm phiền người bình thường; khi bật và giữ chuột `2000ms` sẽ đọc tên màu Tiếng Việt + mã `#HEX` + độ tương phản WCAG).
+  - [x] Thêm nút `#btnCatInspectProductDetailColors` (`🎨 Mèo Báo Màu & Ngoại Hình SP Này`) gọi `inspectCurrentProductDetailColors()` trong `services/product/product-detail.js`.
+  - [x] Nâng cấp NLP trong `core/cat_widget.js` và `ai_engine/cat_assistant_engine.py`: phân biệt chính xác câu hỏi màu sắc sản phẩm thông thường với câu báo khó khăn thị giác/mù màu (`ENABLE_COLORBLIND_HOVER_ASSIST`).
+- [x] **11.4. Nhiệm vụ 4 — Xây dựng lại toàn diện Hệ thống Điểm danh 7 Ngày & Ẩn Nút Test đối với Người dùng thường (`[FEAT-HDR-001.3]` & `[FEAT-HDR-001.4]`):**
+  - [x] Nâng cấp `/api/settings/daily-checkin` lưu bảng `user_daily_checkins`, cộng thưởng bậc thang 7 ngày (`+5.000 Xu` ➔ `+50.000 Xu` + Lượt quay + Voucher `STREAK7VIP`) vào Ví SQLite và cập nhật ngay số ngày `🔥` + số dư `🪙 Xu` trên Header.
+  - [x] Ẩn hoàn toàn 2 nút `⚡ Test +1 Ngày Chuỗi Tiếp Theo` và `🔄 Reset` đối với người dùng thường (`isCurrentUserAdminOrDebugForStreak()`), khóa nút Điểm danh sau khi đã nhận trong ngày (`✅ Đã Điểm Danh Hôm Nay`).
+- [x] **11.5. Nhiệm vụ 5 — Hoàn thiện Xác minh OTP: Thưởng +20.000 Xu & Tự động làm mờ/khóa nút Gửi lại sau khi đã xác minh (`[FEAT-AUTH-003.2]` & `[FEAT-AUTH-003.3]`):**
+  - [x] Cộng thưởng **`+20.000 Xu`** (`OTP_VERIFY_BONUS`) khi xác minh OTP thành công tại `/api/settings/email-otp/verify` và `/api/account/verify-otp-and-change-password`.
+  - [x] Tự động làm mờ và vô hiệu hóa nút Gửi OTP sau khi đã xác minh (`✅ Email Đã Được Xác Minh Bảo Mật`), kèm nút mở khóa xác minh lại `unlockOtpReverification()` khi cần Đổi Mật khẩu / Đổi Mã PIN / Đổi Email.
+- [x] **11.6. Nhiệm vụ 6, 7, 8 & 9 — Mở rộng Bản đồ 45 Mã Tính Năng Con `[FEAT-xxx.y]`, Chiến dịch Săn & Diệt 100/100 Bug (`BUG_HUNT_100_REPORT.md`), Nâng cấp Đội Quân 10 Bot QA (`V12.0-10-BOTS`) & Đồng bộ GitHub (`ver11` & `main`):**
+  - [x] Cập nhật `AI_RULES.md` và `FEATURE_ARCHITECTURE_AND_AUDIT.md` với 45 mã tính năng con `[FEAT-xxx.y]`.
+  - [x] Lập báo cáo `BUG_HUNT_100_REPORT.md` (100/100 Bug `[x] FIXED & VERIFIED`) và nâng cấp `_deep_synchronized_qa_bot_audit()` lên **QA Bot Squad V12.0 — 10 Bots** đạt **100% PASS (0 lỗi)**.

@@ -1,5 +1,5 @@
 # HIẾN PHÁP KỸ THUẬT & QUY TẮC BẮT BUỘC CHO AI (AI ENGINEERING CONSTITUTION)
-**Dự án:** Sàn Thương Mại Điện Tử Công Nghệ & Đời Sống — **Nexora Mall (NEXORA V10.0)**
+**Dự án:** Sàn Thương Mại Điện Tử Công Nghệ & Đời Sống — **Nexora Mall (NEXORA V11.0)**
 
 ---
 
@@ -7,27 +7,73 @@
 
 ### Điều 1 (Cấm tự ý sửa đổi thiết kế đã khóa — `[LOCKED-DESIGN]`):
 Mọi thành phần đã được gắn nhãn `[LOCKED-DESIGN]` — bao gồm:
-1. **Cấu trúc Header 3 tầng cuộn cố định (`[FEAT-HDR-001]`):** Hàng 1 Topbar Dropdown không điểm mù (`Sàn Giao Dịch ▾`, `Giải Trí & Săn Thưởng ▾`, `Tiện Ích ▾`, `Nexora Pay`), Hàng 2 (`Logo NEXORA`, Thanh tìm kiếm, nút Điểm danh lửa `🔥`, Chuông `🔔`, Đổi Sáng/Tối `☀️/🌙`, Tài khoản, Giỏ hàng), Hàng 3 (Thanh 9 Danh mục + So Sánh & Wishlist) ở chế độ `position: fixed; top: 0; z-index: 2147483000` kèm `#nvxHeaderStickySpacer`.
+1. **Cấu trúc Header 3 tầng cuộn cố định (`[FEAT-HDR-001]` & `[FEAT-HDR-001.1..001.5]`):** Hàng 1 Topbar Dropdown không điểm mù (`Sàn Giao Dịch ▾`, `Giải Trí & Săn Thưởng ▾`, `Tiện Ích ▾`, `Nexora Pay`), Hàng 2 (`Logo NEXORA`, Thanh tìm kiếm, nút Điểm danh lửa `🔥`, Chuông `🔔`, Đổi Sáng/Tối `☀️/🌙`, Tài khoản, Giỏ hàng), Hàng 3 (Thanh 9 Danh mục + So Sánh & Wishlist) ở chế độ `position: fixed; top: 0; z-index: 2147483000` kèm `#nvxHeaderStickySpacer`. Tuyệt đối CẤM đặt `filter`, `transform`, `perspective`, hoặc `backdrop-filter` lên `html, body`.
 2. **Hình ảnh & cách cắt chữ của Logo `#brandLogoImg` (`#headerBrandLogoImg`)** và **Cấu hình miền gửi mail Resend `@mail.castle-tech.cloud`** (`Nexora Mall CSKH <noreply@mail.castle-tech.cloud>`).
-3. **18 tính năng Mèo AI chia 4 nhóm xổ xuống (`[FEAT-CAT-002]`):** Lớp Canvas trên cùng (`z-index: 2147483645`), 5 giống mèo, cằm bo tròn mềm mại không vệt ngang, miệng mèo `(mouthX, mouthY)` khớp 100% với hoạt ảnh Ăn Cá / Uống Trà Sữa, kịch bản săn hàng 4 chặng và 4 thanh Accordion xổ xuống (`▾`).
-4. **Hệ thống 12 giao diện Sáng/Tối & 5 chế độ Trợ năng Mù màu (`[FEAT-ACC-009]`)** cùng **Giao diện Ví MoMo `Nexora Pay` (`[FEAT-PAY-004]`)**.
+3. **18+ tính năng Mèo AI chia 4 nhóm xổ xuống & Chế độ Cất/Gọi Mèo Thập Thò (`[FEAT-CAT-002]` & `[FEAT-CAT-002.1..002.6]`):** Lớp Canvas trên cùng (`z-index: 2147483645`), 5 giống mèo, cằm bo tròn mềm mại không vệt ngang, miệng mèo `(mouthX, mouthY)` khớp 100% với hoạt ảnh Ăn Cá / Uống Trà Sữa, kịch bản săn hàng 4 chặng, 4 thanh Accordion xổ xuống (`▾`), và chế độ `TUCKED_BEHIND_CHAT` (`tuckCatBehindChat()` / `summonCatBackOut()`) nấp sau thanh Chat thò tai/đuôi/mắt/chân măng cụt mỗi 6-9 giây.
+4. **Hệ thống 12 giao diện Sáng/Tối, 5 chế độ Trợ năng Mù màu (CVD) & Mèo Báo Màu Di Chuột 2 Giây (`[FEAT-ACC-009]` & `[FEAT-ACC-009.1..009.4]`)** cùng **Giao diện Ví MoMo `Nexora Pay` (`[FEAT-PAY-004]`)**.
 
 Tất cả các thành phần trên là **BẤT KHẢ XÂM PHẠM**. Không một AI nào được phép tự ý xóa, ẩn, rút gọn hoặc thay đổi bố cục khi chưa có lệnh rõ ràng từ người dùng.
 
-### Điều 2 (Quy chuẩn ghi chú Mã Tính Năng khi viết code):
+### Điều 2 (Quy chuẩn ghi chú 10 Mã Phân Hệ & 45 Mã Tính Năng Con `[FEAT-xxx.y]`):
 Khi viết hoặc sửa bất kỳ hàm Python/JS/CSS nào, bắt buộc phải đặt khối comment chuẩn ngay trên đầu hàm/khu vực đó theo định dạng:
-`# [FEAT-<PHÂN_HỆ>-<SỐ>] Tên tính năng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: <API / Bảng SQLite / File UI> | [LOCKED-DESIGN]`
-Danh mục 10 Mã Tính Năng Cốt Lõi:
-- `[FEAT-HDR-001]`: Thanh Header 3 tầng cố định cuộn theo người dùng (`Sticky/Fixed 3-Row Header`), nút Điểm danh lửa `🔥`, nút Đổi Sáng/Tối `☀️/🌙` và Dropdown không điểm mù.
-- `[FEAT-CAT-002]`: Trợ lý Mèo AI Lớp Trên Cùng (`Topmost Canvas Layer`), 5 giống mèo, 4 nhóm xổ xuống (18 tính năng), hoạt ảnh ăn cá/uống trà sữa khớp miệng, săn hàng 4 chặng.
-- `[FEAT-AUTH-003]`: Hệ thống Đăng nhập/Đăng ký, Bảo mật OTP 6 số qua Resend (`@mail.castle-tech.cloud`), Đổi mật khẩu, Mã PIN Ví 6 số và Phân quyền 4 cấp (`Guest / Buyer / Seller / Admin`).
-- `[FEAT-PAY-004]`: Ví điện tử `Nexora Pay` chuẩn MoMo, Khóa bắt buộc đăng nhập khi chuyển khoản/nạp rút, Quét QR 2 bước xem giá hóa đơn & Chuyển khoản hộ đồng bộ PC-Mobile.
-- `[FEAT-LOG-005]`: Vận đơn Radar 6 bước (`ESCROW_LOCKED` -> `COMPLETED`), Chốt chặn nhận hàng & Trả hàng hoàn tiền 100% + Phạt trễ SLA.
-- `[FEAT-MKT-006]`: Sàn Theo dõi giá thị trường VN (Biểu đồ nến 30 phiên, EMA-7, Bollinger Bands, RSI 14 & Báo động giảm giá).
-- `[FEAT-AUC-007]`: Sàn Đấu giá kép (Đấu giá ký quỹ 10% chống cướp giây cuối +30s & Đấu giá ngược giảm giá từng giây).
-- `[FEAT-RFQ-008]`: Sàn Đấu thầu ngược B2B/C2B (`Reverse RFQ`) & Hộ chiếu Thiết bị Blockchain SHA-256 (`Device Passport`).
-- `[FEAT-ACC-009]`: Trung tâm Trợ năng Mù màu (5 chế độ CVD), Bảng xem trước màu Tab/Nút/Nến giá, Mô tả màu sắc sản phẩm & Hỗ trợ người khuyết tật.
-- `[FEAT-ADM-010]`: Trung tâm Chỉ huy Admin (`Admin Mission Control`), Chấm điểm rủi ro gian lận (`0-100`) & Đội quân 9 Bot Kiểm thử Tự động (`QA Bot Squad V11.0`).
+`# [FEAT-<PHÂN_HỆ>-<SỐ>.<NHÁNH>] Tên tính năng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: <API / Bảng SQLite / File UI> | [LOCKED-DESIGN]`
+
+Danh mục **10 Phân Hệ Lớn & 45 Mã Tính Năng Con (`[FEAT-xxx.y]`)**:
+1. **`[FEAT-HDR-001]` — Thanh Header 3 Tầng Cố Định & Tiện Ích Đầu Trang (5 mã con):**
+   - `[FEAT-HDR-001.1]`: Khóa `position: fixed; top: 0; z-index: 2147483000` cho Header 3 tầng, cấm `filter`/`transform` trên `html, body` & đồng bộ `#nvxHeaderStickySpacer`.
+   - `[FEAT-HDR-001.2]`: Menu Dropdown Topbar không điểm mù (`16px` cầu nối trong suốt + `260ms` delay) & Kệ 3 cột Glassmorphism trong suốt (`gap: 32px`).
+   - `[FEAT-HDR-001.3]`: Hệ thống Điểm danh 7 ngày liên tiếp (`🔥 + số ngày`) cộng thưởng thật vào SQLite (`+5.000 Xu` $\rightarrow$ `+50.000 Xu` + Lượt quay + Voucher `STREAK7VIP`).
+   - `[FEAT-HDR-001.4]`: Khóa nút Điểm danh sau khi đã nhận trong ngày & ẩn 2 nút Test (`⚡ Test +1 Ngày`, `🔄 Reset`) đối với khách thường (chỉ hiện cho Admin/Debug).
+   - `[FEAT-HDR-001.5]`: Nút chuyển nhanh Giao diện Sáng/Tối (`☀️/🌙`), Chuông thông báo giảm giá (`🔔`) & Đồng bộ 14 vị trí Icon động (`syncActiveIconSetAcrossWebsite`).
+2. **`[FEAT-CAT-002]` — Linh Vật Mèo AI Canvas 2D Lớp Trên Cùng (6 mã con):**
+   - `[FEAT-CAT-002.1]`: Khung xương Canvas 2D (`z-index: 2147483645`), 5 giống mèo & đầu bo tròn mềm mại không vạch ngang cằm.
+   - `[FEAT-CAT-002.2]`: Khóa tọa độ miệng mèo `(mouthX = headCenterX, mouthY = headCenterY + headRadius * 0.38)` khớp 100% với mẩu cá & ống hút trà sữa.
+   - `[FEAT-CAT-002.3]`: Bảng điều khiển Mèo AI gom 4 Nhóm Accordion xổ xuống (`▾`) hiển thị đầy đủ 18+ nút tương tác.
+   - `[FEAT-CAT-002.4]`: Kịch bản Mèo AI đi săn hàng khuyến mãi 4 chặng & lưu Wishlist thực tế vào SQLite (`/api/compare/wishlist`).
+   - `[FEAT-CAT-002.5]`: Mèo AI trèo leo hô thần chú & tự động bấm nút tìm kiếm khi dùng Giọng nói (`🎙️` Google Voice Search).
+   - `[FEAT-CAT-002.6]`: Tính năng **"Cất Mèo Đi / Gọi Mèo Ra"** (`tuckCatBehindChat()`, `summonCatBackOut()`, `TUCKED_BEHIND_CHAT`) — Mèo chạy ra sau thanh Chat góc phải dưới, thò 2 tai vểnh và cứ 6-9 giây lại thập thò đuôi / nửa mặt + mắt tròn / 2 chân măng cụt bám mép.
+3. **`[FEAT-AUTH-003]` — Xác Thực Đa Tầng, OTP Resend & Phân Quyền RBAC (5 mã con):**
+   - `[FEAT-AUTH-003.1]`: Đăng nhập/Đăng ký Buyer & Seller, Google OAuth 2.0 & trang Auth mặc định Nền Sáng Thanh Lịch (`executive_light`).
+   - `[FEAT-AUTH-003.2]`: Xác minh Email OTP 6 số qua Resend (`@mail.castle-tech.cloud`) tự động thưởng **`+20.000 Xu`** vào Ví SQLite (`OTP_VERIFY_BONUS`) & bật cờ `email_verified = 1`.
+   - `[FEAT-AUTH-003.3]`: Tự động làm mờ & vô hiệu hóa nút Gửi mã OTP sau khi đã xác minh (`✅ Email Đã Được Xác Minh Bảo Mật`), chỉ mở lại khi bấm `unlockOtpReverification()` để Đổi Mật khẩu / Đổi Mã PIN / Đổi Email.
+   - `[FEAT-AUTH-003.4]`: Quy trình Đổi mật khẩu (`SHA-256`) & Thiết lập Mã PIN Ví 6 số có nhật ký kiểm toán `security_audit_logs`.
+   - `[FEAT-AUTH-003.5]`: Ma trận phân quyền RBAC 4 cấp (`Guest / Buyer / Seller / Admin`) trên 25 trang & chặn tuyệt đối khách chưa đăng nhập chuyển khoản/nạp rút (`HTTP 401 require_login`).
+4. **`[FEAT-PAY-004]` — Ví Điện Tử Nexora Pay, Hóa Đơn QR 2 Bước & Escrow (5 mã con):**
+   - `[FEAT-PAY-004.1]`: Giao diện Ví điện tử `Nexora Pay` chuẩn MoMo & đồng bộ số dư thời gian thực giữa Web và Mobile App.
+   - `[FEAT-PAY-004.2]`: Tạo đơn hàng QR ở trạng thái chờ `AWAITING_PAYMENT` (cấm tự động duyệt khi chưa bấm xác nhận).
+   - `[FEAT-PAY-004.3]`: Màn hình Xem giá & Kiểm tra hóa đơn chi tiết trên `bank.html?pay_token=...` trước khi bấm `✅ Xác Nhận Chuyển Khoản`.
+   - `[FEAT-PAY-004.4]`: Chế độ **Chuyển khoản hộ cho bạn bè / người thân** (lưu họ tên người chuyển hộ & lời nhắn).
+   - `[FEAT-PAY-004.5]`: Khóa tiền vào Quỹ Bảo Lãnh (`ESCROW_LOCKED`) & phát tín hiệu Realtime (`poll=1`) tự động chuyển màn hình `checkout.html` sang `tracking.html`.
+5. **`[FEAT-LOG-005]` — Điều Phối Vận Đơn NX Express 6 Bước & Hoàn Tiền 100% (4 mã con):**
+   - `[FEAT-LOG-005.1]`: Chu trình vận đơn 6 bước chuẩn (`AWAITING_PAYMENT` $\rightarrow$ `ESCROW_LOCKED` $\rightarrow$ `SELLER_PACKING` $\rightarrow$ `NVX_IN_TRANSIT` $\rightarrow$ `DELIVERED_INSPECTING` $\rightarrow$ `COMPLETED`).
+   - `[FEAT-LOG-005.2]`: Bản đồ Radar Canvas 2D mô phỏng lộ trình giao hàng Hỏa Tốc NX Express 2H.
+   - `[FEAT-LOG-005.3]`: Chốt chặn xác nhận Đã nhận hàng & giải ngân bảo lãnh Escrow cho Gian hàng.
+   - `[FEAT-LOG-005.4]`: Luồng Trả hàng / Hoàn tiền nguyên tử 100% (`RETURN_REQUESTED` $\rightarrow$ `REFUNDED`) cộng trả tiền vào Ví, hoàn kho `products.stock` & tính tiền phạt trễ SLA.
+6. **`[FEAT-MKT-006]` — Sàn Theo Dõi Giá VN-TECH INDEX & Chỉ Báo Định Lượng (4 mã con):**
+   - `[FEAT-MKT-006.1]`: Biểu đồ Nến Nhật OHLC 30 phiên vẽ bằng HTML5 Canvas 2D so sánh giá Nexora và Giá Trung Bình Thị Trường VN.
+   - `[FEAT-MKT-006.2]`: Bộ 3 chỉ báo định lượng kỹ thuật: Đường trung bình lũy thừa `EMA-7`, Dải `Bollinger Bands (20, 2σ)` và Chỉ số sức mạnh tương đối `RSI-14`.
+   - `[FEAT-MKT-006.3]`: Quản lý danh sách Canh giá (`Watchlist Quota`: 05 vật phẩm mặc định, mở rộng lên 08 vật phẩm khi đã xác minh OTP hoặc điểm danh $\ge 3$ ngày).
+   - `[FEAT-MKT-006.4]`: Cảnh báo tự động qua Chuông (`🔔`) & huy hiệu `⚡ ĐÃ CHẠM GIÁ MỤC TIÊU` khi giá giảm chạm `target_price`.
+7. **`[FEAT-AUC-007]` — Sàn Đấu Giá Kép Thời Gian Thực (2 mã con):**
+   - `[FEAT-AUC-007.1]`: Đấu giá truyền thống ký quỹ 10% (`Escrow Deposit`), tự động hoàn cọc 100% cho người bị vượt giá & cơ chế chống cướp phút chót `+30s Anti-Sniping`.
+   - `[FEAT-AUC-007.2]`: Đấu giá ngược giảm giá từng giây (`Dutch Flash Auction`) chốt đơn nguyên tử ngay khi người đầu tiên bấm mua.
+8. **`[FEAT-RFQ-008]` — Sàn Đấu Thầu Ngược B2B Reverse RFQ & Hộ Chiếu SHA-256 (5 mã con):**
+   - `[FEAT-RFQ-008.1]`: Đăng yêu cầu báo giá số lượng lớn (`rfq_requests`) cho 24 Gian hàng Chính hãng Flagship.
+   - `[FEAT-RFQ-008.2]`: Gian hàng gửi chào giá cạnh tranh (`rfq_quotes`) kèm cam kết SLA & chiết khấu sỉ.
+   - `[FEAT-RFQ-008.3]`: Người mua bấm Chốt báo giá (`/api/rfq/accept-offer`) tự động sinh đơn hàng thật trong bảng `orders` và khóa quỹ Escrow.
+   - `[FEAT-RFQ-008.4]`: Hộ chiếu Thiết bị Blockchain (`Device Passport` — `/api/blockchain/device-passport`) băm chuỗi `SHA-256` chống làm giả nguồn gốc & lịch sử bảo hành.
+   - `[FEAT-RFQ-008.5]`: Trạm Build PC AI kiểm tra tương thích nguồn/socket & Nông trại Cây Voucher đồng bộ kho Voucher toàn sàn.
+9. **`[FEAT-ACC-009]` — Studio 12 Giao Diện, 5 Chế Độ Mù Màu (CVD) & Mèo Báo Màu 2s (4 mã con):**
+   - `[FEAT-ACC-009.1]`: Studio 12 Giao Diện Đa Lứa Tuổi (6 Nền Sáng Thanh Lịch mặc định `executive_light` + 6 Nền Tối Chuyên Nghiệp/Lễ Hội) & Chỉnh mật độ lưới (`3, 4, 5, 6 Cột`).
+   - `[FEAT-ACC-009.2]`: 5 Chế độ Trợ năng Mù màu (`normal`, `deuteranopia`, `tritanopia`, `pattern_labels`, `high_contrast_aaa`) áp dụng SVG Filter lên `#nvxPageRoot` (hoặc thẻ con, tuyệt đối không gắn `filter` lên `html, body`) kèm Ký hiệu Hình học (`▲`, `▼`, `◆`) trên nến giá và nút.
+   - `[FEAT-ACC-009.3]`: Bảng Xem Trước Màu Thực Tế (`openColorblindPreviewModal()`) & Tự động mô tả màu sắc, chất liệu trong Chi tiết Sản phẩm.
+   - `[FEAT-ACC-009.4]`: Tính năng **Mèo AI Báo Màu Khi Di Chuột 2 Giây** (`toggleHoverColorInspector()`, mặc định `TẮT` để không làm phiền người bình thường), nút `🎨 Mèo Báo Màu & Ngoại Hình SP Này` (`inspectCurrentProductDetailColors()`) và Nhận diện Ngôn ngữ Tự nhiên (NLP) phân biệt thông minh giữa câu hỏi màu sản phẩm thông thường với câu báo khó khăn thị giác/mù màu (`ENABLE_COLORBLIND_HOVER_ASSIST`).
+10. **`[FEAT-ADM-010]` — Trung Tâm Chỉ Huy Admin, 3 Thuật Toán Lõi & Đội Quân 10 Bot QA V12.0 (5 mã con):**
+    - `[FEAT-ADM-010.1]`: Trung tâm Quản trị Admin (`admin-center.html`), Studio Đa Bộ Icon 14 Vị Trí & Lá chắn An ninh SOC 25 Lớp.
+    - `[FEAT-ADM-010.2]`: Tòa Án Trọng Tài AI (`arbitration-court.html`) phân tích bằng chứng & phán quyết tranh chấp Escrow.
+    - `[FEAT-ADM-010.3]`: Thuật toán 1 — Hệ thống Đề xuất Sản phẩm **Hybrid Bayesian Weighted Rating** (`/api/algorithms/bayesian-recommendations`).
+    - `[FEAT-ADM-010.4]`: Thuật toán 3 — Radar Chấm điểm Rủi ro Gian lận Thời gian thực **Multi-Signal Fraud Risk Scoring 0-100** (`/api/admin-dispute/fraud-risk-radar`).
+    - `[FEAT-ADM-010.5]`: **Đội Quân 10 Bot Kiểm Thử Tự Động Toàn Diện (`QA Bot Squad V12.0 — 10 Bots`)** & Chiến dịch Kiểm toán Săn 100 Bug (`BUG_HUNT_100_REPORT.md` — 100/100 FIXED).
 
 ---
 
