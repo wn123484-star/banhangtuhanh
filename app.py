@@ -7496,6 +7496,24 @@ def _serve_nexora_mobile_shortcut():
     return _render_root_error_page(404)
 
 
+@app.route("/api/mobile/download-apk", methods=["GET"])
+def _serve_or_redirect_mobile_apk():
+    local_apk = os.path.join(BASE_DIR, "android_nexora_app", "app", "build", "outputs", "apk", "debug", "app-debug.apk")
+    if os.path.isfile(local_apk):
+        return send_file(local_apk, as_attachment=True, download_name="Nexora-Mobile-App.apk")
+    actions_url = "https://github.com/wn123484-star/banhangtuhanh/actions"
+    if request.args.get("format") == "json":
+        return jsonify({
+            "ok": True,
+            "apk_status": "CI_CD_READY",
+            "github_actions_url": actions_url,
+            "pwa_url": "/services/mobile/mobile-app.html",
+            "message": "Dự án Android Native đã sẵn sàng trên GitHub Actions (Nexora-Mobile-Debug-APK)!"
+        }), 200
+    from flask import redirect
+    return redirect(actions_url, code=302)
+
+
 @app.route("/manifest.json", methods=["GET"])
 def _serve_root_pwa_manifest():
     target = os.path.join(BASE_DIR, "manifest.json")

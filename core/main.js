@@ -79,6 +79,11 @@ function getAuthUser() {
 }
 window.getAuthUser = getAuthUser;
 
+function isUserLoggedIn() {
+    return Boolean(getAuthUser());
+}
+window.isUserLoggedIn = isUserLoggedIn;
+
 function setAuthUser(userObj) {
     if (!userObj) {
         localStorage.removeItem('nvx_explicit_login');
@@ -98,6 +103,19 @@ async function logoutUser() {
     localStorage.removeItem('nvidia_user');
     localStorage.removeItem('auth_user');
     sessionStorage.clear();
+    __nvxStreakState = null;
+    __nvNotificationsCache = [];
+    __nvMessengerOpenWindows = [];
+    __nvMessengerSessionsCache = [];
+    document.getElementById('nvxHeaderLoginStreakBtn')?.remove();
+    document.getElementById('headerNotifBellBtn')?.remove();
+    document.getElementById('nvGlobalNotifDrawer')?.remove();
+    const slotEl = document.getElementById('nvMessengerWindowsSlot');
+    if (slotEl) slotEl.innerHTML = '';
+    const cntEl = document.getElementById('nvMessengerActiveCount');
+    if (cntEl) cntEl.textContent = '0';
+    const pillCntEl = document.getElementById('nvMessengerPillCount');
+    if (pillCntEl) pillCntEl.textContent = '0';
     localStorage.setItem('nvx_logout_event_ts', String(Date.now()));
     try {
         await fetch('/api/auth/logout', { method: 'POST' });
@@ -559,15 +577,17 @@ window.syncActiveIconSetAcrossWebsite = syncActiveIconSetAcrossWebsite;
 var __nvxStreakState = null;
 
 function getLoggedInUserIdForStreak() {
-    try {
-        var uRaw = localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user');
-        var u = uRaw ? JSON.parse(uRaw) : null;
-        if (u && u.id) return Number(u.id);
-    } catch (e) {}
-    return 13;
+    var u = getAuthUser();
+    if (u && u.id) return Number(u.id);
+    return 0;
 }
 
 function updateHeaderCoinsAndStreakDisplay(streakData) {
+    if (!isUserLoggedIn()) {
+        document.getElementById('nvxHeaderLoginStreakBtn')?.remove();
+        document.getElementById('headerNotifBellBtn')?.remove();
+        return;
+    }
     if (!streakData) return;
 
     /* 1. Đồng bộ lại số dư Xu trên Header nếu vừa cộng thưởng */
@@ -683,6 +703,11 @@ function build7DayStreakStripHtml(data, isCompact) {
 }
 
 async function loadAndRenderDailyCheckinStreak() {
+    if (!isUserLoggedIn()) {
+        document.getElementById('nvxHeaderLoginStreakBtn')?.remove();
+        document.getElementById('headerNotifBellBtn')?.remove();
+        return;
+    }
     var uid = getLoggedInUserIdForStreak();
     try {
         var res = await fetch('/api/settings/daily-checkin?user_id=' + uid);
@@ -728,6 +753,13 @@ async function loadAndRenderDailyCheckinStreak() {
 window.loadAndRenderDailyCheckinStreak = loadAndRenderDailyCheckinStreak;
 
 async function claimDailyStreakReward(forceNextDay) {
+    if (!isUserLoggedIn()) {
+        if (typeof notifyToast === 'function') {
+            notifyToast('🔒 Vui lòng Đăng nhập tài khoản để Điểm danh nhận thưởng Xu!', 'warning');
+        }
+        setTimeout(function() { window.location.href = '/services/auth/auth.html'; }, 650);
+        return;
+    }
     var uid = getLoggedInUserIdForStreak();
     try {
         var res = await fetch('/api/settings/daily-checkin', {
@@ -758,6 +790,7 @@ async function claimDailyStreakReward(forceNextDay) {
 window.claimDailyStreakReward = claimDailyStreakReward;
 
 async function resetDailyStreakCounter() {
+    if (!isUserLoggedIn()) return;
     var uid = getLoggedInUserIdForStreak();
     try {
         var res = await fetch('/api/settings/daily-checkin', {
@@ -784,6 +817,13 @@ function closeDailyCheckinModal() {
 window.closeDailyCheckinModal = closeDailyCheckinModal;
 
 function openDailyCheckinModal() {
+    if (!isUserLoggedIn()) {
+        if (typeof notifyToast === 'function') {
+            notifyToast('🔒 Vui lòng Đăng nhập tài khoản để Điểm danh nhận thưởng Xu!', 'warning');
+        }
+        setTimeout(function() { window.location.href = '/services/auth/auth.html'; }, 650);
+        return;
+    }
     var modal = document.getElementById('nvxDailyCheckinGlobalModal');
     if (!modal) {
         modal = document.createElement('div');
@@ -2313,13 +2353,17 @@ function renderGlobalHeaderAndFooter() {
         ? 'Đang ở Chế độ Tối — Bấm để chuyển nhanh sang Chế độ Sáng (Executive Light)'
         : 'Đang ở Chế độ Sáng — Bấm để chuyển nhanh sang Chế độ Tối (Emerald Tech)';
 
-    const streakAndNotifClusterHtml = `
+    const streakAndNotifClusterHtml = user ? `
         <button type="button" id="nvxHeaderLoginStreakBtn" class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1 nvx-streak-fire-btn ${isCheckedTodayInit ? 'is-checked-in' : 'is-pending-checkin'}" style="font-size: 12px;" title="Chuỗi điểm danh: ${streakDaysInit} ngày — Bấm để nhận thưởng" onclick="openDailyCheckinModal()">
             <span class="nvx-fire-icon">🔥</span> <span id="nvxHeaderStreakCount">${streakDaysInit}</span>
         </button>
         <button type="button" id="headerNotifBellBtn" class="btn btn-outline-warning btn-sm py-1 px-2 rounded-pill fw-bold" style="font-size: 11.5px;" title="Thông báo hệ thống" onclick="toggleGlobalNotificationDrawer()">
-            🔔 <span id="headerNotifCount">${user ? 3 : 2}</span>
+            🔔 <span id="headerNotifCount">3</span>
         </button>
+        <button type="button" id="quickThemeToggleBtn" class="btn btn-sm py-1 px-2 rounded-pill fw-bold nvx-quick-theme-btn" style="font-size: 12px;" title="${quickThemeTitle}" onclick="toggleTheme()">
+            ${quickThemeIcon}
+        </button>
+    ` : `
         <button type="button" id="quickThemeToggleBtn" class="btn btn-sm py-1 px-2 rounded-pill fw-bold nvx-quick-theme-btn" style="font-size: 12px;" title="${quickThemeTitle}" onclick="toggleTheme()">
             ${quickThemeIcon}
         </button>
@@ -2342,31 +2386,31 @@ function renderGlobalHeaderAndFooter() {
         hdrBox.innerHTML = `
             <header class="nvidia-header-bar">
                 <div class="nvidia-header-shell">
-                    <div class="nv-header-top-row">
+                    <div class="nv-header-top-row nvx-topbar">
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             <a href="${user && (user.role === 'seller' || user.role === 'admin') ? '/services/seller/seller-dashboard.html' : '/services/auth/seller-auth.html'}" class="nv-topbar-dropdown-btn">🏪 Kênh Người Bán</a>
 
-                            <div class="nv-topbar-dropdown">
+                            <div class="nv-topbar-dropdown nvx-dropdown">
                                 <button type="button" class="nv-topbar-dropdown-btn">📈 Sàn Giao Dịch ▾</button>
-                                <div class="nv-topbar-dropdown-menu">
+                                <div class="nv-topbar-dropdown-menu nvx-dropdown-menu">
                                     <a href="/services/market_tracker/price-tracker.html" class="nv-topbar-dropdown-item">📈 Theo Dõi Giá Thị Trường VN</a>
                                     <a href="/services/auction/auction.html" class="nv-topbar-dropdown-item">🔨 Sàn Đấu Giá Kép (Live)</a>
                                     <a href="/services/rfq/rfq.html" class="nv-topbar-dropdown-item">📋 Đấu Thầu Ngược B2B (RFQ)</a>
                                 </div>
                             </div>
 
-                            <div class="nv-topbar-dropdown">
+                            <div class="nv-topbar-dropdown nvx-dropdown">
                                 <button type="button" class="nv-topbar-dropdown-btn">🎮 Giải Trí &amp; Săn Thưởng ▾</button>
-                                <div class="nv-topbar-dropdown-menu">
+                                <div class="nv-topbar-dropdown-menu nvx-dropdown-menu">
                                     <a href="/services/vouchers_deals/vouchers.html" data-nv-slot="nav_voucher" class="nv-topbar-dropdown-item">🎟️ Kho Siêu Voucher Toàn Sàn</a>
                                     <a href="/services/minigame/farm.html" data-nv-slot="nav_farm" class="nv-topbar-dropdown-item">🌱 Nông Trại Cây Voucher</a>
                                     <a href="/services/minigame/minigame.html" class="nv-topbar-dropdown-item">🎡 Vòng Quay &amp; Bắn Tâm Esport</a>
                                 </div>
                             </div>
 
-                            <div class="nv-topbar-dropdown">
+                            <div class="nv-topbar-dropdown nvx-dropdown">
                                 <button type="button" class="nv-topbar-dropdown-btn">🛠️ Tiện Ích ▾</button>
-                                <div class="nv-topbar-dropdown-menu">
+                                <div class="nv-topbar-dropdown-menu nvx-dropdown-menu">
                                     <a href="/services/mobile/mobile-app.html" class="nv-topbar-dropdown-item text-info fw-bold">📱 Siêu App Nexora Mobile</a>
                                     <a href="/services/pc_builder/pc-builder.html" class="nv-topbar-dropdown-item">🛠️ Trạm Build PC AI</a>
                                     <a href="/services/compare/compare.html" class="nv-topbar-dropdown-item">⚖️ So Sánh &amp; Wishlist</a>
@@ -2471,8 +2515,86 @@ function renderGlobalHeaderAndFooter() {
             </footer>
         `;
     }
+
+    bindTopbarDropdownInteractions();
 }
 window.renderGlobalHeaderAndFooter = renderGlobalHeaderAndFooter;
+
+function bindTopbarDropdownInteractions() {
+    const dropdowns = document.querySelectorAll('.nv-topbar-dropdown, .nvx-dropdown');
+    dropdowns.forEach(drop => {
+        if (drop.dataset.nvDropBound === '1') return;
+        drop.dataset.nvDropBound = '1';
+        let closeTimer = null;
+
+        const openMenu = () => {
+            if (closeTimer) {
+                clearTimeout(closeTimer);
+                closeTimer = null;
+            }
+            dropdowns.forEach(other => {
+                if (other !== drop) other.classList.remove('open');
+            });
+            drop.classList.add('open');
+        };
+
+        const scheduleClose = () => {
+            if (closeTimer) clearTimeout(closeTimer);
+            closeTimer = setTimeout(() => {
+                drop.classList.remove('open');
+            }, 220);
+        };
+
+        drop.addEventListener('mouseenter', openMenu);
+        drop.addEventListener('mouseleave', scheduleClose);
+
+        const btn = drop.querySelector('.nv-topbar-dropdown-btn');
+        if (btn && btn.tagName === 'BUTTON') {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (closeTimer) {
+                    clearTimeout(closeTimer);
+                    closeTimer = null;
+                }
+                const wasOpen = drop.classList.contains('open');
+                dropdowns.forEach(other => other.classList.remove('open'));
+                if (!wasOpen) drop.classList.add('open');
+            });
+        }
+
+        const menu = drop.querySelector('.nv-topbar-dropdown-menu, .nvx-dropdown-menu');
+        if (menu) {
+            menu.addEventListener('mouseenter', () => {
+                if (closeTimer) {
+                    clearTimeout(closeTimer);
+                    closeTimer = null;
+                }
+                drop.classList.add('open');
+            });
+            menu.addEventListener('mouseleave', scheduleClose);
+            menu.querySelectorAll('a[href]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const href = link.getAttribute('href');
+                    if (href && href !== '#') {
+                        window.location.href = href;
+                    }
+                });
+            });
+        }
+    });
+
+    if (!window.__nvTopbarOutsideClickBound) {
+        window.__nvTopbarOutsideClickBound = true;
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.nv-topbar-dropdown, .nvx-dropdown')) {
+                document.querySelectorAll('.nv-topbar-dropdown.open, .nvx-dropdown.open').forEach(d => d.classList.remove('open'));
+            }
+        });
+    }
+}
+window.bindTopbarDropdownInteractions = bindTopbarDropdownInteractions;
 
 function handleGlobalHeaderSearch(e) {
     if (e && e.preventDefault) e.preventDefault();
@@ -2919,6 +3041,8 @@ function initMultiWindowMessengerDock() {
     if (document.getElementById('nvMessengerLauncherBar')) return;
 
     const hubMinimized = localStorage.getItem('nvx_unified_hub_minimized') === '1';
+    const loggedInInit = isUserLoggedIn();
+    const initChatCnt = loggedInInit ? 3 : 0;
 
     const launcher = document.createElement('div');
     launcher.id = 'nvMessengerLauncherBar';
@@ -2934,10 +3058,10 @@ function initMultiWindowMessengerDock() {
     });
 
     launcher.innerHTML = `
-        <!-- Khay chứa các cửa sổ Chat Gian Hàng mở song song -->
-        <div id="nvMessengerWindowsSlot" style="display:flex;align-items:flex-end;gap:10px;pointer-events:auto;"></div>
+        <!-- Khay phụ (Giữ trống để gom 100% về 1 khung Hợp Nhất duy nhất) -->
+        <div id="nvMessengerWindowsSlot" style="display:none;align-items:flex-end;gap:10px;pointer-events:auto;"></div>
 
-        <!-- Khung Hợp Nhất 3 Tab: Mèo Lỏng AI | Chat Gian Hàng | Khiếu Nại -->
+        <!-- Khung Hợp Nhất 3 Tab: 🐱 Trợ Lý Mèo | 💬 Chat | 🚨 Khiếu Nại -->
         <div style="pointer-events:auto;position:relative;">
             <div id="nvUnifiedHubDock" class="${hubMinimized ? 'd-none' : ''}">
                 <!-- Thanh tiêu đề & Điều khiển nhanh Linh vật Mèo Lỏng -->
@@ -2952,39 +3076,44 @@ function initMultiWindowMessengerDock() {
                     </div>
                 </div>
 
-                <!-- Thanh chuyển 3 Tab: 1. Mèo Lỏng AI | 2. Chat Gian Hàng | 3. Khiếu Nại -->
+                <!-- Thanh chuyển 3 Tab ngắn gọn: 🐱 Trợ Lý Mèo | 💬 Chat (3) | 🚨 Khiếu Nại -->
                 <div class="nv-hub-seg-bar">
-                    <button type="button" id="msgHubTabBtn_cat" data-nv-slot="nav_ai_cat" class="nv-hub-seg-btn active" onclick="switchMessengerPopupTab('cat')">🐾 1. Mèo Lỏng AI</button>
-                    <button type="button" id="msgHubTabBtn_chat" class="nv-hub-seg-btn" onclick="switchMessengerPopupTab('chat')">💬 2. Chat Shop (<span id="nvMessengerActiveCount">3</span>)</button>
-                    <button type="button" id="msgHubTabBtn_report" class="nv-hub-seg-btn" onclick="switchMessengerPopupTab('report')">🚨 3. Khiếu Nại</button>
+                    <button type="button" id="msgHubTabBtn_cat" data-nv-slot="nav_ai_cat" class="nv-hub-seg-btn active" onclick="switchMessengerPopupTab('cat')">🐱 Trợ Lý Mèo</button>
+                    <button type="button" id="msgHubTabBtn_chat" class="nv-hub-seg-btn" onclick="switchMessengerPopupTab('chat')">💬 Chat (<span id="nvMessengerActiveCount">${initChatCnt}</span>)</button>
+                    <button type="button" id="msgHubTabBtn_report" class="nv-hub-seg-btn" onclick="switchMessengerPopupTab('report')">🚨 Khiếu Nại</button>
                 </div>
 
-                <!-- TAB 1: ĐIỀU KHIỂN LINH VẬT MÈO LỎNG GỐC (5 GIỐNG MÈO, LEO TRẦN, SĂN HÀNG) -->
+                <!-- TAB 1: ĐIỀU KHIỂN LINH VẬT MÈO LỎNG (GOM GỌN 3 NHÓM SEGMENTED TABS) -->
                 <div id="msgHubPane_cat" class="p-3 small">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-1 mb-2 pb-2 border-bottom border-secondary border-opacity-25">
-                        <span class="text-warning fw-bold" style="font-size:11px;">🎨 Đổi Giống &amp; Di Chuyển:</span>
-                        <div class="d-flex flex-wrap gap-1">
-                            <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.switchCatBreed()">🎨 Đổi Mèo (5 Giống)</button>
-                            <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToCeilingWalk()">🐾 Leo Trần</button>
-                            <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToRandom2DTarget()">🚀 Đi Khắp Màn</button>
-                        </div>
+                    <div class="nv-cat-group-tabs">
+                        <button type="button" id="catGrpBtn_move" class="nv-cat-group-btn active" onclick="switchCatFeatureSubGroup('move')">🐾 Giống &amp; Di Chuyển</button>
+                        <button type="button" id="catGrpBtn_fun" class="nv-cat-group-btn" onclick="switchCatFeatureSubGroup('fun')">🐟 Ăn Uống &amp; Biểu Diễn</button>
+                        <button type="button" id="catGrpBtn_hunt" class="nv-cat-group-btn" onclick="switchCatFeatureSubGroup('hunt')">🛒 Săn Deal Tận Giỏ</button>
                     </div>
 
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Cho ăn cá')">🐟 Ăn cá</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Uống trà sữa boba')">🧋 Trà sữa</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Lộn vòng backflip')">🤸 Nhào lộn</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Nằm ổ bánh mì')">🍞 Bánh mì</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Tan chảy sploot')">🫠 Tan chảy</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Nhảy múa')">🎵 Nhảy múa</button>
+                    <!-- Nhóm 1: 🐾 Giống & Di Chuyển -->
+                    <div id="catGrpPane_move" class="nv-cat-group-pane d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.switchCatBreed()">🎨 Đổi Mèo (5 Giống)</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToCeilingWalk()">🧗 Leo Trần</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToRandom2DTarget()">🏃 Đi Khắp Màn</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMagicThemeToggle() : toggleTheme()">☀️/🌙 Đổi Sáng/Tối</button>
                     </div>
 
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="cat-action-chip" style="border-color:#76b900;color:#a3e635;" onclick="executeGlobalCatSearchBarHunt('Mua 2 card RTX 4070 bỏ vào giỏ')">🛒 Săn 2 RTX 4070</button>
-                        <button type="button" class="cat-action-chip" style="border-color:#38bdf8;color:#7dd3fc;" onclick="executeGlobalCatSearchBarHunt('Lấy 3 bàn phím cơ bỏ vào giỏ')">⌨️ Săn 3 Phím Cơ</button>
+                    <!-- Nhóm 2: 🐟 Ăn Uống & Biểu Diễn -->
+                    <div id="catGrpPane_fun" class="nv-cat-group-pane d-flex flex-wrap gap-1 mb-2 d-none">
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performEatFishAnimation() : executeGlobalCatSearchBarHunt('Cho ăn cá')">🐟 Ăn Cá</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performDrinkBobaAnimation() : executeGlobalCatSearchBarHunt('Uống trà sữa boba')">🧋 Uống Trà Sữa</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performLoafBreadAnimation() : executeGlobalCatSearchBarHunt('Nằm ổ bánh mì')">🥖 Bánh Mì</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performBackflipAnimation() : executeGlobalCatSearchBarHunt('Lộn vòng backflip')">🤸 Nhào Lộn</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMeltSplootAnimation() : executeGlobalCatSearchBarHunt('Tan chảy sploot')">🫠 Tan Chảy</button>
+                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performDanceAnimation() : executeGlobalCatSearchBarHunt('Nhảy múa')">💃 Nhảy Múa</button>
+                    </div>
+
+                    <!-- Nhóm 3: 🛒 Săn Deal Tận Giỏ -->
+                    <div id="catGrpPane_hunt" class="nv-cat-group-pane d-flex flex-wrap gap-1 mb-2 d-none">
+                        <button type="button" class="cat-action-chip" style="border-color:#76b900;color:#a3e635;" onclick="executeGlobalCatSearchBarHunt('Mua 2 card RTX 4070 bỏ vào giỏ')">⚡ Săn RTX 4070</button>
+                        <button type="button" class="cat-action-chip" style="border-color:#38bdf8;color:#7dd3fc;" onclick="executeGlobalCatSearchBarHunt('Lấy 3 bàn phím cơ bỏ vào giỏ')">⌨️ Săn Phím Cơ</button>
                         <button type="button" class="cat-action-chip" style="border-color:#facc15;color:#fde047;" onclick="executeGlobalCatSearchBarHunt('Tìm màn hình bỏ vào giỏ')">🖥️ Săn Màn Hình</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Đổi giao diện tối')">🌙 Nền Tối</button>
-                        <button type="button" class="cat-action-chip" onclick="executeGlobalCatSearchBarHunt('Đổi giao diện sáng')">☀️ Nền Sáng</button>
                     </div>
 
                     <form id="nividaCatCmdForm" onsubmit="submitUnifiedCatCommand(event)" class="d-flex gap-1 mt-2">
@@ -2993,10 +3122,11 @@ function initMultiWindowMessengerDock() {
                     </form>
                 </div>
 
-                <!-- TAB 2: DANH SÁCH CHAT GIAN HÀNG ĐA CỬA SỔ -->
+                <!-- TAB 2: CHAT GIAN HÀNG BẢO MẬT TRONG CÙNG 1 KHUNG -->
                 <div id="msgHubPane_chat" class="p-2 d-none">
-                    <div class="small px-1 mb-2" style="font-size:11px;color:#cbd5e1;">Chọn gian hàng để mở cửa sổ chat trực tuyến:</div>
-                    <div id="nvMessengerContactList" class="d-flex flex-column gap-1" style="max-height:240px;overflow-y:auto;"></div>
+                    <div id="nvMessengerContactHeaderHint" class="small px-1 mb-2" style="font-size:11px;color:#cbd5e1;">Chọn gian hàng để trò chuyện trực tuyến:</div>
+                    <div id="nvMessengerContactList" class="d-flex flex-column gap-1" style="max-height:260px;overflow-y:auto;"></div>
+                    <div id="nvMessengerInlineThreadBox" class="d-none"></div>
                 </div>
 
                 <!-- TAB 3: GỬI KHIẾU NẠI NHANH & MỞ TÒA ÁN PHÂN XỬ 3 BÊN -->
@@ -3038,8 +3168,7 @@ function initMultiWindowMessengerDock() {
                     class="btn btn-nvidia rounded-pill shadow-lg px-3 py-2 fw-bold d-flex align-items-center gap-2"
                     style="border:2px solid #ffffff;font-size:12.5px;box-shadow:0 10px 28px rgba(0,0,0,0.6);"
                     onclick="toggleUnifiedHubDock()">
-                <span>🐾 Mèo AI &amp; 💬 Chat Gian Hàng</span>
-                <span class="badge rounded-pill bg-warning text-dark">Mở</span>
+                <span>🐱 Trợ Lý Mèo &amp; 💬 Chat (<span id="nvMessengerPillCount">${initChatCnt}</span>)</span>
             </button>
         </div>
     `;
@@ -3051,6 +3180,14 @@ function initMultiWindowMessengerDock() {
     }
 }
 window.initMultiWindowMessengerDock = initMultiWindowMessengerDock;
+
+function switchCatFeatureSubGroup(grpKey) {
+    ['move', 'fun', 'hunt'].forEach(k => {
+        document.getElementById('catGrpPane_' + k)?.classList.toggle('d-none', k !== grpKey);
+        document.getElementById('catGrpBtn_' + k)?.classList.toggle('active', k === grpKey);
+    });
+}
+window.switchCatFeatureSubGroup = switchCatFeatureSubGroup;
 
 function toggleUnifiedHubDock(forceState = null) {
     const dock = document.getElementById('nvUnifiedHubDock');
@@ -3093,6 +3230,38 @@ function submitUnifiedCatCommand(e) {
 window.submitUnifiedCatCommand = submitUnifiedCatCommand;
 
 async function loadMessengerContactsList() {
+    const cntEl = document.getElementById('nvMessengerActiveCount');
+    const pillCntEl = document.getElementById('nvMessengerPillCount');
+    const box = document.getElementById('nvMessengerContactList');
+    const hintEl = document.getElementById('nvMessengerContactHeaderHint');
+    const threadBox = document.getElementById('nvMessengerInlineThreadBox');
+    const slot = document.getElementById('nvMessengerWindowsSlot');
+    if (slot) slot.innerHTML = '';
+
+    if (!isUserLoggedIn()) {
+        __nvMessengerOpenWindows = [];
+        __nvMessengerSessionsCache = [];
+        if (cntEl) cntEl.textContent = '0';
+        if (pillCntEl) pillCntEl.textContent = '0';
+        if (hintEl) hintEl.classList.add('d-none');
+        if (threadBox) {
+            threadBox.innerHTML = '';
+            threadBox.classList.add('d-none');
+        }
+        if (box) {
+            box.classList.remove('d-none');
+            box.innerHTML = `
+                <div class="p-3 rounded-3 text-center" style="background:rgba(15,23,42,0.92);border:1px dashed rgba(16,185,129,0.55);">
+                    <div class="mb-2" style="font-size:1.5rem;">🔒</div>
+                    <div class="fw-bold small text-white mb-2">Vui lòng Đăng nhập tài khoản để xem và trò chuyện bảo mật với Gian hàng</div>
+                    <a href="/services/auth/auth.html" class="btn btn-nvidia btn-sm rounded-pill px-3 fw-bold">Đăng Nhập Ngay</a>
+                </div>
+            `;
+        }
+        return;
+    }
+
+    if (hintEl) hintEl.classList.remove('d-none');
     const u = getAuthUser();
     try {
         const res = await fetch(`/api/admin-dispute/store-chat/sessions?seller_id=${(u && u.id) || 1}&role=admin`);
@@ -3106,10 +3275,9 @@ async function loadMessengerContactsList() {
             ];
         }
         __nvMessengerSessionsCache = list;
-        const cntEl = document.getElementById('nvMessengerActiveCount');
         if (cntEl) cntEl.textContent = String(list.length);
+        if (pillCntEl) pillCntEl.textContent = String(list.length);
 
-        const box = document.getElementById('nvMessengerContactList');
         if (!box) return;
         box.innerHTML = list.map(s => `
             <div class="nv-chat-contact-item" onclick="openMessengerChatWindow(${s.id}, '${(s.buyer_name || 'Khách hàng').replace(/'/g, '')}', '${(s.seller_store_name || 'Gian hàng').replace(/'/g, '')}', '${s.chat_mode || 'ai'}')">
@@ -3126,25 +3294,31 @@ async function loadMessengerContactsList() {
 }
 window.loadMessengerContactsList = loadMessengerContactsList;
 
+function backToMessengerContactList() {
+    __nvMessengerOpenWindows = [];
+    document.getElementById('nvMessengerInlineThreadBox')?.classList.add('d-none');
+    document.getElementById('nvMessengerContactList')?.classList.remove('d-none');
+    document.getElementById('nvMessengerContactHeaderHint')?.classList.remove('d-none');
+}
+window.backToMessengerContactList = backToMessengerContactList;
+
 async function openMessengerChatWindow(sessionId, buyerName = 'Khách hàng', storeName = 'Shop', chatMode = 'ai') {
-    const sid = Number(sessionId || 1);
-    const existing = __nvMessengerOpenWindows.find(w => w.sessionId === sid);
-    if (existing) {
-        existing.minimized = false;
-        renderMessengerWindowsDock();
-        fetchSingleMessengerWindowHistory(sid);
+    if (!isUserLoggedIn()) {
+        toggleUnifiedHubDock(true);
+        switchMessengerPopupTab('chat');
+        loadMessengerContactsList();
         return;
     }
-    if (__nvMessengerOpenWindows.length >= 2) {
-        __nvMessengerOpenWindows.shift();
-    }
-    __nvMessengerOpenWindows.push({
+    const sid = Number(sessionId || 1);
+    __nvMessengerOpenWindows = [{
         sessionId: sid,
         buyerName: buyerName,
         storeName: storeName,
         chatMode: chatMode,
         minimized: false
-    });
+    }];
+    toggleUnifiedHubDock(true);
+    switchMessengerPopupTab('chat');
     renderMessengerWindowsDock();
     await fetchSingleMessengerWindowHistory(sid);
 }
@@ -3152,71 +3326,67 @@ window.openMessengerChatWindow = openMessengerChatWindow;
 
 function closeMessengerChatWindow(sessionId) {
     __nvMessengerOpenWindows = __nvMessengerOpenWindows.filter(w => w.sessionId !== Number(sessionId));
-    renderMessengerWindowsDock();
+    backToMessengerContactList();
 }
 window.closeMessengerChatWindow = closeMessengerChatWindow;
 
 function toggleMinimizeMessengerWindow(sessionId) {
-    const w = __nvMessengerOpenWindows.find(x => x.sessionId === Number(sessionId));
-    if (w) {
-        w.minimized = !w.minimized;
-        renderMessengerWindowsDock();
-        if (!w.minimized) fetchSingleMessengerWindowHistory(w.sessionId);
-    }
+    backToMessengerContactList();
 }
 window.toggleMinimizeMessengerWindow = toggleMinimizeMessengerWindow;
 
 function renderMessengerWindowsDock() {
     const slot = document.getElementById('nvMessengerWindowsSlot');
-    if (!slot) return;
-    slot.innerHTML = __nvMessengerOpenWindows.map(w => {
-        const initials = String(w.buyerName || 'KH').trim().slice(0, 2).toUpperCase();
-        if (w.minimized) {
-            return `
-                <div class="position-relative" style="cursor:pointer;" title="${w.buyerName}" onclick="toggleMinimizeMessengerWindow(${w.sessionId})">
-                    <div class="rounded-circle shadow-lg d-flex align-items-center justify-content-center fw-bold text-white"
-                         style="width:46px;height:46px;background:linear-gradient(135deg,#0f172a,#15803d);border:2px solid #76b900;font-size:13px;">
-                        ${initials}
-                    </div>
-                    <span class="position-absolute bottom-0 start-0 p-1 bg-success border border-light rounded-circle"></span>
-                    <button type="button" class="position-absolute top-0 end-0 badge rounded-pill bg-danger border-0 p-1"
-                            style="font-size:8px;line-height:1;"
-                            onclick="event.stopPropagation(); closeMessengerChatWindow(${w.sessionId})">✕</button>
-                </div>
-            `;
-        }
-        return `
-            <div class="shadow-lg d-flex flex-column"
-                 style="width:300px;height:370px;background:rgba(9,14,24,0.95);color:#f8fafc;border:1.5px solid rgba(118,185,0,0.7);border-radius:18px;overflow:hidden;box-shadow:0 18px 42px rgba(0,0,0,0.6);backdrop-filter:blur(18px);">
-                <div class="px-3 py-2 d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#090d16,#1e293b);color:#fff;border-bottom:1px solid rgba(118,185,0,0.4);">
-                    <div class="d-flex align-items-center gap-2 text-truncate pe-1" style="cursor:pointer;" onclick="toggleMinimizeMessengerWindow(${w.sessionId})">
-                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-dark flex-shrink-0"
-                             style="width:28px;height:28px;background:#76b900;font-size:11px;">${initials}</div>
-                        <div class="text-truncate">
-                            <div class="fw-bold small text-truncate lh-1 mb-1 text-white">${w.buyerName}</div>
-                            <small style="font-size:10px;color:#a3e635;">● ${w.storeName}</small>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-1">
-                        <button type="button" id="msgModeBtn_${w.sessionId}" class="badge rounded-pill border-0 ${w.chatMode === 'human' ? 'bg-warning text-dark' : 'bg-info text-dark'}" style="font-size:10px;cursor:pointer;" onclick="switchMessengerWindowMode(${w.sessionId})">
-                            ${w.chatMode === 'human' ? '👤 Người' : '🤖 AI'}
-                        </button>
-                        <button type="button" class="btn btn-sm py-0 px-1 text-light border-0" onclick="toggleMinimizeMessengerWindow(${w.sessionId})">—</button>
-                        <button type="button" class="btn btn-sm py-0 px-1 text-secondary border-0" onclick="closeMessengerChatWindow(${w.sessionId})">✕</button>
+    if (slot) slot.innerHTML = '';
+    const threadBox = document.getElementById('nvMessengerInlineThreadBox');
+    const listBox = document.getElementById('nvMessengerContactList');
+    const hintEl = document.getElementById('nvMessengerContactHeaderHint');
+    if (!threadBox) return;
+
+    if (!isUserLoggedIn() || !__nvMessengerOpenWindows.length) {
+        threadBox.innerHTML = '';
+        threadBox.classList.add('d-none');
+        listBox?.classList.remove('d-none');
+        if (isUserLoggedIn()) hintEl?.classList.remove('d-none');
+        return;
+    }
+
+    const w = __nvMessengerOpenWindows[0];
+    const initials = String(w.buyerName || 'KH').trim().slice(0, 2).toUpperCase();
+    listBox?.classList.add('d-none');
+    hintEl?.classList.add('d-none');
+    threadBox.classList.remove('d-none');
+
+    threadBox.innerHTML = `
+        <div class="d-flex flex-column rounded-3 overflow-hidden" style="background:rgba(9,14,24,0.95);border:1px solid rgba(118,185,0,0.65);">
+            <div class="px-2 py-1 d-flex justify-content-between align-items-center" style="background:linear-gradient(135deg,#090d16,#1e293b);border-bottom:1px solid rgba(118,185,0,0.35);">
+                <div class="d-flex align-items-center gap-2 text-truncate pe-1">
+                    <button type="button" class="btn btn-sm py-0 px-2 text-info border border-info rounded-pill" style="font-size:10px;" onclick="backToMessengerContactList()">← Danh sách</button>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-dark flex-shrink-0"
+                         style="width:24px;height:24px;background:#76b900;font-size:10px;">${initials}</div>
+                    <div class="text-truncate">
+                        <div class="fw-bold small text-truncate lh-1 text-white" style="font-size:11.5px;">${w.buyerName}</div>
+                        <small style="font-size:9.5px;color:#a3e635;">● ${w.storeName}</small>
                     </div>
                 </div>
-                <div id="msgHistoryBox_${w.sessionId}" class="flex-fill p-2 small" style="overflow-y:auto;"></div>
-                <div class="px-2 py-1 border-top border-secondary border-opacity-25 d-flex gap-1" style="overflow-x:auto;white-space:nowrap;scrollbar-width:none;background:rgba(15,23,42,0.5);">
-                    <span class="cat-action-chip py-0 px-2" style="font-size:10px;" onclick="quickSendMessengerText(${w.sessionId}, 'Shop xác nhận đơn của bạn đã đóng gói kèm ảnh minh chứng nhé!')">📦 Đã đóng gói</span>
-                    <span class="cat-action-chip py-0 px-2" style="font-size:10px;" onclick="quickSendMessengerText(${w.sessionId}, 'Sản phẩm bảo hành chính hãng 36 tháng 1 đổi 1 ạ!')">🛡️ Bảo hành 36T</span>
+                <div class="d-flex align-items-center gap-1">
+                    <button type="button" id="msgModeBtn_${w.sessionId}" class="badge rounded-pill border-0 ${w.chatMode === 'human' ? 'bg-warning text-dark' : 'bg-info text-dark'}" style="font-size:10px;cursor:pointer;" onclick="switchMessengerWindowMode(${w.sessionId})">
+                        ${w.chatMode === 'human' ? '👤 Người' : '🤖 AI'}
+                    </button>
+                    <button type="button" class="btn btn-sm py-0 px-1 text-secondary border-0" onclick="closeMessengerChatWindow(${w.sessionId})">✕</button>
                 </div>
-                <form onsubmit="submitMessengerWindowSend(event, ${w.sessionId})" class="p-2 border-top border-secondary border-opacity-25 d-flex align-items-center gap-1">
-                    <input type="text" id="msgInput_${w.sessionId}" class="form-control form-control-sm rounded-pill px-3" style="background:#0f172a;color:#fff;border-color:#475569;" placeholder="Nhắn tin..." required>
-                    <button type="submit" class="btn btn-nvidia btn-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:32px;height:32px;padding:0;">➤</button>
-                </form>
             </div>
-        `;
-    }).join('');
+            <div id="msgHistoryBox_${w.sessionId}" class="p-2 small" style="height:175px;overflow-y:auto;"></div>
+            <div class="px-2 py-1 border-top border-secondary border-opacity-25 d-flex gap-1" style="overflow-x:auto;white-space:nowrap;scrollbar-width:none;background:rgba(15,23,42,0.5);">
+                <span class="cat-action-chip py-0 px-2" style="font-size:10px;" onclick="quickSendMessengerText(${w.sessionId}, 'Shop xác nhận đơn của bạn đã đóng gói kèm ảnh minh chứng nhé!')">📦 Đã đóng gói</span>
+                <span class="cat-action-chip py-0 px-2" style="font-size:10px;" onclick="quickSendMessengerText(${w.sessionId}, 'Sản phẩm bảo hành chính hãng 36 tháng 1 đổi 1 ạ!')">🛡️ Bảo hành 36T</span>
+            </div>
+            <form onsubmit="submitMessengerWindowSend(event, ${w.sessionId})" class="p-2 border-top border-secondary border-opacity-25 d-flex align-items-center gap-1">
+                <input type="text" id="msgInput_${w.sessionId}" class="form-control form-control-sm rounded-pill px-3" style="background:#0f172a;color:#fff;border-color:#475569;" placeholder="Nhắn tin..." required>
+                <button type="submit" class="btn btn-nvidia btn-sm rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:30px;height:30px;padding:0;">➤</button>
+            </form>
+        </div>
+    `;
 }
 
 async function fetchSingleMessengerWindowHistory(sessionId) {

@@ -2980,7 +2980,8 @@ async function triggerMobilePwaInstallPrompt() {
 }
 
 function openMobileApkDownloadGuide() {
-    nxToast('📦 Dự án Android Native sẵn sàng tại android_nexora_app/ & GitHub Actions tự động đóng gói Nexora-Mobile-Debug-APK!');
+    nxToast('📦 Đang mở kho tải bản build .APK Android tự động (Nexora-Mobile-Debug-APK)...');
+    window.open('https://github.com/wn123484-star/banhangtuhanh/actions', '_blank', 'noopener');
 }
 
 window.nxApplyTheme = nxApplyTheme;
