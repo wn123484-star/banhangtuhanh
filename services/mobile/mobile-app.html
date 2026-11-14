@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi" data-nx-theme="executive_pearl_light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#d82d8b">
+    <title>Nexora Mobile — Siêu Ứng Dụng Tài Chính Escrow, Quét QR 2 Bước &amp; Đấu Giá Kép</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/assets/icons/icon.png">
+    <link rel="apple-touch-icon" href="/assets/icons/pwa/icon-192x192.png">
+    <link rel="stylesheet" href="/services/mobile/mobile-app.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+</head>
+<body class="nx-mobile-body">
+    <div class="nx-app-shell">
+        <header class="nx-top-hero">
+            <div class="nx-status-bar">
+                <div class="nx-server-pill" onclick="promptSwitchServerEndpoint()" id="nxServerStatusText">
+                    🟢 Đang kết nối: nexora.castle-tech.cloud
+                </div>
+                <button type="button" class="nx-theme-trigger-btn" onclick="openNxModal('nxThemeModal')">
+                    🎨 Đổi Giao Diện
+                </button>
+            </div>
+
+            <div class="nx-brand-strip">
+                <div class="nx-brand-left">
+                    <img src="/assets/icons/nexora_mobile_crest.svg" alt="NX" id="nxMobileCrestLogo" class="nx-crest-avatar">
+                    <div>
+                        <div style="font-size:0.72rem;opacity:0.9;font-weight:600;">SIÊU ỨNG DỤNG CÔNG NGHỆ NEXORA</div>
+                        <div style="font-size:0.98rem;font-weight:800;" id="nxHeaderUserName">William • Nexora VIP</div>
+                    </div>
+                </div>
+                <span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:999px;font-size:0.75rem;font-weight:800;" id="nxHeaderCoinsBadge">🪙 150.000 Xu</span>
+            </div>
+
+            <div class="nx-top-4-actions">
+                <div class="nx-top-action-item" onclick="openNxModal('nxTopupWithdrawModal')">
+                    <div class="nx-top-action-icon">📥</div>
+                    <div class="nx-top-action-label">Nạp / Rút</div>
+                </div>
+                <div class="nx-top-action-item" onclick="openNxModal('nxReceiveQrModal')">
+                    <div class="nx-top-action-icon">📲</div>
+                    <div class="nx-top-action-label">Nhận Tiền</div>
+                </div>
+                <div class="nx-top-action-item" onclick="openMobileQrScannerCenter()">
+                    <div class="nx-top-action-icon">📷</div>
+                    <div class="nx-top-action-label">QR Thanh Toán</div>
+                </div>
+                <div class="nx-top-action-item" onclick="window.location.href='/services/cart_checkout/bank.html'">
+                    <div class="nx-top-action-icon">🧰</div>
+                    <div class="nx-top-action-label">Ví Tiện Ích</div>
+                </div>
+            </div>
+        </header>
+
+        <section class="nx-multi-pocket-card">
+            <div class="nx-pocket-header">
+                <span style="font-size:0.76rem;font-weight:800;color:var(--nx-muted);">🛡️ TÀI SẢN ĐA TÚI TIỀN HỢP NHẤT</span>
+                <button type="button" class="nx-eye-btn" id="nxEyeToggleBtn" onclick="toggleBalanceVisibility()">👁️ Ẩn số dư</button>
+            </div>
+            <div class="nx-pocket-grid">
+                <div class="nx-pocket-col" onclick="openNxModal('nxTopupWithdrawModal')">
+                    <div class="nx-pocket-title">Ví Nexora Pay</div>
+                    <div class="nx-pocket-val" id="nxPocketWalletVal">50.000.000 ₫</div>
+                </div>
+                <div class="nx-pocket-col" onclick="openMobileQrScannerCenter()">
+                    <div class="nx-pocket-title">Túi Bảo Lãnh Escrow</div>
+                    <div class="nx-pocket-val" id="nxPocketEscrowVal">18.990.000 ₫</div>
+                </div>
+                <div class="nx-pocket-col" onclick="document.getElementById('nxAuctionSection').scrollIntoView({behavior:'smooth'})">
+                    <div class="nx-pocket-title">Ký Quỹ Đấu Giá 10%</div>
+                    <div class="nx-pocket-val" id="nxPocketAuctionVal">4.500.000 ₫</div>
+                </div>
+            </div>
+            <div class="nx-pocket-footer" onclick="window.location.href='/services/cart_checkout/bank.html'">
+                <span>✨ Trung Tâm Tài Chính &amp; Bảo Chứng Giao Dịch</span>
+                <span>&gt;</span>
+            </div>
+        </section>
+
+        <div class="nx-search-pill-bar">
+            <span>🔍</span>
+            <input type="text" id="nxQuickSearchInput" placeholder="Nhập mã đơn hàng, mã QR hoặc tên bạn bè để chuyển tiền / trả hộ" onkeydown="handleQuickSearchInput(event)">
+            <span style="cursor:pointer;" onclick="inspectQrTokenInvoice(document.getElementById('nxQuickSearchInput').value)">📞</span>
+        </div>
+
+        <section class="nx-section-card">
+            <div class="nx-service-grid-4x2">
+                <div class="nx-service-cell" onclick="openNxModal('nxTopupWithdrawModal')">
+                    <div class="nx-service-icon-box">💸</div>
+                    <div class="nx-service-name">Chuyển tiền nhanh</div>
+                </div>
+                <div class="nx-service-cell" onclick="setMobilePayerMode('behalf');openMobileQrScannerCenter();">
+                    <span class="nx-hot-tag">Hot</span>
+                    <div class="nx-service-icon-box">🤝</div>
+                    <div class="nx-service-name">Thanh toán hộ QR</div>
+                </div>
+                <div class="nx-service-cell" onclick="document.getElementById('nxAuctionSection').scrollIntoView({behavior:'smooth'})">
+                    <span class="nx-hot-tag">Hot</span>
+                    <div class="nx-service-icon-box">🔨</div>
+                    <div class="nx-service-name">Sàn Đấu Giá Kép</div>
+                </div>
+                <div class="nx-service-cell" onclick="openMobileMarketTrackerModal(1)">
+                    <div class="nx-service-icon-box">📈</div>
+                    <div class="nx-service-name">Theo Dõi Giá VN</div>
+                </div>
+                <div class="nx-service-cell" onclick="window.location.href='/services/rfq/rfq.html'">
+                    <div class="nx-service-icon-box">📑</div>
+                    <div class="nx-service-name">Đấu Thầu Ngược RFQ</div>
+                </div>
+                <div class="nx-service-cell" onclick="triggerMobileDailyCheckin()">
+                    <div class="nx-service-icon-box">🔥</div>
+                    <div class="nx-service-name">Điểm Danh Chuỗi Lửa</div>
+                </div>
+                <div class="nx-service-cell" onclick="triggerMobileReflexArenaClaim()">
+                    <div class="nx-service-icon-box">🎯</div>
+                    <div class="nx-service-name">Bắn Tâm Esport 30s</div>
+                </div>
+                <div class="nx-service-cell" onclick="window.location.href='/services/order_tracking/tracking.html'">
+                    <div class="nx-service-icon-box">🚚</div>
+                    <div class="nx-service-name">Tra Cứu Vận Đơn Radar</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="nx-section-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <div style="font-weight:800;font-size:0.88rem;">⚡ Phiên QR Đang Chờ Trên Máy Tính (1-Chạm Xem Giá)</div>
+                <button class="nx-eye-btn" onclick="syncMobileBridge()">🔄 Làm mới</button>
+            </div>
+            <div id="nxAwaitingQrQuickList"></div>
+        </section>
+
+        <section class="nx-section-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                <div style="width:42px;height:42px;border-radius:14px;background:var(--nx-primary-grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.35rem;">🐱</div>
+                <div>
+                    <div style="font-weight:800;font-size:0.88rem;">Trợ Thủ AI - Mèo Nexora &amp; Biểu Đồ Chi Tiêu Tháng</div>
+                    <div style="font-size:0.73rem;color:var(--nx-muted);">Phân tích tự động dòng tiền Mua sắm, Ký quỹ &amp; Hoàn tiền 100%</div>
+                </div>
+            </div>
+            <div class="nx-ai-donut-row">
+                <div class="nx-donut-wrap">
+                    <svg id="nxSpendingDonutSvg" viewBox="0 0 108 108" width="108" height="108"></svg>
+                    <div class="nx-donut-center">
+                        <span style="color:var(--nx-muted);">Tháng này</span>
+                        <strong id="nxDonutCenterTotal" style="font-size:0.84rem;color:var(--nx-primary);">69Tr</strong>
+                    </div>
+                </div>
+                <div id="nxSpendingLegendBox"></div>
+            </div>
+        </section>
+
+        <section class="nx-section-card" id="nxAuctionSection">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div style="font-weight:800;font-size:0.88rem;">🔨 Sàn Đấu Giá Kép Thời Gian Thực</div>
+                <a href="/services/auction/auction.html" style="font-size:0.74rem;font-weight:700;color:var(--nx-primary);text-decoration:none;">Mở toàn sàn &gt;</a>
+            </div>
+            <div id="nxMobileAuctionsList"></div>
+        </section>
+    </div>
+
+    <nav class="nx-bottom-nav">
+        <button type="button" class="nx-nav-btn active" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+            <span style="font-size:1.2rem;">🏠</span>
+            <span>Nexora</span>
+        </button>
+        <button type="button" class="nx-nav-btn" onclick="document.getElementById('nxAuctionSection').scrollIntoView({behavior:'smooth'})">
+            <span style="font-size:1.2rem;">🔨</span>
+            <span>Đấu Giá</span>
+        </button>
+        <div class="nx-nav-qr-center-wrap" onclick="openMobileQrScannerCenter()">
+            <div class="nx-nav-qr-orb">📷</div>
+            <span style="font-size:0.66rem;font-weight:800;color:var(--nx-primary);margin-top:3px;">QUÉT MÃ QR</span>
+        </div>
+        <button type="button" class="nx-nav-btn" onclick="triggerMobileLuckySpin()">
+            <span style="font-size:1.2rem;">🎮</span>
+            <span>Săn Xu</span>
+        </button>
+        <button type="button" class="nx-nav-btn" onclick="openNxSettingsAndSecurityCenter()">
+            <span style="font-size:1.2rem;">⚙️</span>
+            <span>Cài Đặt &amp; Tôi</span>
+        </button>
+    </nav>
+
+    <div class="nx-modal-backdrop" id="nxSettingsSecurityModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong style="font-size:1rem;">⚙️ Trung Tâm Cài Đặt, Xác Minh OTP &amp; Đổi Mật Khẩu</strong>
+                <button type="button" class="nx-eye-btn" onclick="closeNxModal('nxSettingsSecurityModal')">✕ Đóng</button>
+            </div>
+
+            <!-- KHU VỰC 1: HỒ SƠ CÁ NHÂN & TRẠNG THÁI BẢO CHỨNG -->
+            <div class="nx-settings-sec-card">
+                <div class="nx-settings-sec-title">
+                    <span>👤 1. Hồ Sơ Cá Nhân &amp; Trạng Thái Bảo Chứng</span>
+                    <span id="nxSecVerifiedBadge" style="font-size:0.68rem;padding:3px 8px;border-radius:999px;background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;">🛡️ Đã xác thực OTP Bảo Lãnh Escrow</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px;border-radius:14px;background:var(--nx-surface);border:1px solid var(--nx-border);">
+                    <img src="/assets/icons/nexora_mobile_crest.svg" alt="Avatar" style="width:46px;height:46px;border-radius:14px;background:#0f172a;padding:4px;object-fit:contain;">
+                    <div>
+                        <div style="font-weight:800;font-size:0.92rem;" id="nxSecProfileDisplayName">William • Nexora VIP</div>
+                        <div style="font-size:0.75rem;color:var(--nx-muted);" id="nxSecProfileDisplayEmail">william.vip@nexora.castle-tech.cloud • 0988889999</div>
+                    </div>
+                </div>
+                <label class="nx-form-label">Họ và tên hiển thị:</label>
+                <input type="text" id="nxSetFullName" class="nx-form-input" value="William • Nexora VIP" oninput="this.dataset.dirty='1'">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div>
+                        <label class="nx-form-label">Email nhận OTP Bảo mật:</label>
+                        <input type="email" id="nxSetEmail" class="nx-form-input" value="william.vip@nexora.castle-tech.cloud" oninput="this.dataset.dirty='1'">
+                    </div>
+                    <div>
+                        <label class="nx-form-label">Số điện thoại VietQR:</label>
+                        <input type="text" id="nxSetPhone" class="nx-form-input" value="0988889999" oninput="this.dataset.dirty='1'">
+                    </div>
+                </div>
+                <label class="nx-form-label">Địa chỉ nhận hàng mặc định:</label>
+                <input type="text" id="nxSetAddress" class="nx-form-input" value="Tòa nhà Nexora Tower, Quận 1, TP. Hồ Chí Minh" oninput="this.dataset.dirty='1'">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;font-weight:700;margin-bottom:10px;cursor:pointer;">
+                    <input type="checkbox" id="nxSetTwoFactor" checked style="width:16px;height:16px;">
+                    <span>🛡️ Bật bảo vệ 2 lớp (2FA OTP) khi rút tiền &amp; chuyển khoản lớn</span>
+                </label>
+                <button type="button" style="width:100%;padding:11px;border:none;border-radius:12px;background:var(--nx-primary);color:#fff;font-weight:800;cursor:pointer;" onclick="saveMobileProfileAndSettings()">
+                    💾 Lưu Hồ Sơ Cá Nhân &amp; Cài Đặt Bảo Chứng
+                </button>
+            </div>
+
+            <!-- KHU VỰC 2: TRUNG TÂM BẢO MẬT: XÁC MINH OTP & ĐỔI MẬT KHẨU / MÃ PIN VÍ -->
+            <div class="nx-settings-sec-card">
+                <div class="nx-settings-sec-title">
+                    <span>🔐 2. Trung Tâm Bảo Mật: Xác Minh OTP &amp; Đổi Mật Khẩu / Mã PIN Ví</span>
+                </div>
+
+                <!-- Bước 1: Gửi mã OTP -->
+                <div style="padding:10px;border-radius:14px;background:var(--nx-surface);border:1px solid var(--nx-border);margin-bottom:12px;">
+                    <div style="font-size:0.78rem;font-weight:800;color:var(--nx-primary);margin-bottom:6px;">BƯỚC 1 — GỬI MÃ OTP XÁC THỰC BẢO MẬT (6 SỐ):</div>
+                    <label class="nx-form-label">Email hoặc Tên đăng nhập tài khoản:</label>
+                    <input type="text" id="nxSecTargetIdentity" class="nx-form-input" value="khach_hang_vip" placeholder="Nhập email hoặc username...">
+                    <label class="nx-form-label">Mục đích xác thực OTP:</label>
+                    <select id="nxSecOtpPurpose" class="nx-form-input">
+                        <option value="change_password">🔑 Đổi mật khẩu đăng nhập &amp; Cập nhật Mã PIN Ví</option>
+                        <option value="verify_account">🛡️ Xác minh tài khoản chính chủ Bảo Lãnh Escrow</option>
+                        <option value="reset_pin">💳 Khôi phục Mã PIN 6 số Ví Nexora Pay</option>
+                    </select>
+                    <button type="button" id="nxBtnSendSecurityOtp" style="width:100%;padding:11px;border:none;border-radius:12px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="sendMobileSecurityOtp()">
+                        📨 Gửi Mã OTP Xác Thực (6 Số)
+                    </button>
+                    <div id="nxSecOtpDemoHintBanner" style="display:none;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(16,185,129,0.12);border:1px dashed #10b981;font-size:0.76rem;"></div>
+                </div>
+
+                <!-- Bước 2: Nhập mã OTP 6 ô số -->
+                <div style="padding:10px;border-radius:14px;background:var(--nx-surface);border:1px solid var(--nx-border);margin-bottom:12px;">
+                    <div style="font-size:0.78rem;font-weight:800;color:var(--nx-primary);margin-bottom:4px;">BƯỚC 2 — NHẬP MÃ OTP 6 Ô SỐ TỪ EMAIL:</div>
+                    <div style="font-size:0.72rem;color:var(--nx-muted);">Tự động nhảy sang ô kế tiếp khi gõ hoặc dán nhanh 6 số:</div>
+                    <div class="nx-otp-6-grid" onpaste="onNxOtpDigitPaste(event)">
+                        <input type="text" id="nxOtpBox0" class="nx-otp-digit-box" maxlength="1" inputmode="numeric" oninput="onNxOtpDigitInput(0, this)" onkeydown="onNxOtpDigitKeydown(0, event)">
+                        <input type="text" id="nxOtpBox1" class="nx-otp-digit-box" maxlength="1" inputmode="numeric" oninput="onNxOtpDigitInput(1, this)" onkeydown="onNxOtpDigitKeydown(1, event)">
+                        <input type="text" id="nxOtpBox2" class="nx-otp-digit-box" maxlength="1" inputmode="numeric" oninput="onNxOtpDigitInput(2, this)" onkeydown="onNxOtpDigitKeydown(2, event)">
+                        <input type="text" id="nxOtpBox3" class="nx-otp-digit-box" maxlength="1" inputmode="numeric" oninput="onNxOtpDigitInput(3, this)" onkeydown="onNxOtpDigitKeydown(3, event)">
+                        <input type="text" id="nxOtpBox4" class="nx-otp-digit-box" maxlength="1" inputmode="numeric" oninput="onNxOtpDigitInput(4, this)" onkeydown="onNxOtpDigitKeydown(4, event)">
+                        <input type="text" id="nxOtpBox5" class="nx-otp-digit-box" maxlength="1" inputmode="numeric" oninput="onNxOtpDigitInput(5, this)" onkeydown="onNxOtpDigitKeydown(5, event)">
+                    </div>
+                    <button type="button" style="width:100%;padding:9px;border-radius:11px;border:1.5px solid #10b981;background:rgba(16,185,129,0.12);color:#10b981;font-weight:800;font-size:0.8rem;cursor:pointer;" onclick="verifyMobileSecurityOtpOnly()">
+                        ✅ Xác Minh OTP Ngay
+                    </button>
+                </div>
+
+                <!-- Bước 3: Đổi Mật Khẩu & Mã PIN Thanh Toán QR -->
+                <div style="padding:10px;border-radius:14px;background:var(--nx-surface);border:1px solid var(--nx-border);">
+                    <div style="font-size:0.78rem;font-weight:800;color:var(--nx-primary);margin-bottom:8px;">BƯỚC 3 — ĐỔI MẬT KHẨU &amp; MÃ PIN THANH TOÁN QR:</div>
+
+                    <label class="nx-form-label">Mật khẩu hiện tại (Tùy chọn nếu đã có mã OTP 6 số ở trên):</label>
+                    <div class="nx-pw-wrap">
+                        <input type="password" id="nxSecOldPassword" class="nx-form-input" placeholder="Nhập mật khẩu hiện tại (nếu không dùng OTP)...">
+                        <button type="button" class="nx-pw-eye-btn" onclick="toggleNxPasswordVisibility('nxSecOldPassword', this)">👁️</button>
+                    </div>
+
+                    <label class="nx-form-label">Mật khẩu mới (Tối thiểu 6 ký tự):</label>
+                    <div class="nx-pw-wrap">
+                        <input type="password" id="nxSecNewPassword" class="nx-form-input" placeholder="Nhập mật khẩu mới..." oninput="evaluateNxPasswordStrength(this.value)">
+                        <button type="button" class="nx-pw-eye-btn" onclick="toggleNxPasswordVisibility('nxSecNewPassword', this)">👁️</button>
+                    </div>
+                    <div class="nx-pw-strength-track">
+                        <div id="nxPwStrengthFill" class="nx-pw-strength-fill"></div>
+                    </div>
+                    <div id="nxPwStrengthLabel" style="font-size:0.71rem;font-weight:700;color:var(--nx-muted);margin-bottom:8px;">Độ mạnh mật khẩu: Chưa nhập</div>
+
+                    <label class="nx-form-label">Xác nhận mật khẩu mới:</label>
+                    <div class="nx-pw-wrap">
+                        <input type="password" id="nxSecConfirmPassword" class="nx-form-input" placeholder="Nhập lại mật khẩu mới...">
+                        <button type="button" class="nx-pw-eye-btn" onclick="toggleNxPasswordVisibility('nxSecConfirmPassword', this)">👁️</button>
+                    </div>
+
+                    <label class="nx-form-label">Mã PIN 6 số Ví Nexora Pay (Dùng khi xác nhận chuyển khoản QR):</label>
+                    <div class="nx-pw-wrap">
+                        <input type="password" id="nxSecWalletPin" class="nx-form-input" maxlength="6" inputmode="numeric" value="888999" placeholder="Nhập 6 chữ số PIN Ví (VD: 888999)">
+                        <button type="button" class="nx-pw-eye-btn" onclick="toggleNxPasswordVisibility('nxSecWalletPin', this)">👁️</button>
+                    </div>
+
+                    <div id="nxSecPasswordResultBanner" style="display:none;padding:9px 12px;border-radius:12px;border:1.5px solid #10b981;margin-bottom:10px;font-size:0.78rem;font-weight:800;"></div>
+
+                    <button type="button" style="width:100%;padding:12px;border:none;border-radius:14px;background:var(--nx-primary-grad);color:#fff;font-size:0.88rem;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(216,45,139,0.28);" onclick="submitMobileVerifyOtpAndChangePassword()">
+                        🔐 Lưu Mật Khẩu Mới &amp; Cập Nhật Bảo Mật
+                    </button>
+
+                    <div style="margin-top:12px;">
+                        <div style="font-size:0.74rem;font-weight:800;color:var(--nx-muted);margin-bottom:4px;">📋 Nhật ký hoạt động bảo mật gần đây:</div>
+                        <div id="nxSecAuditLogsBox"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KHU VỰC 3: CÁ NHÂN HÓA GIAO DIỆN, CỠ CHỮ & SÁNG/TỐI -->
+            <div class="nx-settings-sec-card">
+                <div class="nx-settings-sec-title">
+                    <span>🎨 3. Cá Nhân Hóa Giao Diện, Cỡ Chữ &amp; Sáng/Tối</span>
+                    <button type="button" class="nx-eye-btn" onclick="toggleMobileLightDarkQuick()">☀️ / 🌙 Đổi Sáng/Tối</button>
+                </div>
+                <div style="font-size:0.75rem;font-weight:700;color:var(--nx-muted);margin-bottom:6px;">Chọn nhanh 1 trong 6 giao diện Siêu Ứng Dụng (Đồng bộ App &amp; Web):</div>
+                <div id="nxSettingsThemeSelectorList" style="margin-bottom:12px;"></div>
+
+                <label class="nx-form-label">Thanh chỉnh cỡ chữ hiển thị:</label>
+                <div class="nx-font-scale-bar" style="margin-bottom:12px;">
+                    <button type="button" class="nx-font-scale-btn" data-scale="small" onclick="applyMobileFontScale('small')">A- Nhỏ</button>
+                    <button type="button" class="nx-font-scale-btn active" data-scale="normal" onclick="applyMobileFontScale('normal')">A Chuẩn</button>
+                    <button type="button" class="nx-font-scale-btn" data-scale="large" onclick="applyMobileFontScale('large')">A+ Lớn</button>
+                    <button type="button" class="nx-font-scale-btn" data-scale="xlarge" onclick="applyMobileFontScale('xlarge')">A++ Rất Lớn</button>
+                </div>
+
+                <label class="nx-form-label">Mật độ hiển thị thẻ giao diện:</label>
+                <select id="nxUiDensitySelect" class="nx-form-input" onchange="applyMobileUiDensity(this.value)">
+                    <option value="compact">Gọn gàng (Compact)</option>
+                    <option value="comfortable" selected>Tiêu chuẩn (Comfortable)</option>
+                    <option value="spacious">Thoáng rộng (Spacious)</option>
+                </select>
+            </div>
+
+            <!-- KHU VỰC 4: KẾT NỐI MÁY CHỦ & TẢI FILE CÀI ĐẶT .APK -->
+            <div class="nx-settings-sec-card">
+                <div class="nx-settings-sec-title">
+                    <span>🌐 4. Kết Nối Máy Chủ (Cloud / IP LAN) &amp; Cài Đặt .APK</span>
+                </div>
+                <label class="nx-form-label">Địa chỉ Máy chủ API đang đồng bộ:</label>
+                <input type="text" id="nxSettingsInlineServerInput" class="nx-form-input" placeholder="https://nexora.castle-tech.cloud hoặc http://192.168.1.x:8000">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                    <button type="button" class="nx-eye-btn" onclick="saveServerEndpointConfig('https://nexora.castle-tech.cloud')">☁️ nexora.castle-tech.cloud</button>
+                    <button type="button" class="nx-eye-btn" onclick="saveServerEndpointConfig(window.location.origin)">📡 IP LAN Hiện Tại</button>
+                    <button type="button" class="nx-eye-btn" onclick="saveServerEndpointConfig('http://127.0.0.1:8000')">💻 Localhost:8000</button>
+                </div>
+                <button type="button" style="width:100%;padding:10px;border:none;border-radius:12px;background:var(--nx-primary);color:#fff;font-weight:800;margin-bottom:10px;cursor:pointer;" onclick="saveServerEndpointConfig(document.getElementById('nxSettingsInlineServerInput').value)">
+                    🔄 Lưu Máy Chủ &amp; Đồng Bộ Ngay
+                </button>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button type="button" style="padding:10px;border-radius:12px;border:1.5px solid var(--nx-primary);background:var(--nx-surface);color:var(--nx-primary);font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="triggerMobilePwaInstallPrompt()">
+                        📲 Cài App Ra Màn Hình Chính
+                    </button>
+                    <button type="button" style="padding:10px;border-radius:12px;border:1.5px solid #10b981;background:rgba(16,185,129,0.12);color:#10b981;font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="openMobileApkDownloadGuide()">
+                        🤖 Tải Gói .APK Android
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxQrScannerModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.98rem;">📷 Quét Mã QR Thanh Toán / Chuyển Khoản Hộ</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxQrScannerModal')">✕ Đóng</button>
+            </div>
+            <div class="nx-qr-camera-box" id="nxMobileCameraBox">
+                <video id="nxMobileQrVideo" playsinline autoplay muted style="width:100%;height:100%;object-fit:cover;"></video>
+                <div class="nx-laser-line"></div>
+            </div>
+            <canvas id="nxMobileQrCanvas" style="display:none;"></canvas>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button type="button" style="flex:1;background:var(--nx-primary-grad);color:#fff;border:none;border-radius:12px;padding:10px;font-weight:800;cursor:pointer;" onclick="startMobileCameraQr()">🎥 Bật Camera Thật Quét QR</button>
+                <button type="button" style="background:var(--nx-surface-2);color:var(--nx-text);border:1px solid var(--nx-border);border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;" onclick="stopMobileCameraQr()">⏹️ Tắt</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;">
+                <input type="text" id="nxManualPayTokenInput" placeholder="Hoặc nhập mã pay_token (VD: NVXPAY-101)..." style="flex:1;padding:9px 12px;border-radius:12px;border:1px solid var(--nx-border);background:var(--nx-surface-2);color:var(--nx-text);">
+                <button type="button" style="background:var(--nx-primary);color:#fff;border:none;border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;" onclick="inspectQrTokenInvoice(document.getElementById('nxManualPayTokenInput').value)">Xem Giá</button>
+            </div>
+            <div style="font-size:0.8rem;font-weight:800;margin-bottom:6px;">⚡ Đơn Hàng AWAITING_PAYMENT Vừa Tạo Trên Máy Tính (Chạm Để Xem Giá Ngay):</div>
+            <div id="nxModalPendingQrList"></div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxInvoiceInspectModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.96rem;">🧾 Màn Hình Xem Giá Hóa Đơn Chi Tiết</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxInvoiceInspectModal')">✕ Đóng</button>
+            </div>
+            <div id="nxInvoiceDetailBody"></div>
+            <div style="margin-top:12px;margin-bottom:12px;">
+                <div style="font-size:0.78rem;font-weight:800;margin-bottom:6px;">Chọn phương thức thanh toán trên điện thoại:</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <button type="button" id="nxBtnModeSelf" style="padding:10px;border-radius:12px;border:1px solid var(--nx-border);background:var(--nx-primary);color:#fff;font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="setMobilePayerMode('self')">
+                        💳 Tự Thanh Toán Bằng Ví Của Tôi
+                    </button>
+                    <button type="button" id="nxBtnModeBehalf" style="padding:10px;border-radius:12px;border:1px solid var(--nx-border);background:var(--nx-surface-2);color:var(--nx-text);font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="setMobilePayerMode('behalf')">
+                        🤝 Chuyển Khoản Hộ Bạn Bè
+                    </button>
+                </div>
+                <div id="nxBehalfInputsWrap" style="display:none;margin-top:10px;padding:10px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);">
+                    <input type="text" id="nxBehalfPayerName" placeholder="Nhập tên người chuyển khoản hộ..." value="William (Chuyển khoản hộ)" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--nx-border);margin-bottom:6px;background:var(--nx-surface);color:var(--nx-text);">
+                    <input type="text" id="nxBehalfPayerMsg" placeholder="Lời nhắn gửi bạn bè..." value="Mình thanh toán hộ hóa đơn Nexora này cho bạn nhé!" style="width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--nx-border);background:var(--nx-surface);color:var(--nx-text);">
+                </div>
+            </div>
+            <button type="button" id="nxConfirmQrPayBtn" style="width:100%;padding:13px;border-radius:16px;border:none;background:var(--nx-primary-grad);color:#fff;font-size:0.92rem;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(216,45,139,0.32);" onclick="confirmMobileQrPaymentNow()">
+                ✅ Xác Nhận Chuyển Khoản Ngay
+            </button>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxMarketTrackerModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.96rem;">📈 Biểu Đồ Nến Giá Linh Kiện VN &amp; Báo Động Giá</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxMarketTrackerModal')">✕ Đóng</button>
+            </div>
+            <div id="nxMarketCandleContent" style="margin-bottom:12px;"></div>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <input type="number" id="nxWatchlistTargetPrice" placeholder="Nhập mức giá muốn báo động (VNĐ)" style="flex:1;padding:9px 12px;border-radius:12px;border:1px solid var(--nx-border);background:var(--nx-surface-2);color:var(--nx-text);font-weight:700;">
+                <button type="button" style="background:var(--nx-primary);color:#fff;border:none;border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;" onclick="submitMobileWatchlistAlert()">🔔 Đặt Báo Động</button>
+            </div>
+            <a href="/services/market_tracker/price-tracker.html" style="display:block;text-align:center;font-size:0.78rem;font-weight:700;color:var(--nx-primary);text-decoration:none;">Mở trang phân tích biểu đồ nến đầy đủ &gt;</a>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxThemeModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong style="font-size:0.98rem;">🎨 Bộ Đổi 6 Giao Diện Siêu Ứng Dụng Nexora</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxThemeModal')">✕ Đóng</button>
+            </div>
+            <div id="nxThemeSelectorList"></div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxTopupWithdrawModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong style="font-size:0.98rem;">📥 Nạp / Rút &amp; Chuyển Tiền Ví Nexora Pay</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxTopupWithdrawModal')">✕ Đóng</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="nx-eye-btn" onclick="document.getElementById('nxWalletActionAmount').value=2000000">+2.000.000đ</button>
+                <button class="nx-eye-btn" onclick="document.getElementById('nxWalletActionAmount').value=10000000">+10.000.000đ</button>
+                <button class="nx-eye-btn" onclick="document.getElementById('nxWalletActionAmount').value=50000000">+50.000.000đ</button>
+            </div>
+            <input type="number" id="nxWalletActionAmount" value="10000000" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;font-weight:800;font-size:1rem;background:var(--nx-surface-2);color:var(--nx-text);">
+            <input type="text" id="nxWalletActionRecipient" value="Ví Nexora Pay / NAPAS 247" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface-2);color:var(--nx-text);">
+            <input type="text" id="nxWalletActionNote" value="Giao dịch tức thì trên Siêu ứng dụng Nexora Mobile" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:12px;background:var(--nx-surface-2);color:var(--nx-text);">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <button type="button" style="padding:11px;border:none;border-radius:12px;background:#10b981;color:#fff;font-weight:800;cursor:pointer;" onclick="submitMobileWalletAction('topup')">📥 Nạp Tiền</button>
+                <button type="button" style="padding:11px;border:none;border-radius:12px;background:#f59e0b;color:#000;font-weight:800;cursor:pointer;" onclick="submitMobileWalletAction('withdraw')">📤 Rút Tiền</button>
+                <button type="button" style="padding:11px;border:none;border-radius:12px;background:var(--nx-primary);color:#fff;font-weight:800;cursor:pointer;" onclick="submitMobileWalletAction('transfer')">💸 Chuyển Tiền</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxReceiveQrModal">
+        <div class="nx-modal-sheet" style="text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong style="font-size:0.98rem;">📲 Mã VietQR / Nexora QR Nhận Tiền Cá Nhân</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxReceiveQrModal')">✕ Đóng</button>
+            </div>
+            <div style="background:#fff;padding:16px;border-radius:20px;display:inline-block;border:3px solid var(--nx-primary);margin-bottom:10px;">
+                <img src="/assets/icons/nexora_mobile_crest.svg" alt="Nexora QR" style="width:150px;height:150px;object-fit:contain;">
+            </div>
+            <div style="font-weight:800;font-size:0.95rem;">WILLIAM • NEXORA PAY</div>
+            <div style="font-size:0.8rem;color:var(--nx-muted);">Số tài khoản NAPAS 247: <strong>8888 9999 2026</strong></div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxServerConfigModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong style="font-size:0.96rem;">🌐 Cấu Hình Máy Chủ Kết Nối (Cloud / IP LAN)</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxServerConfigModal')">✕ Đóng</button>
+            </div>
+            <input type="text" id="nxServerUrlInput" placeholder="VD: http://192.168.1.10:8000 hoặc https://nexora.castle-tech.cloud" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:10px;background:var(--nx-surface-2);color:var(--nx-text);">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                <button class="nx-eye-btn" onclick="saveServerEndpointConfig(window.location.origin)">⚡ Máy Chủ Hiện Tại</button>
+                <button class="nx-eye-btn" onclick="saveServerEndpointConfig('https://nexora.castle-tech.cloud')">☁️ nexora.castle-tech.cloud</button>
+                <button class="nx-eye-btn" onclick="saveServerEndpointConfig('http://127.0.0.1:8000')">💻 Localhost:8000</button>
+            </div>
+            <button type="button" style="width:100%;padding:11px;border:none;border-radius:12px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="saveServerEndpointConfig()">💾 Lưu &amp; Đồng Bộ Ngay</button>
+        </div>
+    </div>
+
+    <script src="/services/mobile/mobile-app.js"></script>
+</body>
+</html>

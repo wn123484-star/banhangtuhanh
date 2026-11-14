@@ -2367,6 +2367,7 @@ function renderGlobalHeaderAndFooter() {
                             <div class="nv-topbar-dropdown">
                                 <button type="button" class="nv-topbar-dropdown-btn">🛠️ Tiện Ích ▾</button>
                                 <div class="nv-topbar-dropdown-menu">
+                                    <a href="/services/mobile/mobile-app.html" class="nv-topbar-dropdown-item text-info fw-bold">📱 Siêu App Nexora Mobile</a>
                                     <a href="/services/pc_builder/pc-builder.html" class="nv-topbar-dropdown-item">🛠️ Trạm Build PC AI</a>
                                     <a href="/services/compare/compare.html" class="nv-topbar-dropdown-item">⚖️ So Sánh &amp; Wishlist</a>
                                     <a href="/services/order_tracking/tracking.html" class="nv-topbar-dropdown-item">🚚 Tra Cứu Vận Đơn NX Express</a>

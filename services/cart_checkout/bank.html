@@ -52,11 +52,43 @@
             100% { top: 12%; }
         }
     </style>
+    <link rel="stylesheet" href="/services/mobile/mobile-app.css">
 </head>
 <body>
     <div id="header-placeholder"></div>
 
     <main class="container py-4">
+
+        <div class="p-3 rounded-4 mb-4 shadow-sm" style="background: var(--nx-primary-grad, linear-gradient(135deg, #a50064 0%, #d82d8b 55%, #0f172a 100%)); color: #fff; border: 2px solid rgba(255,255,255,0.25);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <span class="badge bg-dark border border-light px-3 py-1" style="cursor:pointer;" onclick="promptSwitchBankServerIp()">
+                    🟢 Đang kết nối: nexora.castle-tech.cloud (Bấm để đổi IP LAN)
+                </span>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <select id="bankThemeQuickSelect" class="form-select form-select-sm fw-bold" style="width:auto;border-radius:999px;" onchange="if(window.applyNexoraBankThemeDirect)window.applyNexoraBankThemeDirect(this.value)">
+                        <option value="executive_pearl_light">🎨 1. Sáng Thanh Lịch (Mặc định)</option>
+                        <option value="momo_lotus_pink">🎨 2. Hồng Sen MoMo</option>
+                        <option value="swiss_banking_slate">🎨 3. Tài Chính Thụy Sĩ</option>
+                        <option value="emerald_fintech_light">🎨 4. Lục Bảo Nexora</option>
+                        <option value="obsidian_gold_dark">🎨 5. Đen Thượng Lưu</option>
+                        <option value="bloomberg_dark">🎨 6. Chứng Khoán Bloomberg</option>
+                    </select>
+                    <a href="/services/mobile/mobile-app.html" class="btn btn-light btn-sm fw-bold text-dark rounded-pill">📱 Mở Siêu App Mobile</a>
+                    <a href="/services/mobile/mobile-app.html?tab=settings" class="btn btn-warning btn-sm fw-bold text-dark rounded-pill">⚙️ Cài Đặt &amp; Đổi Mật Khẩu OTP</a>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="/assets/icons/nexora_mobile_crest.svg" alt="NX" style="width:48px;height:48px;object-fit:contain !important;padding:4px !important;background:#0f172a;border-radius:14px;">
+                    <div>
+                        <span class="badge bg-warning text-dark fw-bold mb-1">MOMO SUPER-APP WALLET &amp; 6-THEME LIVE SYNC</span>
+                        <h5 class="fw-bold m-0">📱 Cổng Ví Điện Tử Siêu Ứng Dụng Nexora Pay &amp; Quét QR 2 Bước</h5>
+                        <small class="opacity-75">Đồng bộ thời gian thực với App Android Nexora Mobile • Bảo lãnh Escrow &amp; Chuyển khoản hộ 1 chạm</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
             <div>
                 <span class="badge bg-nvidia mb-1">REAL CAMERA QR SCANNER &amp; ATOMIC IDEMPOTENCY GUARD V8.5</span>
@@ -859,5 +891,39 @@
             }
         });
     </script>
+
+<script>
+(function(){
+    window.promptSwitchBankServerIp = function() {
+        var u = prompt('Nhập địa chỉ Server Cloud hoặc IP LAN:', localStorage.getItem('nexora_api_base') || window.location.origin);
+        if (u) {
+            localStorage.setItem('nexora_api_base', u);
+            location.reload();
+        }
+    };
+    window.applyNexoraBankThemeDirect = async function(themeId) {
+        const chosen = themeId || 'executive_pearl_light';
+        localStorage.setItem('nexora_active_theme', chosen);
+        document.documentElement.setAttribute('data-nx-theme', chosen);
+        document.body.setAttribute('data-nx-theme', chosen);
+        const sel = document.getElementById('bankThemeQuickSelect');
+        if (sel) sel.value = chosen;
+        try {
+            await fetch('/api/mobile/theme-sync', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({theme_id: chosen, source: 'bank_html'})
+            });
+        } catch (e) {}
+        if (typeof notifyToast === 'function') notifyToast('🎨 Đã đồng bộ giao diện: ' + chosen, 'info');
+    };
+    const savedTheme = localStorage.getItem('nexora_active_theme') || 'executive_pearl_light';
+    document.documentElement.setAttribute('data-nx-theme', savedTheme);
+    document.addEventListener('DOMContentLoaded', function() {
+        const sel = document.getElementById('bankThemeQuickSelect');
+        if (sel) sel.value = savedTheme;
+    });
+})();
+</script>
 </body>
 </html>
