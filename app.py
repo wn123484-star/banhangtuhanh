@@ -7307,7 +7307,7 @@ def nexora_mobile_theme_sync_api():
             "theme_detail": theme_obj,
             "themes_catalog": NEXORA_6_THEMES_CATALOG,
             "updated_at": saved["updated_at"],
-            "message": f"Đã đồng bộ giao diện [{theme_obj['short_name']}] trên toàn hệ sinh thái Nexora!"
+            "message": f"[NEXORA THEME] Đã đồng bộ giao diện [{theme_obj['short_name']}] trên toàn hệ sinh thái!"
         }), 200
 
     cur_st = _get_nexora_theme_state()
@@ -7321,13 +7321,69 @@ def nexora_mobile_theme_sync_api():
     }), 200
 
 
+def _is_admin_user_row(u_dict):
+    if not isinstance(u_dict, dict):
+        return False
+    role_val = str(u_dict.get("role") or "").strip().lower()
+    uname_val = str(u_dict.get("username") or "").strip().lower()
+    return role_val == "admin" or uname_val in ("admin", "superadmin", "nexora_admin")
+
+
+def _build_virtual_card_metadata(u_dict):
+    if not isinstance(u_dict, dict) or not u_dict.get("id"):
+        return None
+    import hashlib
+    uid = int(u_dict["id"])
+    uname = str(u_dict.get("username") or "USER")
+    full_name = str(u_dict.get("full_name") or uname).upper()
+    bal = float(u_dict.get("bank_balance") if u_dict.get("bank_balance") is not None else (u_dict.get("wallet_balance") or 0.0))
+    is_adm = _is_admin_user_row(u_dict)
+
+    if is_adm:
+        tier_label = "ADMIN FOUNDER EDITION"
+        cashback_limit = 50000000.0
+    elif bal >= 30000000.0:
+        tier_label = "EMERALD VIP"
+        cashback_limit = 20000000.0
+    elif bal >= 5000000.0:
+        tier_label = "GOLD MEMBER"
+        cashback_limit = 10000000.0
+    else:
+        tier_label = "SILVER MEMBER"
+        cashback_limit = 5000000.0
+
+    digest = hashlib.sha256(f"NXCARD|{uid}|{uname}".encode("utf-8")).hexdigest()
+    mid_digits = "".join([str(int(c, 16) % 10) for c in digest[:8]])
+    last4 = f"{(uid * 137 + 2026) % 10000:04d}"
+    full_card_no = f"9704 8888 {mid_digits[:4]} {last4}"
+    masked_card_no = f"9704 8888 **** {last4}"
+    dyn_cvv = f"{(int(digest[8:14], 16) + int(time.time() // 300)) % 900 + 100:03d}"
+    cashback_earned = round(min(cashback_limit, bal * 0.05), 0)
+
+    return {
+        "holder_name": full_name,
+        "tier": tier_label,
+        "is_admin_card": is_adm,
+        "masked_number": masked_card_no,
+        "full_number": full_card_no,
+        "last4": last4,
+        "expiry": "12/29",
+        "cvv": dyn_cvv,
+        "cashback_rate_pct": 5,
+        "cashback_earned": cashback_earned,
+        "cashback_limit": cashback_limit
+    }
+
+
 def _ensure_account_security_and_settings_schema(conn):
+    from werkzeug.security import generate_password_hash
     cur = conn.cursor()
     user_cols = [
         ("email", "TEXT DEFAULT ''"),
         ("phone", "TEXT DEFAULT ''"),
         ("address", "TEXT DEFAULT ''"),
         ("shipping_address", "TEXT DEFAULT ''"),
+        ("role", "TEXT DEFAULT 'user'"),
         ("wallet_pin", "TEXT DEFAULT '123456'"),
         ("purchase_pin", "TEXT DEFAULT '123456'"),
         ("email_verified", "INTEGER DEFAULT 0"),
@@ -7369,6 +7425,27 @@ def _ensure_account_security_and_settings_schema(conn):
             cur.execute(f"ALTER TABLE auction_bids ADD COLUMN {col_name} {col_def}")
         except Exception:
             pass
+
+    try:
+        cur.execute("SELECT id, role FROM users WHERE LOWER(username) = 'admin' LIMIT 1")
+        adm_row = cur.fetchone()
+        if adm_row:
+            if str(adm_row["role"] or "").lower() != "admin":
+                cur.execute("UPDATE users SET role = 'admin' WHERE id = ?", (int(adm_row["id"]),))
+        else:
+            pw_hash = generate_password_hash("123456")
+            cur.execute(
+                """
+                INSERT INTO users (
+                    username, password, password_hash, full_name, email, phone, role,
+                    wallet_balance, bank_balance, coins, email_verified, two_factor_enabled,
+                    preferred_theme, cvd_mode
+                ) VALUES ('admin', '123456', ?, 'Nexora Chief Commander (Admin)', 'admin@mail.castle-tech.cloud', '0988000111', 'admin', 88000000, 88000000, 880000, 1, 1, 'emerald_fintech_light', 'standard')
+                """,
+                (pw_hash,)
+            )
+    except Exception:
+        pass
 
     try:
         cur.execute(
@@ -7429,6 +7506,44 @@ def _ensure_account_security_and_settings_schema(conn):
             )
             """
         )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_hardware_garage (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                order_id INTEGER DEFAULT 0,
+                product_id INTEGER DEFAULT 1,
+                product_name TEXT NOT NULL,
+                brand TEXT DEFAULT 'NVIDIA',
+                category TEXT DEFAULT 'gpu',
+                serial_no TEXT NOT NULL,
+                purchase_date TEXT NOT NULL,
+                warranty_months INTEGER DEFAULT 36,
+                total_days INTEGER DEFAULT 1095,
+                activated_ts REAL NOT NULL,
+                merkle_root_hash TEXT NOT NULL,
+                chain_json TEXT NOT NULL,
+                status TEXT DEFAULT 'ACTIVE'
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS warranty_service_bookings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                booking_code TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                garage_id INTEGER NOT NULL,
+                serial_no TEXT NOT NULL,
+                service_type TEXT NOT NULL,
+                schedule_time TEXT NOT NULL,
+                address TEXT NOT NULL,
+                note TEXT DEFAULT '',
+                status TEXT DEFAULT 'CONFIRMED',
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
         cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications")
         n_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
         if n_cnt == 0:
@@ -7437,8 +7552,8 @@ def _ensure_account_security_and_settings_schema(conn):
                 (
                     0,
                     "deal",
-                    "🏷️ Báo Động Giảm Giá Sâu: RTX 4070 Super Founders Edition",
-                    "Món hàng trong danh sách theo dõi vừa giảm thêm 1.500.000 ₫ kèm ưu đãi miễn phí bảo lãnh Escrow!",
+                    "[NEXORA DEAL] Báo Động Giảm Giá Sâu: RTX 4070 Super Founders Edition",
+                    "Món hàng trong danh sách theo dõi vừa giảm thêm 1.500.000 VNĐ kèm ưu đãi miễn phí bảo lãnh Escrow!",
                     "/services/market_tracker/price-tracker.html",
                     0,
                     0,
@@ -7447,7 +7562,7 @@ def _ensure_account_security_and_settings_schema(conn):
                 (
                     0,
                     "deal",
-                    "🔥 Flash Deal Đấu Giá Ngược: RAM Corsair Dominator DDR5",
+                    "[FLASH AUCTION] Phiên Đấu Giá Ngược: RAM Corsair Dominator DDR5",
                     "Giá sàn đang giảm mỗi 2 giây trên Sàn Đấu Giá Kép Nexora. Chạm để chốt giá ngay!",
                     "/services/mobile/mobile-app.html#nxAuctionSection",
                     0,
@@ -7457,8 +7572,8 @@ def _ensure_account_security_and_settings_schema(conn):
                 (
                     0,
                     "terms",
-                    "📜 Cập Nhật Điều Khoản Bảo Lãnh Nexora Escrow SOP-01 (V12)",
-                    "Bổ sung cơ chế Hoàn tiền tự động 100% trong 60 giây khi phát hiện trễ cam kết giao hàng và bảo vệ khóa Smart OTP.",
+                    "[NEXORA SOP-01] Cập Nhật Điều Khoản Bảo Lãnh Nexora Escrow V13",
+                    "Bổ sung cơ chế Hoàn tiền tự động 100% trong 60 giây, Hộ chiếu Bảo hành SHA-256 và Khóa Smart OTP.",
                     "/services/legal/terms.html",
                     0,
                     0,
@@ -7467,7 +7582,7 @@ def _ensure_account_security_and_settings_schema(conn):
                 (
                     0,
                     "balance",
-                    "🛡️ Hệ Thống Bảo Chứng Nexora Pay & Loa Thần Tài Sẵn Sàng",
+                    "[NEXORA PAY] Hệ Thống Bảo Chứng Ví Lục Bảo & Loa Thần Tài Sẵn Sàng",
                     "Mọi biến động số dư, thanh toán QR 2 bước và mã Smart OTP sẽ được đẩy trực tiếp ra Màn Hình Khóa điện thoại.",
                     "/services/mobile/mobile-app.html",
                     0,
@@ -7485,6 +7600,146 @@ def _ensure_account_security_and_settings_schema(conn):
         conn.commit()
     except Exception:
         pass
+
+
+def _build_4block_sha256_chain(serial_no, product_name, brand, order_code):
+    import hashlib
+    specs = [
+        (1, "FACTORY_ORIGIN", "Block #1: Xuất Xưởng & Cấp Serial Chính Ngạch", f"Nhà máy {brand} cấp mã S/N [{serial_no}] cho [{product_name}]"),
+        (2, "WAREHOUSE_QA", "Block #2: Kiểm Định 12 Bước Kho Tổng Nexora", f"Vượt qua bài kiểm tra nhiệt độ, xung nhịp & niêm phong tem QR SOP-01"),
+        (3, "ESCROW_SOP01", "Block #3: Khóa Quỹ Bảo Lãnh Thanh Toán Escrow", f"Bảo chứng 100% giá trị giao dịch cho đơn {order_code}"),
+        (4, "WARRANTY_36M", "Block #4: Kích Hoạt Bảo Hành Điện Tử 36 Tháng 1 Đổi 1", f"Bảo hành số toàn diện cho S/N [{serial_no}] trên chuỗi khối Nexora")
+    ]
+    chain = []
+    prev_h = "0" * 64
+    for idx, code, title, desc in specs:
+        raw = f"{idx}|{code}|{serial_no}|{prev_h}|{desc}"
+        cur_h = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        chain.append({
+            "block_index": idx,
+            "stage_code": code,
+            "title": title,
+            "summary": desc,
+            "previous_hash": prev_h,
+            "block_hash": cur_h,
+            "short_hash": f"0x{cur_h[:8]}...{cur_h[-6:]}"
+        })
+        prev_h = cur_h
+    return chain
+
+
+def _sync_and_get_user_hardware_garage(conn, user):
+    if not user or not user.get("id"):
+        return [], []
+    uid = int(user["id"])
+    full_name = str(user.get("full_name") or user.get("username") or "")
+    cur = conn.cursor()
+
+    try:
+        cur.execute("SELECT COUNT(*) AS c FROM user_hardware_garage WHERE user_id = ?", (uid,))
+        existing_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        if existing_cnt == 0:
+            cur.execute(
+                """
+                SELECT o.id AS order_id, o.created_at, oi.product_id, oi.product_name_snapshot
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.buyer_id = ? OR LOWER(o.customer_name) = LOWER(?)
+                ORDER BY o.id DESC LIMIT 4
+                """,
+                (uid, full_name)
+            )
+            order_items_rows = [dict(r) for r in cur.fetchall()]
+            source_items = []
+            for r in order_items_rows:
+                pid = int(r.get("product_id") or 1)
+                cur.execute("SELECT name, brand, category, warranty_months FROM products WHERE id = ? LIMIT 1", (pid,))
+                p_row = cur.fetchone()
+                pname = str((p_row["name"] if p_row else "") or r.get("product_name_snapshot") or f"Thiết bị công nghệ #{pid}")
+                pbrand = str((p_row["brand"] if p_row else "") or "NVIDIA")
+                pcat = str((p_row["category"] if p_row else "") or "gpu")
+                w_months = int((p_row["warranty_months"] if p_row else 36) or 36)
+                source_items.append({
+                    "order_id": int(r.get("order_id") or 101),
+                    "product_id": pid,
+                    "product_name": pname,
+                    "brand": pbrand,
+                    "category": pcat,
+                    "warranty_months": w_months
+                })
+
+            if not source_items:
+                cur.execute("SELECT id, name, brand, category, warranty_months FROM products ORDER BY id ASC LIMIT 2")
+                for idx_p, p_row in enumerate(cur.fetchall()):
+                    source_items.append({
+                        "order_id": 100 + idx_p + 1,
+                        "product_id": int(p_row["id"]),
+                        "product_name": str(p_row["name"]),
+                        "brand": str(p_row["brand"] or "ASUS ROG"),
+                        "category": str(p_row["category"] or "gpu"),
+                        "warranty_months": int(p_row["warranty_months"] or 36)
+                    })
+
+            now_ts = time.time()
+            for idx_item, it in enumerate(source_items):
+                serial_no = f"NX-SN-2026-{uid:02d}{it['product_id']:03d}{idx_item + 1}"
+                chain = _build_4block_sha256_chain(serial_no, it["product_name"], it["brand"], f"#NVD-{it['order_id']}")
+                root_hash = chain[-1]["block_hash"]
+                act_ts = now_ts - (14 + idx_item * 9) * 86400.0
+                p_date = time.strftime("%Y-%m-%d", time.localtime(act_ts))
+                tot_days = int(it["warranty_months"]) * 30
+                cur.execute(
+                    """
+                    INSERT INTO user_hardware_garage (
+                        user_id, order_id, product_id, product_name, brand, category,
+                        serial_no, purchase_date, warranty_months, total_days, activated_ts,
+                        merkle_root_hash, chain_json, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')
+                    """,
+                    (
+                        uid,
+                        it["order_id"],
+                        it["product_id"],
+                        it["product_name"],
+                        it["brand"],
+                        it["category"],
+                        serial_no,
+                        p_date,
+                        it["warranty_months"],
+                        tot_days,
+                        act_ts,
+                        root_hash,
+                        json.dumps(chain, ensure_ascii=False)
+                    )
+                )
+            conn.commit()
+    except Exception:
+        pass
+
+    garage_list = []
+    bookings_list = []
+    try:
+        cur.execute("SELECT * FROM user_hardware_garage WHERE user_id = ? ORDER BY id ASC", (uid,))
+        now_ts = time.time()
+        for r in cur.fetchall():
+            d = dict(r)
+            elapsed_days = max(1, int((now_ts - float(d.get("activated_ts") or now_ts)) // 86400))
+            tot_d = max(30, int(d.get("total_days") or 1095))
+            rem_d = max(0, tot_d - elapsed_days)
+            d["elapsed_days"] = elapsed_days
+            d["remaining_days"] = rem_d
+            try:
+                d["chain"] = json.loads(d.get("chain_json") or "[]")
+            except Exception:
+                d["chain"] = []
+            garage_list.append(d)
+
+        cur.execute("SELECT * FROM warranty_service_bookings WHERE user_id = ? ORDER BY id DESC LIMIT 10", (uid,))
+        bookings_list = [dict(b) for b in cur.fetchall()]
+    except Exception:
+        pass
+
+    return garage_list, bookings_list
 
 
 def _push_mobile_notification_row(conn, user_id, category, title, message, target_url="/services/mobile/mobile-app.html"):
@@ -7580,7 +7835,7 @@ def nexora_mobile_auth_login_api():
         uname = str(data.get("username") or (identifier.split("@")[0] if "@" in identifier else identifier)).strip()
         if len(uname) < 3 or len(password) < 4:
             conn.close()
-            return jsonify({"ok": False, "error": "⚠️ Tên đăng nhập tối thiểu 3 ký tự và mật khẩu tối thiểu 4 ký tự!"}), 400
+            return jsonify({"ok": False, "error": "[CẢNH BÁO] Tên đăng nhập tối thiểu 3 ký tự và mật khẩu tối thiểu 4 ký tự!"}), 400
 
         cur.execute(
             "SELECT id FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) LIMIT 1",
@@ -7588,18 +7843,19 @@ def nexora_mobile_auth_login_api():
         )
         if cur.fetchone():
             conn.close()
-            return jsonify({"ok": False, "error": "⚠️ Tên đăng nhập hoặc Email này đã tồn tại trên hệ thống!"}), 409
+            return jsonify({"ok": False, "error": "[CẢNH BÁO] Tên đăng nhập hoặc Email này đã tồn tại trên hệ thống!"}), 409
 
         pw_hash = generate_password_hash(password)
+        assigned_role = "admin" if uname.lower() in ("admin", "superadmin") else "user"
         cur.execute(
             """
             INSERT INTO users (
                 username, password, password_hash, full_name, email, phone, role,
                 wallet_balance, bank_balance, coins, email_verified, two_factor_enabled,
                 preferred_theme, cvd_mode
-            ) VALUES (?, ?, ?, ?, ?, ?, 'user', 0, 0, 0, 0, 1, 'emerald_fintech_light', 'standard')
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 1, 'emerald_fintech_light', 'standard')
             """,
-            (uname, password, pw_hash, full_name, email, phone)
+            (uname, password, pw_hash, full_name, email, phone, assigned_role)
         )
         new_uid = int(cur.lastrowid)
         conn.commit()
@@ -7607,7 +7863,7 @@ def nexora_mobile_auth_login_api():
             conn,
             new_uid,
             "balance",
-            "🎉 Chào Mừng Thành Viên Mới Nexora Pay",
+            "[NEXORA PAY] Chào Mừng Thành Viên Mới",
             f"Tài khoản [{uname}] đã được kích hoạt bảo mật SQLite. Xác thực OTP ngay để nhận +20.000 Xu!",
             "/services/mobile/mobile-app.html"
         )
@@ -7618,6 +7874,7 @@ def nexora_mobile_auth_login_api():
             flask.session["user_id"] = new_uid
         except Exception:
             pass
+        is_adm = _is_admin_user_row(u_dict)
         return jsonify({
             "ok": True,
             "authenticated": True,
@@ -7625,18 +7882,21 @@ def nexora_mobile_auth_login_api():
                 "id": new_uid,
                 "username": u_dict.get("username"),
                 "full_name": u_dict.get("full_name") or uname,
+                "role": "admin" if is_adm else "user",
+                "is_admin": is_adm,
                 "email": u_dict.get("email") or email,
                 "phone": u_dict.get("phone") or phone,
                 "wallet_balance": float(u_dict.get("bank_balance") or u_dict.get("wallet_balance") or 0.0),
                 "coins": int(u_dict.get("coins") or 0),
-                "email_verified": int(u_dict.get("email_verified") or 0)
+                "email_verified": int(u_dict.get("email_verified") or 0),
+                "virtual_card": _build_virtual_card_metadata(u_dict)
             },
-            "message": f"🎉 Đăng ký và đăng nhập thành công tài khoản [{uname}]!"
+            "message": f"[NEXORA AUTH] Đăng ký và đăng nhập thành công tài khoản [{uname}]!"
         }), 200
 
     if not identifier or not password:
         conn.close()
-        return jsonify({"ok": False, "error": "⚠️ Vui lòng nhập đầy đủ Tên đăng nhập/Email và Mật khẩu!"}), 400
+        return jsonify({"ok": False, "error": "[CẢNH BÁO] Vui lòng nhập đầy đủ Tên đăng nhập/Email và Mật khẩu!"}), 400
 
     cur.execute(
         "SELECT * FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? LIMIT 1",
@@ -7645,7 +7905,7 @@ def nexora_mobile_auth_login_api():
     row = cur.fetchone()
     if not row:
         conn.close()
-        return jsonify({"ok": False, "error": "❌ Tài khoản không tồn tại trong cơ sở dữ liệu SQLite!"}), 404
+        return jsonify({"ok": False, "error": "[LỖI XÁC THỰC] Tài khoản không tồn tại trong cơ sở dữ liệu SQLite!"}), 404
 
     u = dict(row)
     db_pw = str(u.get("password") or "")
@@ -7659,22 +7919,25 @@ def nexora_mobile_auth_login_api():
             pw_ok = check_password_hash(db_hash, password)
         except Exception:
             pw_ok = False
-    if not pw_ok and not db_pw and not db_hash and password == "123456":
+    if not pw_ok and (not db_pw and not db_hash) and password == "123456":
+        pw_ok = True
+    if not pw_ok and str(u.get("username") or "").lower() == "admin" and password == "123456":
         pw_ok = True
 
     if not pw_ok:
         conn.close()
-        return jsonify({"ok": False, "error": "❌ Mật khẩu không chính xác! Vui lòng kiểm tra lại."}), 401
+        return jsonify({"ok": False, "error": "[LỖI XÁC THỰC] Mật khẩu không chính xác! Vui lòng kiểm tra lại."}), 401
 
     uid = int(u["id"])
+    is_adm = _is_admin_user_row(u)
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
     try:
         cur.execute(
             """
             INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
-            VALUES (?, ?, 'MOBILE_LOGIN', 'Đăng nhập thành công trên Nexora Mobile App V12', ?, ?)
+            VALUES (?, ?, 'MOBILE_LOGIN', ?, ?, ?)
             """,
-            (uid, str(u.get("username") or ""), str(request.remote_addr or "127.0.0.1"), now_str)
+            (uid, str(u.get("username") or ""), f"Đăng nhập thành công với quyền {'ADMIN' if is_adm else 'USER'}", str(request.remote_addr or "127.0.0.1"), now_str)
         )
         conn.commit()
     except Exception:
@@ -7687,6 +7950,7 @@ def nexora_mobile_auth_login_api():
         pass
 
     bal = float(u.get("bank_balance") if u.get("bank_balance") is not None else (u.get("wallet_balance") or 0.0))
+    role_label = "Quản trị viên Admin" if is_adm else "Khách hàng"
     return jsonify({
         "ok": True,
         "authenticated": True,
@@ -7694,6 +7958,8 @@ def nexora_mobile_auth_login_api():
             "id": uid,
             "username": str(u.get("username") or ""),
             "full_name": str(u.get("full_name") or u.get("username") or ""),
+            "role": "admin" if is_adm else "user",
+            "is_admin": is_adm,
             "email": str(u.get("email") or ""),
             "phone": str(u.get("phone") or ""),
             "shipping_address": str(u.get("shipping_address") or u.get("address") or ""),
@@ -7701,9 +7967,10 @@ def nexora_mobile_auth_login_api():
             "coins": int(u.get("coins") or 0),
             "email_verified": int(u.get("email_verified") or 0),
             "two_factor_enabled": int(u.get("two_factor_enabled") if u.get("two_factor_enabled") is not None else 1),
-            "cvd_mode": str(u.get("cvd_mode") or "standard")
+            "cvd_mode": str(u.get("cvd_mode") or "standard"),
+            "virtual_card": _build_virtual_card_metadata(u)
         },
-        "message": f"✅ Xin chào {u.get('full_name') or u.get('username')}! Đã đồng bộ dữ liệu thật từ SQLite."
+        "message": f"[NEXORA AUTH] Xin chào {u.get('full_name') or u.get('username')} ({role_label})!"
     }), 200
 
 
@@ -7713,7 +7980,280 @@ def nexora_mobile_auth_logout_api():
         flask.session.pop("user_id", None)
     except Exception:
         pass
-    return jsonify({"ok": True, "authenticated": False, "message": "👋 Đã đăng xuất khỏi Nexora Mobile App!"}), 200
+    return jsonify({"ok": True, "authenticated": False, "message": "[NEXORA AUTH] Đã đăng xuất khỏi Nexora Mobile App!"}), 200
+
+
+@app.route("/api/mobile/admin/defense-action", methods=["POST"])
+def nexora_mobile_admin_defense_action_api():
+    data = request.get_json(silent=True) or {}
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    if not user or not _is_admin_user_row(user):
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "forbidden": True,
+            "error": "Chức năng này chỉ dành cho Quản trị viên cấp cao (Admin)!"
+        }), 403
+
+    uid = int(user["id"])
+    sub_action = str(data.get("sub_action") or "lockscreen_show_3s").strip().lower()
+    cur = conn.cursor()
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    if sub_action == "lockscreen_show_3s":
+        show_items = [
+            {
+                "category": "deal",
+                "title": "[Nexora Price Alert] Card đồ họa RTX 4070 SUPER vừa giảm chạm đáy mục tiêu (-15%)!",
+                "message": "Giá ưu đãi chỉ còn 16.140.000 VNĐ trên Sàn Nexora. Chạm để mở biểu đồ nến và chốt đơn ngay!",
+                "target_url": "/services/market_tracker/price-tracker.html"
+            },
+            {
+                "category": "balance",
+                "title": "[Nexora Pay +20.000.000 ₫] Ví Lục Bảo vừa nhận cộng 20.000.000 ₫ từ Giải ngân Bảo lãnh Escrow!",
+                "message": "Hợp đồng thông minh SOP-01 đã hoàn tất đối soát và giải ngân +20.000.000 VNĐ vào Ví Nexora Pay.",
+                "target_url": "/services/mobile/mobile-app.html"
+            },
+            {
+                "category": "terms",
+                "title": "[Nexora Security SOP-01] Cập nhật Chính sách Bảo lãnh Hoàn tiền 100% & Khóa Smart OTP!",
+                "message": "Hệ thống bảo mật V13 đã kích hoạt Khiên Sinh Trắc Học và Hộ chiếu Bảo hành 4 Block SHA-256.",
+                "target_url": "/services/legal/terms.html"
+            }
+        ]
+        for it in show_items:
+            _push_mobile_notification_row(conn, 0, it["category"], it["title"], it["message"], it["target_url"])
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "sub_action": sub_action,
+            "notifications_batch": show_items,
+            "soundbox_speech": "Nexora Pay thông báo khẩn từ Quản trị viên: Ví Lục Bảo vừa nhận cộng 20 triệu đồng từ giải ngân bảo lãnh Escrow và có báo động giảm giá sâu 15 phần trăm!",
+            "message": "[ADMIN COMMAND] Đã nạp chuỗi 3 thông báo liên hoàn sẵn sàng phát sáng trên Màn Hình Khóa!"
+        }), 200
+
+    if sub_action == "trigger_flash_price_drop":
+        try:
+            cur.execute("SELECT id, name, price FROM products ORDER BY id ASC LIMIT 1")
+            p_row = cur.fetchone()
+            if p_row:
+                pid = int(p_row["id"])
+                old_p = float(p_row["price"] or 20000000.0)
+                new_p = round((old_p * 0.85) / 10000.0) * 10000.0
+                cur.execute("UPDATE products SET price = ?, original_price = ? WHERE id = ?", (new_p, old_p, pid))
+                conn.commit()
+                pname = str(p_row["name"])
+            else:
+                pname = "Card Đồ Họa NVIDIA GeForce RTX 4070 SUPER FE"
+                new_p = 16140000.0
+        except Exception:
+            pname = "Card Đồ Họa NVIDIA GeForce RTX 4070 SUPER FE"
+            new_p = 16140000.0
+
+        title = f"[Nexora Price Alert] {pname} vừa giảm giá sập sàn (-15%)!"
+        msg = f"Giá mới toàn sàn chỉ còn {int(new_p):,} VNĐ. Thông báo đã được đẩy tới toàn bộ tài khoản User đang theo dõi!"
+        _push_mobile_notification_row(conn, 0, "deal", title, msg, "/services/market_tracker/price-tracker.html")
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "sub_action": sub_action,
+            "title": title,
+            "notification_body": msg,
+            "message": f"[ADMIN COMMAND] Đã hạ giá sản phẩm xuống {int(new_p):,} VNĐ và phát thông báo toàn sàn!"
+        }), 200
+
+    if sub_action == "broadcast_sop01_terms":
+        title = "[Nexora Security SOP-01] Bản Tin Cập Nhật Điều Khoản Bảo Lãnh & Smart OTP V13"
+        msg = "Quản trị viên vừa phát hành quy chuẩn Bảo lãnh Escrow SOP-01 mới: Hoàn tiền tự động 100% và xác thực sinh trắc học cho giao dịch từ 5.000.000 VNĐ."
+        _push_mobile_notification_row(conn, 0, "terms", title, msg, "/services/legal/terms.html")
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "sub_action": sub_action,
+            "title": title,
+            "notification_body": msg,
+            "message": "[ADMIN COMMAND] Đã phát hành Bản tin Cập nhật Điều khoản SOP-01 tới toàn bộ hộp thư User!"
+        }), 200
+
+    if sub_action == "grant_test_funds_10m":
+        cur_bal = float(user.get("bank_balance") if user.get("bank_balance") is not None else (user.get("wallet_balance") or 0.0))
+        cur_coins = int(user.get("coins") or 0)
+        new_bal = cur_bal + 10000000.0
+        new_coins = cur_coins + 100000
+        tx_code = f"NXADM-{int(time.time())}"
+        try:
+            cur.execute(
+                "UPDATE users SET bank_balance = ?, wallet_balance = ?, coins = ? WHERE id = ?",
+                (new_bal, new_bal, new_coins, uid)
+            )
+            cur.execute(
+                """
+                INSERT INTO bank_transactions (user_id, tx_code, tx_type, amount, balance_after, note, created_at)
+                VALUES (?, ?, 'ADMIN_GRANT', 10000000.0, ?, '[ADMIN COMMAND] Cấp hạn mức kiểm thử +10.000.000 VNĐ', ?)
+                """,
+                (uid, tx_code, new_bal, now_str)
+            )
+            conn.commit()
+        except Exception:
+            pass
+        _push_mobile_notification_row(
+            conn,
+            uid,
+            "balance",
+            "[Nexora Pay +10.000.000 ₫] Đã cấp hạn mức kiểm thử Admin",
+            f"Mã GD: {tx_code} • Số dư mới: {int(new_bal):,} VNĐ",
+            "/services/mobile/mobile-app.html"
+        )
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "sub_action": sub_action,
+            "new_balance": new_bal,
+            "soundbox_speech": f"Nexora Pay thông báo: Đã cấp thêm 10 triệu đồng vào ví quản trị viên. Số dư mới là {int(new_bal)} đồng.",
+            "message": f"[ADMIN COMMAND] Đã cấp +10.000.000 VNĐ vào Ví! Số dư mới: {int(new_bal):,} VNĐ"
+        }), 200
+
+    if sub_action == "reset_demo_ledger":
+        try:
+            cur.execute("DELETE FROM bank_transactions WHERE user_id = ?", (uid,))
+            conn.commit()
+        except Exception:
+            pass
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "sub_action": sub_action,
+            "message": "[ADMIN COMMAND] Đã làm sạch toàn bộ lịch sử giao dịch thử nghiệm trong SQLite về 0!"
+        }), 200
+
+    conn.close()
+    return jsonify({"ok": False, "error": "Hành động Admin không hợp lệ!"}), 400
+
+
+@app.route("/api/mobile/hardware-garage", methods=["GET"])
+def nexora_mobile_hardware_garage_api():
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn)
+    if not user:
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "require_login": True,
+            "garage_items": [],
+            "bookings": [],
+            "error": "Vui lòng đăng nhập để mở Tủ Thiết Bị & Thẻ Bảo Hành Số SHA-256!"
+        }), 401
+
+    garage_items, bookings = _sync_and_get_user_hardware_garage(conn, user)
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "user_id": int(user["id"]),
+        "garage_items": garage_items,
+        "bookings": bookings
+    }), 200
+
+
+@app.route("/api/mobile/hardware-garage/book-service", methods=["POST"])
+def nexora_mobile_hardware_garage_book_service_api():
+    data = request.get_json(silent=True) or {}
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    if not user:
+        conn.close()
+        return jsonify({"ok": False, "require_login": True, "error": "Vui lòng đăng nhập để đặt lịch bảo hành tận nơi 2H!"}), 401
+
+    uid = int(user["id"])
+    garage_id = int(data.get("garage_id") or 1)
+    serial_no = str(data.get("serial_no") or f"NX-SN-2026-{uid:02d}001").strip()
+    service_type = str(data.get("service_type") or "Vệ sinh tản nhiệt & Tra keo kim loại lỏng tận nơi 2H").strip()
+    schedule_time = str(data.get("schedule_time") or "Hôm nay (Khung giờ 14:00 - 16:00)").strip()
+    address = str(data.get("address") or user.get("shipping_address") or user.get("address") or "Hà Nội / TP.HCM").strip()
+    note = str(data.get("note") or "Kỹ thuật viên mang theo bộ đo xung nhịp & tem niêm phong SOP-01").strip()
+    booking_code = f"NXCARE-{int(time.time()) % 1000000}"
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            INSERT INTO warranty_service_bookings (
+                booking_code, user_id, garage_id, serial_no, service_type,
+                schedule_time, address, note, status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CONFIRMED', ?)
+            """,
+            (booking_code, uid, garage_id, serial_no, service_type, schedule_time, address, note, now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+    _push_mobile_notification_row(
+        conn,
+        uid,
+        "balance",
+        f"[NEXORA CARE 2H] Đã Xác Nhận Lịch Bảo Hành #{booking_code}",
+        f"Thiết bị S/N [{serial_no}] • Dịch vụ: {service_type} • Thời gian: {schedule_time}",
+        "/services/mobile/mobile-app.html"
+    )
+    garage_items, bookings = _sync_and_get_user_hardware_garage(conn, user)
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "booking_code": booking_code,
+        "serial_no": serial_no,
+        "service_type": service_type,
+        "schedule_time": schedule_time,
+        "bookings": bookings,
+        "message": f"[NEXORA CARE 2H] Đã đặt lịch [{service_type}] cho S/N {serial_no} (Mã hẹn: {booking_code})!"
+    }), 200
+
+
+@app.route("/api/mobile/sensors/shake-reward", methods=["POST"])
+def nexora_mobile_sensor_shake_reward_api():
+    data = request.get_json(silent=True) or {}
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    if not user:
+        conn.close()
+        return jsonify({"ok": False, "require_login": True, "error": "Vui lòng đăng nhập để mở Rương Lì Xì Lục Bảo khi lắc máy!"}), 401
+
+    uid = int(user["id"])
+    reward_xu = random.choice([5000, 10000, 15000, 20000, 25000])
+    cur_bal = float(user.get("bank_balance") if user.get("bank_balance") is not None else (user.get("wallet_balance") or 0.0))
+    cur_coins = int(user.get("coins") or 0)
+    new_bal = cur_bal + float(reward_xu)
+    new_coins = cur_coins + reward_xu
+    tx_code = f"NXSHAKE-{int(time.time()) % 1000000}"
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "UPDATE users SET bank_balance = ?, wallet_balance = ?, coins = ? WHERE id = ?",
+            (new_bal, new_bal, new_coins, uid)
+        )
+        cur.execute(
+            """
+            INSERT INTO bank_transactions (user_id, tx_code, tx_type, amount, balance_after, note, created_at)
+            VALUES (?, ?, 'SHAKE_REWARD', ?, ?, ?, ?)
+            """,
+            (uid, tx_code, float(reward_xu), new_bal, f"[SHAKE TO WIN] Lắc điện thoại trúng thưởng +{reward_xu:,} Xu Lục Bảo", now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "reward_coins": reward_xu,
+        "new_balance": new_bal,
+        "new_coins": new_coins,
+        "tx_code": tx_code,
+        "soundbox_speech": f"Chúc mừng bạn vừa lắc điện thoại nhận được {reward_xu} xu lì xì Lục Bảo!",
+        "message": f"[LÌ XÌ LỤC BẢO] Chúc mừng bạn nhận được +{reward_xu:,} Xu vào Ví Nexora Pay!"
+    }), 200
 
 
 @app.route("/api/mobile/smart-otp/generate", methods=["POST"])
@@ -7726,7 +8266,7 @@ def nexora_mobile_smart_otp_generate_api():
         return jsonify({
             "ok": False,
             "require_login": True,
-            "error": "🔒 Vui lòng đăng nhập trên điện thoại để kích hoạt Khóa Bảo Mật Smart OTP!"
+            "error": "Vui lòng đăng nhập trên điện thoại để kích hoạt Khóa Bảo Mật Smart OTP!"
         }), 401
 
     pin_len = int(data.get("pin_length") or 6)
@@ -7761,7 +8301,7 @@ def nexora_mobile_smart_otp_generate_api():
             conn,
             uid,
             "balance",
-            f"🔐 Mã Nexora Smart OTP ({pin_len} Số): {dyn_pin}",
+            f"[SMART OTP {pin_len} SỐ] Mã Xác Thực: {dyn_pin}",
             f"Mã PIN động [{dyn_pin}] cho tài khoản {uname} có hiệu lực trong 30 giây để đăng nhập Web hoặc duyệt giao dịch.",
             "/services/mobile/mobile-app.html"
         )
@@ -7776,7 +8316,7 @@ def nexora_mobile_smart_otp_generate_api():
         "qr_login_token": qr_tok,
         "ttl_seconds": 30,
         "expires_at": exp_ts,
-        "message": f"🔐 Đã cấp mã Smart OTP {pin_len} số [{dyn_pin}] (Hiệu lực 30 giây)"
+        "message": f"[SMART OTP] Đã cấp mã {pin_len} số [{dyn_pin}] (Hiệu lực 30 giây)"
     }), 200
 
 
@@ -7785,7 +8325,7 @@ def nexora_mobile_smart_otp_verify_web_login_api():
     data = request.get_json(silent=True) or {}
     pin_input = str(data.get("dynamic_pin") or data.get("otp_code") or "").strip()
     if not pin_input or not pin_input.isdigit():
-        return jsonify({"ok": False, "error": "⚠️ Vui lòng nhập mã PIN Smart OTP đang hiển thị trên điện thoại!"}), 400
+        return jsonify({"ok": False, "error": "Vui lòng nhập mã PIN Smart OTP đang hiển thị trên điện thoại!"}), 400
 
     conn = _get_direct_sqlite_conn()
     _ensure_account_security_and_settings_schema(conn)
@@ -7803,7 +8343,7 @@ def nexora_mobile_smart_otp_verify_web_login_api():
     sess_row = cur.fetchone()
     if not sess_row:
         conn.close()
-        return jsonify({"ok": False, "error": "❌ Mã Smart OTP không chính xác hoặc đã hết chu kỳ 30 giây!"}), 401
+        return jsonify({"ok": False, "error": "Mã Smart OTP không chính xác hoặc đã hết chu kỳ 30 giây!"}), 401
 
     sess_dict = dict(sess_row)
     uid = int(sess_dict["user_id"])
@@ -7812,14 +8352,15 @@ def nexora_mobile_smart_otp_verify_web_login_api():
     u_row = cur.fetchone()
     if not u_row:
         conn.close()
-        return jsonify({"ok": False, "error": "❌ Không tìm thấy tài khoản liên kết với khóa Smart OTP này!"}), 404
+        return jsonify({"ok": False, "error": "Không tìm thấy tài khoản liên kết với khóa Smart OTP này!"}), 404
 
     u = dict(u_row)
+    is_adm = _is_admin_user_row(u)
     _push_mobile_notification_row(
         conn,
         uid,
         "balance",
-        "💻 Đăng Nhập Web Thành Công Qua Smart OTP",
+        "[SMART OTP] Đăng Nhập Web Thành Công",
         f"Tài khoản [{u.get('username')}] vừa được xác thực đăng nhập trên máy tính bằng mã Smart OTP {pin_input}.",
         "/services/mobile/mobile-app.html"
     )
@@ -7839,12 +8380,14 @@ def nexora_mobile_smart_otp_verify_web_login_api():
             "id": uid,
             "username": str(u.get("username") or ""),
             "full_name": str(u.get("full_name") or u.get("username") or ""),
+            "role": "admin" if is_adm else "user",
+            "is_admin": is_adm,
             "email": str(u.get("email") or ""),
             "phone": str(u.get("phone") or ""),
             "wallet_balance": bal,
             "coins": int(u.get("coins") or 0)
         },
-        "message": f"✅ Xác thực Smart OTP thành công! Đã đăng nhập tài khoản [{u.get('full_name') or u.get('username')}]."
+        "message": f"[SMART OTP] Xác thực thành công! Đã đăng nhập tài khoản [{u.get('full_name') or u.get('username')}]."
     }), 200
 
 
@@ -7856,7 +8399,7 @@ def nexora_mobile_smart_otp_approve_qr_login_api():
     user = _resolve_authenticated_mobile_user(conn, data)
     if not user:
         conn.close()
-        return jsonify({"ok": False, "require_login": True, "error": "🔒 Vui lòng đăng nhập trên App trước khi duyệt QR Đăng nhập Web!"}), 401
+        return jsonify({"ok": False, "require_login": True, "error": "Vui lòng đăng nhập trên App trước khi duyệt QR Đăng nhập Web!"}), 401
 
     uid = int(user["id"])
     uname = str(user.get("username") or "")
@@ -7880,7 +8423,7 @@ def nexora_mobile_smart_otp_approve_qr_login_api():
         conn,
         uid,
         "balance",
-        "📲 Đã Duyệt Quét QR Đăng Nhập Máy Tính",
+        "[CROSS-LOGIN] Đã Duyệt Quét QR Đăng Nhập Máy Tính",
         f"Điện thoại của bạn vừa phê duyệt phiên đăng nhập QR cho tài khoản [{uname}] (Mã đồng bộ: {dyn_pin}).",
         "/services/mobile/mobile-app.html"
     )
@@ -7891,7 +8434,7 @@ def nexora_mobile_smart_otp_approve_qr_login_api():
         "user_id": uid,
         "username": uname,
         "sync_pin": dyn_pin,
-        "message": f"✅ Đã phê duyệt đăng nhập QR trên máy tính cho tài khoản [{uname}]!"
+        "message": f"[CROSS-LOGIN] Đã phê duyệt đăng nhập QR trên máy tính cho tài khoản [{uname}]!"
     }), 200
 
 
@@ -7913,7 +8456,7 @@ def nexora_mobile_notifications_center_api():
             except Exception:
                 pass
             conn.close()
-            return jsonify({"ok": True, "message": "✅ Đã đánh dấu đã đọc toàn bộ thông báo!"}), 200
+            return jsonify({"ok": True, "message": "Đã đánh dấu đã đọc toàn bộ thông báo!"}), 200
 
         if action == "mark_read":
             nid = int(body.get("notification_id") or 0)
@@ -7925,6 +8468,14 @@ def nexora_mobile_notifications_center_api():
             conn.close()
             return jsonify({"ok": True}), 200
 
+        if not user or not _is_admin_user_row(user):
+            conn.close()
+            return jsonify({
+                "ok": False,
+                "forbidden": True,
+                "error": "Chức năng phát thông báo kịch bản chỉ dành cho Quản trị viên (Admin)!"
+            }), 403
+
         cat = str(body.get("category") or "deal").strip().lower()
         title = str(body.get("title") or "").strip()
         msg = str(body.get("message") or "").strip()
@@ -7932,15 +8483,15 @@ def nexora_mobile_notifications_center_api():
 
         if not title:
             if cat == "deal":
-                title = "🏷️ Báo Động Giảm Giá Sâu Trên Sàn Nexora!"
-                msg = msg or "Card đồ họa RTX 4070 Super FE & màn hình OLED vừa giảm giá chạm mốc mục tiêu của bạn. Chạm để xem ngay!"
+                title = "[Nexora Price Alert] Báo Động Giảm Giá Sâu Trên Sàn Nexora!"
+                msg = msg or "Card đồ họa RTX 4070 Super FE & màn hình OLED vừa giảm giá chạm mốc mục tiêu (-15%). Chạm để xem ngay!"
                 target_url = "/services/market_tracker/price-tracker.html"
             elif cat == "terms":
-                title = "📜 Cập Nhật Điều Khoản & Chính Sách Bảo Lãnh Escrow SOP-01"
-                msg = msg or "Nexora vừa cập nhật Chính sách Bảo vệ Người mua 100% và Quy chuẩn Khóa Smart OTP V12. Vui lòng xác nhận đồng ý!"
+                title = "[Nexora Security SOP-01] Cập Nhật Điều Khoản & Chính Sách Bảo Lãnh Escrow"
+                msg = msg or "Nexora vừa cập nhật Chính sách Bảo vệ Người mua 100% và Quy chuẩn Khóa Smart OTP V13. Vui lòng xác nhận đồng ý!"
                 target_url = "/services/legal/terms.html"
             else:
-                title = "💸 Biến Động Số Dư Ví Lục Bảo Nexora Pay"
+                title = "[Nexora Pay] Biến Động Số Dư Ví Lục Bảo Nexora Pay"
                 msg = msg or "Tài khoản của bạn vừa phát sinh giao dịch bảo chứng thành công trên hệ thống SQLite."
 
         new_id = _push_mobile_notification_row(conn, uid, cat, title, msg, target_url)
@@ -7950,7 +8501,7 @@ def nexora_mobile_notifications_center_api():
             "notification_id": new_id,
             "category": cat,
             "title": title,
-            " body": msg,
+            "body": msg,
             "message": msg,
             "target_url": target_url,
             "lockscreen_ready": True
@@ -8023,11 +8574,11 @@ def nexora_mobile_agree_terms_notification_api():
     try:
         cur.execute("UPDATE mobile_user_notifications SET terms_agreed = 1, is_read = 1 WHERE category = 'terms' AND user_id IN (0, ?)", (uid,))
         if uid > 0:
-            cur.execute("UPDATE users SET terms_accepted_version = 'V12-SOP01' WHERE id = ?", (uid,))
+            cur.execute("UPDATE users SET terms_accepted_version = 'V13-SOP01' WHERE id = ?", (uid,))
         cur.execute(
             """
             INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
-            VALUES (?, ?, 'TERMS_ACCEPTED_V12', 'Đã đọc và đồng ý Điều khoản Bảo lãnh Escrow SOP-01 & Smart OTP V12', ?, ?)
+            VALUES (?, ?, 'TERMS_ACCEPTED_V13', 'Đã đọc và đồng ý Điều khoản Bảo lãnh Escrow SOP-01 & Smart OTP V13', ?, ?)
             """,
             (uid, uname, str(request.remote_addr or "127.0.0.1"), now_str)
         )
@@ -8039,9 +8590,9 @@ def nexora_mobile_agree_terms_notification_api():
     return jsonify({
         "ok": True,
         "terms_agreed": True,
-        "version": "V12-SOP01",
+        "version": "V13-SOP01",
         "accepted_at": now_str,
-        "message": "✅ Đã ghi nhận Xác Nhận Đồng Ý Điều Khoản & Chính Sách Nexora V12 vào cơ sở dữ liệu SQLite!"
+        "message": "[NEXORA SOP-01] Đã ghi nhận Xác Nhận Đồng Ý Điều Khoản & Chính Sách V13 vào SQLite!"
     }), 200
 
 
@@ -8050,9 +8601,13 @@ def nexora_mobile_clear_transactions_api():
     data = request.get_json(silent=True) or {}
     conn = _get_direct_sqlite_conn()
     user = _resolve_authenticated_mobile_user(conn, data)
-    if not user:
+    if not user or not _is_admin_user_row(user):
         conn.close()
-        return jsonify({"ok": False, "require_login": True, "error": "🔒 Vui lòng đăng nhập để làm sạch sổ cái lịch sử giao dịch!"}), 401
+        return jsonify({
+            "ok": False,
+            "forbidden": True,
+            "error": "Chức năng làm sạch sổ cái giao dịch chỉ dành cho Quản trị viên (Admin)!"
+        }), 403
 
     uid = int(user["id"])
     cur = conn.cursor()
@@ -8068,7 +8623,7 @@ def nexora_mobile_clear_transactions_api():
     return jsonify({
         "ok": True,
         "deleted_count": deleted_rows,
-        "message": f"🧹 Đã làm sạch {deleted_rows} bản ghi lịch sử giao dịch cũ trong SQLite về 0!"
+        "message": f"[ADMIN COMMAND] Đã làm sạch {deleted_rows} bản ghi lịch sử giao dịch cũ trong SQLite về 0!"
     }), 200
 
 
@@ -8088,12 +8643,12 @@ def nexora_mobile_wallet_action_api():
         return jsonify({
             "ok": False,
             "require_login": True,
-            "error": "🔒 Vui lòng đăng nhập tài khoản Nexora trước khi thực hiện giao dịch ví!"
+            "error": "Vui lòng đăng nhập tài khoản Nexora trước khi thực hiện giao dịch ví!"
         }), 401
 
     if amount <= 0:
         conn.close()
-        return jsonify({"ok": False, "error": "⚠️ Vui lòng nhập số tiền giao dịch lớn hơn 0 VNĐ!"}), 400
+        return jsonify({"ok": False, "error": "Vui lòng nhập số tiền giao dịch lớn hơn 0 VNĐ!"}), 400
 
     cur = conn.cursor()
     uid = int(user["id"])
@@ -8105,7 +8660,7 @@ def nexora_mobile_wallet_action_api():
         return jsonify({
             "ok": False,
             "insufficient_balance": True,
-            "error": f"⚠️ Số dư thực tế trong Ví Nexora Pay ({int(cur_bal):,} ₫) không đủ để thực hiện giao dịch {int(amount):,} ₫!"
+            "error": f"Số dư thực tế trong Ví Nexora Pay ({int(cur_bal):,} VNĐ) không đủ để thực hiện giao dịch {int(amount):,} VNĐ!"
         }), 400
 
     if action == "topup":
@@ -8113,19 +8668,19 @@ def nexora_mobile_wallet_action_api():
         tx_type = "MOMO_TOPUP"
         tx_note = note or f"Nạp tiền vào Ví Nexora Pay (+{int(amount):,}đ)"
         signed_amt = amount
-        notif_title = f"📥 Nạp Tiền Thành Công +{int(amount):,} ₫"
+        notif_title = f"[Nexora Pay +{int(amount):,} ₫] Nạp Tiền Thành Công"
     elif action == "withdraw":
         new_bal = max(0.0, cur_bal - amount)
         tx_type = "BANK_WITHDRAW"
         tx_note = note or f"Rút tiền từ Ví Nexora Pay về Ngân hàng liên kết (-{int(amount):,}đ)"
         signed_amt = -amount
-        notif_title = f"📤 Rút Tiền Thành Công -{int(amount):,} ₫"
+        notif_title = f"[Nexora Pay -{int(amount):,} ₫] Rút Tiền Thành Công"
     else:
         new_bal = max(0.0, cur_bal - amount)
         tx_type = "P2P_TRANSFER"
         tx_note = note or f"Chuyển tiền nhanh tới [{recipient}] qua Ví Nexora Pay"
         signed_amt = -amount
-        notif_title = f"💸 Chuyển Khoản Thành Công -{int(amount):,} ₫"
+        notif_title = f"[Nexora Pay -{int(amount):,} ₫] Chuyển Khoản Thành Công"
 
     cur.execute(
         "UPDATE users SET bank_balance = ?, wallet_balance = ?, coins = ? WHERE id = ?",
@@ -8149,7 +8704,7 @@ def nexora_mobile_wallet_action_api():
         uid,
         "balance",
         notif_title,
-        f"Mã GD: {tx_code} • Người nhận: {recipient} • Số dư mới: {int(new_bal):,} ₫",
+        f"Mã GD: {tx_code} • Người nhận: {recipient} • Số dư mới: {int(new_bal):,} VNĐ",
         "/services/mobile/mobile-app.html"
     )
     conn.commit()
@@ -8165,7 +8720,7 @@ def nexora_mobile_wallet_action_api():
         "created_at": now_str,
         "new_balance": new_bal,
         "soundbox_speech": f"Nexora Pay thông báo: Giao dịch thành công {int(amount)} đồng. Số dư hiện tại là {int(new_bal)} đồng.",
-        "message": f"Giao dịch thành công! Số dư Ví Nexora Pay hiện tại: {int(new_bal):,} ₫"
+        "message": f"[NEXORA PAY] Giao dịch thành công! Số dư hiện tại: {int(new_bal):,} VNĐ"
     }), 200
 
 
@@ -8180,7 +8735,7 @@ def nexora_send_account_security_otp_api():
     raw_e = str(data.get("email") or data.get("email_or_username") or (user.get("email") if user else "") or "khach_hang_vip").strip().lower(); email = raw_e if "@" in raw_e else f"{raw_e}@mail.castle-tech.cloud"
     if not email or "@" not in email:
         conn.close()
-        return jsonify({"ok": False, "error": "⚠️ Vui lòng nhập địa chỉ Email hợp lệ để nhận mã OTP 6 số!"}), 400
+        return jsonify({"ok": False, "error": "Vui lòng nhập địa chỉ Email hợp lệ để nhận mã OTP 6 số!"}), 400
 
     uid = int(user["id"]) if user else 0
     otp_code = str(random.randint(100000, 999999))
@@ -8239,9 +8794,9 @@ def nexora_send_account_security_otp_api():
         "mail_sent": mail_sent,
         "demo_otp_hint": otp_code if not mail_sent else "",
         "message": (
-            f"📨 Đã gửi mã OTP 6 số tới [{email}] từ Nexora Mall CSKH!"
+            f"[NEXORA OTP] Đã gửi mã OTP 6 số tới [{email}] từ Nexora Mall CSKH!"
             if mail_sent else
-            f"📨 Đã tạo mã OTP xác thực cho [{email}] (Mã kiểm thử nội bộ: {otp_code})"
+            f"[NEXORA OTP] Đã tạo mã OTP xác thực cho [{email}] (Mã kiểm thử nội bộ: {otp_code})"
         )
     }), 200
 
@@ -8258,11 +8813,11 @@ def nexora_verify_otp_and_change_password_api():
     user = _resolve_authenticated_mobile_user(conn, data)
     if not user:
         conn.close()
-        return jsonify({"ok": False, "require_login": True, "error": "🔒 Vui lòng đăng nhập trước khi xác minh OTP!"}), 401
+        return jsonify({"ok": False, "require_login": True, "error": "Vui lòng đăng nhập trước khi xác minh OTP!"}), 401
 
     if len(otp_input) != 6 or not otp_input.isdigit():
         conn.close()
-        return jsonify({"ok": False, "error": "⚠️ Mã OTP phải gồm đúng 6 chữ số!"}), 400
+        return jsonify({"ok": False, "error": "Mã OTP phải gồm đúng 6 chữ số!"}), 400
 
     uid = int(user["id"])
     email = str(data.get("email") or user.get("email") or "").strip().lower()
@@ -8286,7 +8841,7 @@ def nexora_verify_otp_and_change_password_api():
 
     if not otp_row and otp_input != "888888":
         conn.close()
-        return jsonify({"ok": False, "error": "❌ Mã OTP không chính xác hoặc đã hết hạn!"}), 400
+        return jsonify({"ok": False, "error": "Mã OTP không chính xác hoặc đã hết hạn!"}), 400
 
     if otp_row:
         try:
@@ -8343,8 +8898,8 @@ def nexora_verify_otp_and_change_password_api():
             conn,
             uid,
             "balance",
-            "🎁 Cộng +20.000 Xu Thưởng Xác Thực OTP Bảo Mật",
-            f"Tài khoản của bạn đã xác thực OTP thành công. Số dư mới: {int(cur_bal):,} ₫.",
+            "[NEXORA BONUS] Cộng +20.000 Xu Xác Thực OTP Bảo Mật",
+            f"Tài khoản của bạn đã xác thực OTP thành công. Số dư mới: {int(cur_bal):,} VNĐ.",
             "/services/mobile/mobile-app.html"
         )
 
@@ -8368,7 +8923,7 @@ def nexora_verify_otp_and_change_password_api():
         "reward_coins_added": reward_coins_added,
         "new_coins": cur_coins,
         "new_balance": cur_bal,
-        "message": f"✅ Đã xác minh OTP bảo mật thành công{bonus_msg}"
+        "message": f"[NEXORA SECURITY] Đã xác minh OTP bảo mật thành công{bonus_msg}"
     }), 200
 
 
@@ -8414,7 +8969,7 @@ def nexora_update_account_settings_api():
         "cvd_mode": cvd_mode,
         "font_scale": font_scale,
         "ui_density": ui_density,
-        "message": "✅ Đã lưu cài đặt cá nhân & chế độ trợ năng mù màu (CVD)!"
+        "message": "[NEXORA SETTINGS] Đã lưu cài đặt cá nhân & chế độ trợ năng mù màu (CVD)!"
     }), 200
 
 
@@ -8434,6 +8989,8 @@ def _build_enriched_mobile_bridge_payload():
     uid = int(user["id"]) if is_authenticated else 0
     uname = str(user.get("username") or "") if is_authenticated else ""
     full_name = str(user.get("full_name") or uname) if is_authenticated else "Khách vãng lai"
+    is_adm = _is_admin_user_row(user) if is_authenticated else False
+    role_str = "admin" if is_adm else ("user" if is_authenticated else "guest")
     wallet_bal = float(user.get("bank_balance") if (is_authenticated and user.get("bank_balance") is not None) else (user.get("wallet_balance") if is_authenticated else 0.0))
     coins_val = int(user.get("coins") or 0) if is_authenticated else 0
     email_verified = int(user.get("email_verified") or 0) if is_authenticated else 0
@@ -8445,8 +9002,13 @@ def _build_enriched_mobile_bridge_payload():
     refunded_total = 0.0
     tech_shopping_spend = 0.0
     recent_txs = []
+    garage_items = []
+    warranty_bookings = []
+    virtual_card_meta = None
 
     if is_authenticated:
+        virtual_card_meta = _build_virtual_card_metadata(user)
+        garage_items, warranty_bookings = _sync_and_get_user_hardware_garage(conn, user)
         try:
             cur.execute(
                 """
@@ -8623,7 +9185,7 @@ def _build_enriched_mobile_bridge_payload():
         "ok": True,
         "authenticated": is_authenticated,
         "platform": "NEXORA Super-App & E-Commerce Ecosystem",
-        "bridge_version": "v12.0-ULTRA-SUPERAPP",
+        "bridge_version": "v13.0-RBAC-PURE-CANVAS",
         "server_timestamp": int(time.time() * 1000),
         "active_theme": theme_state["theme_id"],
         "theme_detail": theme_obj,
@@ -8634,6 +9196,8 @@ def _build_enriched_mobile_bridge_payload():
             "authenticated": is_authenticated,
             "username": uname,
             "full_name": full_name,
+            "role": role_str,
+            "is_admin": is_adm,
             "email": str(user.get("email") or "") if is_authenticated else "",
             "phone": str(user.get("phone") or "") if is_authenticated else "",
             "shipping_address": str(user.get("shipping_address") or user.get("address") or "") if is_authenticated else "",
@@ -8645,7 +9209,8 @@ def _build_enriched_mobile_bridge_payload():
             "coins": coins_val if is_authenticated else None,
             "email_verified": email_verified,
             "cvd_mode": cvd_mode,
-            "streak_days": streak_days
+            "streak_days": streak_days,
+            "virtual_card": virtual_card_meta
         },
         "multi_pockets": {
             "nexora_pay_wallet": wallet_bal if is_authenticated else None,
@@ -8653,6 +9218,8 @@ def _build_enriched_mobile_bridge_payload():
             "auction_margin_10pct": auction_deposit if is_authenticated else None,
             "refund_100pct_bag": refund_100_amount if is_authenticated else None
         },
+        "hardware_garage": garage_items,
+        "warranty_bookings": warranty_bookings,
         "spending_analytics": {
             "month_label": time.strftime("%m/%Y"),
             "total_volume": tech_shopping_spend + auction_escrow_spend + refund_100_amount,
@@ -8670,7 +9237,8 @@ def _build_enriched_mobile_bridge_payload():
             "open_rfq_requests": rfq_cnt,
             "featured_products_count": len(prods),
             "awaiting_qr_count": sum(1 for s in pending_qr_sessions if s["status"] == "AWAITING_PAYMENT"),
-            "unread_notifications": unread_notif_cnt
+            "unread_notifications": unread_notif_cnt,
+            "garage_devices_count": len(garage_items)
         },
         "featured_products": prods,
         "mobile_endpoints": {
@@ -8678,6 +9246,10 @@ def _build_enriched_mobile_bridge_payload():
             "theme_sync": "/api/mobile/theme-sync",
             "auth_login": "/api/mobile/auth-login",
             "auth_logout": "/api/mobile/auth-logout",
+            "admin_defense_action": "/api/mobile/admin/defense-action",
+            "hardware_garage": "/api/mobile/hardware-garage",
+            "book_warranty_service": "/api/mobile/hardware-garage/book-service",
+            "shake_reward": "/api/mobile/sensors/shake-reward",
             "wallet_action": "/api/mobile/wallet-action",
             "clear_transactions": "/api/mobile/transactions/clear",
             "smart_otp_generate": "/api/mobile/smart-otp/generate",

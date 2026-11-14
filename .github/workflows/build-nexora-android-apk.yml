@@ -2,7 +2,7 @@ name: Build Nexora Mobile Android APK
 
 on:
   push:
-    branches: [ "ver12", "ver11", "ver10", "ver09", "ver08", "ver07", "main", "master" ]
+    branches: [ "ver13", "ver12", "ver11", "ver10", "ver09", "ver08", "ver07", "main", "master" ]
   workflow_dispatch:
 
 jobs:

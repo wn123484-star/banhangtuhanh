@@ -113,7 +113,7 @@ body.nx-mobile-body {
     background: var(--nx-bg);
     color: var(--nx-text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    padding-bottom: 102px;
+    padding-bottom: 104px;
     transition: background 0.25s ease, color 0.25s ease;
 }
 
@@ -173,7 +173,7 @@ body.nx-mobile-body {
 .nx-live-ticker-pill {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     background: rgba(255, 255, 255, 0.16);
     backdrop-filter: blur(8px);
     color: #ffffff;
@@ -206,7 +206,7 @@ body.nx-mobile-body {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     position: relative;
 }
 
@@ -295,13 +295,25 @@ body.nx-mobile-body {
 .nx-canvas-icon {
     width: 34px;
     height: 34px;
-    display: block;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 .nx-canvas-icon-sm {
-    width: 24px;
-    height: 24px;
-    display: block;
+    width: 22px;
+    height: 22px;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.nx-canvas-icon-xs {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
 }
 
 .nx-multi-pocket-card {
@@ -336,9 +348,12 @@ body.nx-mobile-body {
     color: var(--nx-text);
     border-radius: 999px;
     padding: 5px 10px;
-    font-size: 0.74rem;
+    font-size: 0.73rem;
     font-weight: 700;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .nx-pocket-grid {
@@ -471,6 +486,67 @@ body.nx-mobile-body {
     padding: 1px 5px;
     border-radius: 999px;
     text-transform: uppercase;
+}
+
+.nx-3d-card-scene {
+    perspective: 1100px;
+    width: 100%;
+    max-width: 400px;
+    height: 226px;
+    margin: 0 auto 10px auto;
+    cursor: pointer;
+    user-select: none;
+}
+
+.nx-3d-card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    border-radius: 20px;
+}
+
+.nx-3d-card-inner.is-flipped {
+    transform: rotateY(180deg);
+}
+
+.nx-3d-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 16px 34px rgba(5, 46, 22, 0.28);
+}
+
+.nx-3d-card-face-back {
+    transform: rotateY(180deg);
+}
+
+.nx-admin-command-card {
+    border: 2px solid #f59e0b !important;
+    background: linear-gradient(145deg, rgba(6, 78, 59, 0.08), rgba(245, 158, 11, 0.12));
+}
+
+.nx-admin-restore-bar {
+    position: fixed;
+    bottom: 84px;
+    right: 16px;
+    z-index: 1020;
+    background: #052e16;
+    color: #fde047;
+    border: 2px solid #f59e0b;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    gap: 6px;
 }
 
 .nx-ai-donut-row {

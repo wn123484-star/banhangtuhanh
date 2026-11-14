@@ -11,6 +11,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,7 +43,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements SensorEventListener {
     private static final String PREFS_NAME = "NexoraMobilePrefs";
     private static final String KEY_SERVER_URL = "server_url";
     private static final String KEY_ACTIVE_THEME = "active_theme";
@@ -55,11 +59,21 @@ public class MainActivity extends Activity {
     private Runnable bgPollRunnable;
     private int notificationSeq = 2000;
 
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private float accelCurrent = SensorManager.GRAVITY_EARTH;
+    private float accelLast = SensorManager.GRAVITY_EARTH;
+    private float shakeAccel = 0.0f;
+    private long lastShakeTimestamp = 0L;
+    private int consecutiveShakeCount = 0;
+    private boolean currentPrivacyTiltState = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         createLockScreenNotificationChannel();
         requestRuntimePermissionsIfNeeded();
+        initHardwareSensors();
 
         LinearLayout rootLayout = new LinearLayout(this);
         rootLayout.setOrientation(LinearLayout.VERTICAL);
@@ -82,6 +96,108 @@ public class MainActivity extends Activity {
 
         loadNexoraPortal(getIntent());
         startBackgroundNotificationPoller();
+    }
+
+    private void initHardwareSensors() {
+        try {
+            sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            if (sensorManager != null) {
+                accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+                if (accelerometer != null) {
+                    sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        try {
+            if (sensorManager != null && accelerometer != null) {
+                sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            if (sensorManager != null) {
+                sensorManager.unregisterListener(this);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event == null || event.sensor == null) return;
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            float x = event.values[0];
+            float y = event.values[1];
+            float z = event.values[2];
+
+            accelLast = accelCurrent;
+            accelCurrent = (float) Math.sqrt((double) (x * x + y * y + z * z));
+            float delta = accelCurrent - accelLast;
+            shakeAccel = shakeAccel * 0.85f + delta;
+
+            if (shakeAccel > 15.5f) {
+                long now = System.currentTimeMillis();
+                if (now - lastShakeTimestamp < 900L) {
+                    consecutiveShakeCount++;
+                } else {
+                    consecutiveShakeCount = 1;
+                }
+                lastShakeTimestamp = now;
+                if (consecutiveShakeCount >= 2) {
+                    consecutiveShakeCount = 0;
+                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    if (v != null) {
+                        v.vibrate(70);
+                    }
+                    if (webView != null) {
+                        webView.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                    webView.evaluateJavascript("if(window.onNexoraDeviceShake)window.onNexoraDeviceShake();", null);
+                                } else {
+                                    webView.loadUrl("javascript:if(window.onNexoraDeviceShake)window.onNexoraDeviceShake();");
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+
+            boolean shouldLockPrivacy = (z < -7.5f) || (Math.abs(x) > 7.8f);
+            if (shouldLockPrivacy != currentPrivacyTiltState) {
+                currentPrivacyTiltState = shouldLockPrivacy;
+                final boolean nextState = shouldLockPrivacy;
+                if (webView != null) {
+                    webView.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            String js = "if(window.onNexoraPrivacyTilt)window.onNexoraPrivacyTilt(" + (nextState ? "true" : "false") + ");";
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                                webView.evaluateJavascript(js, null);
+                            } else {
+                                webView.loadUrl("javascript:" + js);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 
     @Override
@@ -404,11 +520,46 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void scheduleAdminLockScreenShow(final int delayMs) {
+            Handler h = new Handler(Looper.getMainLooper());
+            h.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showSystemLockScreenNotification(
+                            "[Nexora Price Alert] RTX 4070 SUPER vừa giảm chạm đáy (-15%)!",
+                            "Giá ưu đãi chỉ còn 16.140.000 VNĐ trên Sàn Nexora. Chạm để mở biểu đồ nến!",
+                            "/services/market_tracker/price-tracker.html"
+                    );
+                }
+            }, Math.max(100, delayMs));
+            h.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showSystemLockScreenNotification(
+                            "[Nexora Pay +20.000.000 ₫] Giải ngân Bảo lãnh Escrow thành công!",
+                            "Hợp đồng thông minh SOP-01 vừa cộng +20.000.000 VNĐ vào Ví Lục Bảo Nexora Pay.",
+                            "/services/mobile/mobile-app.html"
+                    );
+                }
+            }, Math.max(100, delayMs) + 600);
+            h.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    showSystemLockScreenNotification(
+                            "[Nexora Security SOP-01] Cập nhật Chính sách Bảo lãnh & Smart OTP!",
+                            "Hệ thống V13 đã kích hoạt Khiên Sinh Trắc Học và Hộ chiếu Bảo hành 4-Block SHA-256.",
+                            "/services/legal/terms.html"
+                    );
+                }
+            }, Math.max(100, delayMs) + 1200);
+        }
+
+        @JavascriptInterface
         public void vibrateShort() {
             try {
                 Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                 if (v != null) {
-                    v.vibrate(65);
+                    v.vibrate(70);
                 }
             } catch (Exception ignored) {
             }

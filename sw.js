@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexora-mobile-pwa-v12-ultra';
+const CACHE_NAME = 'nexora-mobile-pwa-v13-rbac';
 const CORE_ASSETS = [
     '/services/mobile/mobile-app.html',
     '/services/mobile/mobile-app.css',

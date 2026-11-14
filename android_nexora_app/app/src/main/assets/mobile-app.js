@@ -41,14 +41,19 @@ function loadSavedMobileAuthUser() {
     return null;
 }
 
+const __initUser = loadSavedMobileAuthUser();
 let __nxState = {
     apiBase: localStorage.getItem('nexora_api_base') || window.location.origin,
     themeId: localStorage.getItem('nexora_active_theme') || 'emerald_fintech_light',
     cvdMode: localStorage.getItem('nexora_cvd_mode') || 'standard',
     hideBalance: localStorage.getItem('nexora_hide_balance') === '1',
+    privacyTiltLocked: false,
     soundboxEnabled: localStorage.getItem('nexora_soundbox_enabled') !== '0',
-    authUser: loadSavedMobileAuthUser(),
-    isLoggedIn: Boolean(loadSavedMobileAuthUser()),
+    authUser: __initUser,
+    isLoggedIn: Boolean(__initUser),
+    userRole: (__initUser && (__initUser.role === 'admin' || __initUser.is_admin)) ? 'admin' : (__initUser ? 'user' : 'guest'),
+    isAdmin: Boolean(__initUser && (__initUser.role === 'admin' || __initUser.is_admin)),
+    previewAsNormalUser: false,
     emailVerified: false,
     otpSendLocked: false,
     bridgeData: null,
@@ -71,8 +76,21 @@ let __nxState = {
     aimTimeLeft: 30,
     aimTarget: { x: 160, y: 120, r: 24 },
     aimTimer: null,
-    treeWaterLevel: 3,
-    treeCoinsDrops: []
+    cardFlipped: false,
+    cardCvvUnlocked: false,
+    cardTiltX: 0,
+    cardTiltY: 0,
+    garageList: [],
+    selectedGarageIdx: 0,
+    chainAnimTick: 0,
+    chainAnimTimer: null,
+    biometricMode: 'fingerprint',
+    biometricProgress: 0,
+    biometricHoldTimer: null,
+    biometricFaceStream: null,
+    biometricCallback: null,
+    shakeMode: 'reward',
+    lastShakeTs: 0
 };
 
 function nxApiUrl(path) {
@@ -92,9 +110,9 @@ function nxAuthHeaders(extra = {}) {
 
 function nxFormatVnd(amount) {
     if (!__nxState.isLoggedIn || amount === null || amount === undefined) {
-        return '🔒 Đăng nhập để xem';
+        return 'Đăng nhập để xem';
     }
-    if (__nxState.hideBalance) return '•••••••• ₫';
+    if (__nxState.hideBalance || __nxState.privacyTiltLocked) return '•••••••• ₫';
     return Number(amount || 0).toLocaleString('vi-VN') + ' ₫';
 }
 
@@ -103,7 +121,7 @@ function nxToast(msg) {
     if (!box) {
         box = document.createElement('div');
         box.id = 'nxToastBanner';
-        box.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);max-width:440px;width:92%;background:#052e16;color:#fff;padding:11px 16px;border-radius:14px;font-size:0.82rem;font-weight:700;z-index:2000;box-shadow:0 10px 28px rgba(0,0,0,0.35);border:1.5px solid #10b981;text-align:center;transition:opacity 0.2s;';
+        box.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);max-width:460px;width:92%;background:#052e16;color:#fff;padding:11px 16px;border-radius:14px;font-size:0.82rem;font-weight:700;z-index:2200;box-shadow:0 10px 28px rgba(0,0,0,0.35);border:1.5px solid #10b981;text-align:center;transition:opacity 0.2s;';
         document.body.appendChild(box);
     }
     box.textContent = msg;
@@ -411,6 +429,152 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.lineWidth = 5;
         ctx.beginPath(); ctx.arc(58, 48, 14, -0.7, 0.7); ctx.stroke();
         ctx.beginPath(); ctx.arc(58, 48, 24, -0.8, 0.8); ctx.stroke();
+    } else if (iconName === 'admin_crown_shield') {
+        ctx.fillStyle = gGold;
+        ctx.beginPath();
+        ctx.moveTo(48, 8); ctx.lineTo(82, 22); ctx.lineTo(82, 50);
+        ctx.quadraticCurveTo(82, 78, 48, 88);
+        ctx.quadraticCurveTo(14, 78, 14, 50);
+        ctx.lineTo(14, 22); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#052e16';
+        ctx.beginPath();
+        ctx.moveTo(28, 58); ctx.lineTo(28, 36); ctx.lineTo(40, 46);
+        ctx.lineTo(48, 30); ctx.lineTo(56, 46); ctx.lineTo(68, 36);
+        ctx.lineTo(68, 58); ctx.closePath(); ctx.fill();
+    } else if (iconName === 'hardware_garage') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath(); ctx.roundRect(22, 22, 52, 52, 10); ctx.fill();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 4;
+        for (let i = 28; i <= 68; i += 12) {
+            ctx.beginPath();
+            ctx.moveTo(i, 10); ctx.lineTo(i, 22);
+            ctx.moveTo(i, 74); ctx.lineTo(i, 86);
+            ctx.moveTo(10, i); ctx.lineTo(22, i);
+            ctx.moveTo(74, i); ctx.lineTo(86, i);
+            ctx.stroke();
+        }
+        ctx.fillStyle = '#052e16';
+        ctx.beginPath(); ctx.roundRect(34, 34, 28, 28, 6); ctx.fill();
+    } else if (iconName === 'metal_card_3d') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath(); ctx.roundRect(10, 22, 76, 52, 12); ctx.fill();
+        ctx.fillStyle = gGold;
+        ctx.beginPath(); ctx.roundRect(20, 36, 18, 14, 4); ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(20, 60); ctx.lineTo(66, 60); ctx.stroke();
+    } else if (iconName === 'fingerprint_scan') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 4;
+        for (let r = 10; r <= 34; r += 8) {
+            ctx.beginPath();
+            ctx.arc(48, 50, r, Math.PI * 1.1, Math.PI * 1.9);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(48, 50, r, 0.2, Math.PI * 0.8);
+            ctx.stroke();
+        }
+    } else if (iconName === 'face_mesh_id') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.roundRect(16, 16, 64, 64, 16); ctx.stroke();
+        ctx.fillStyle = gGold;
+        ctx.beginPath(); ctx.arc(36, 40, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(60, 40, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 50, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = gGold;
+        ctx.beginPath(); ctx.arc(48, 56, 12, 0.2, Math.PI - 0.2); ctx.stroke();
+    } else if (iconName === 'shake_phone') {
+        ctx.save();
+        ctx.translate(48, 48);
+        ctx.rotate(-0.22);
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath(); ctx.roundRect(-18, -30, 36, 60, 8); ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-13, -22, 26, 42);
+        ctx.restore();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(48, 48, 38, -0.8, -0.2); ctx.stroke();
+        ctx.beginPath(); ctx.arc(48, 48, 38, 2.2, 2.8); ctx.stroke();
+    } else if (iconName === 'privacy_shield') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath();
+        ctx.moveTo(48, 10); ctx.lineTo(80, 22); ctx.lineTo(80, 50);
+        ctx.quadraticCurveTo(80, 76, 48, 86);
+        ctx.quadraticCurveTo(16, 76, 16, 50);
+        ctx.lineTo(16, 22); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.moveTo(28, 66); ctx.lineTo(68, 28); ctx.stroke();
+    } else if (iconName === 'wrench_shield') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(24, 72); ctx.lineTo(62, 34);
+        ctx.stroke();
+        ctx.fillStyle = gGold;
+        ctx.beginPath(); ctx.arc(66, 30, 14, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'blockchain_cube') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 4;
+        ctx.strokeRect(18, 28, 36, 36);
+        ctx.strokeStyle = gGold;
+        ctx.strokeRect(40, 18, 36, 36);
+        ctx.beginPath();
+        ctx.moveTo(18, 28); ctx.lineTo(40, 18);
+        ctx.moveTo(54, 28); ctx.lineTo(76, 18);
+        ctx.moveTo(54, 64); ctx.lineTo(76, 54);
+        ctx.stroke();
+    } else if (iconName === 'eye_open' || iconName === 'eye_closed') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(12, 48);
+        ctx.quadraticCurveTo(48, 20, 84, 48);
+        ctx.quadraticCurveTo(48, 76, 12, 48);
+        ctx.stroke();
+        ctx.fillStyle = gGold;
+        ctx.beginPath(); ctx.arc(48, 48, 10, 0, Math.PI * 2); ctx.fill();
+        if (iconName === 'eye_closed') {
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.moveTo(20, 74); ctx.lineTo(76, 22); ctx.stroke();
+        }
+    } else if (iconName === 'user_lock') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath(); ctx.roundRect(22, 42, 52, 40, 10); ctx.fill();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(48, 42, 16, Math.PI, 0); ctx.stroke();
+    } else if (iconName === 'search_lens') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(42, 42, 22, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = gGold;
+        ctx.beginPath(); ctx.moveTo(58, 58); ctx.lineTo(80, 80); ctx.stroke();
+    } else if (iconName === 'sync_arrows') {
+        ctx.strokeStyle = gEmerald;
+        ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(48, 48, 26, 0.3, Math.PI - 0.3); ctx.stroke();
+        ctx.strokeStyle = gGold;
+        ctx.beginPath(); ctx.arc(48, 48, 26, Math.PI + 0.3, Math.PI * 2 - 0.3); ctx.stroke();
+    } else if (iconName === 'close_cross') {
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(24, 24); ctx.lineTo(72, 72);
+        ctx.moveTo(72, 24); ctx.lineTo(24, 72);
+        ctx.stroke();
+    } else if (iconName === 'check_verified') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath(); ctx.arc(48, 48, 36, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(28, 48); ctx.lineTo(42, 62); ctx.lineTo(68, 34);
+        ctx.stroke();
     } else {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 8;
@@ -435,6 +599,690 @@ function renderNexoraCanvasIcons() {
     });
 }
 
+function applyRbacVisibilityAcrossUi() {
+    const prof = (__nxState.bridgeData && __nxState.bridgeData.user_profile) || __nxState.authUser || {};
+    const realIsAdmin = Boolean(__nxState.isLoggedIn && (prof.role === 'admin' || prof.is_admin === true || String(prof.username || '').toLowerCase() === 'admin'));
+    __nxState.userRole = realIsAdmin ? 'admin' : (__nxState.isLoggedIn ? 'user' : 'guest');
+    __nxState.isAdmin = Boolean(realIsAdmin && !__nxState.previewAsNormalUser);
+
+    const cmdCenter = document.getElementById('nxAdminDefenseCommandCenter');
+    if (cmdCenter) {
+        cmdCenter.style.display = __nxState.isAdmin ? 'block' : 'none';
+    }
+    document.querySelectorAll('[data-admin-only="true"]').forEach(el => {
+        el.style.display = __nxState.isAdmin ? '' : 'none';
+    });
+
+    const admBadge = document.getElementById('nxAdminCommanderBadgeWrap');
+    if (admBadge) {
+        admBadge.style.display = __nxState.isAdmin ? 'inline-flex' : 'none';
+    }
+
+    const restoreBar = document.getElementById('nxAdminRestoreFloatingBar');
+    if (restoreBar) {
+        restoreBar.style.display = (realIsAdmin && __nxState.previewAsNormalUser) ? 'inline-flex' : 'none';
+    }
+    renderNexoraCanvasIcons();
+}
+
+function toggleAdminPreviewAsNormalUser(forcePreviewState) {
+    __nxState.previewAsNormalUser = typeof forcePreviewState === 'boolean' ? forcePreviewState : !__nxState.previewAsNormalUser;
+    applyRbacVisibilityAcrossUi();
+    if (__nxState.previewAsNormalUser) {
+        nxToast('Đã bật Chế Độ Xem Thử Giao Diện Khách Hàng Thường (Đã ẩn toàn bộ công cụ Admin)!');
+    } else {
+        nxToast('Đã khôi phục toàn bộ quyền Quản Trị Viên Cấp Cao (ADMIN COMMANDER)!');
+    }
+}
+
+async function start3SecAdminLockscreenShow() {
+    if (!__nxState.isAdmin) {
+        nxToast('Chức năng này chỉ dành cho Quản trị viên (Admin)!');
+        return;
+    }
+    const ringWrap = document.getElementById('nxAdmin3SecCountdownBox');
+    const cv = document.getElementById('nxAdmin3SecCanvas');
+    if (ringWrap) ringWrap.style.display = 'block';
+    nxToast('Đang đếm ngược 3.0 giây! Admin hãy bấm nút Nguồn tắt màn hình điện thoại ngay bây giờ!');
+
+    let remainMs = 3000;
+    const stepMs = 100;
+    const drawCountdown = (ms) => {
+        if (!cv) return;
+        const ctx = cv.getContext('2d');
+        const w = cv.width;
+        const h = cv.height;
+        ctx.clearRect(0, 0, w, h);
+        const pct = Math.max(0, ms) / 3000;
+        ctx.lineWidth = 9;
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
+        ctx.beginPath(); ctx.arc(w / 2, h / 2, 42, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.beginPath(); ctx.arc(w / 2, h / 2, 42, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#052e16';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText((ms / 1000).toFixed(1) + 's', w / 2, h / 2);
+    };
+    drawCountdown(remainMs);
+
+    const timer = setInterval(async () => {
+        remainMs -= stepMs;
+        drawCountdown(Math.max(0, remainMs));
+        if (remainMs <= 0) {
+            clearInterval(timer);
+            try {
+                const res = await fetch(nxApiUrl('/api/mobile/admin/defense-action'), {
+                    method: 'POST',
+                    headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+                    body: JSON.stringify({ sub_action: 'lockscreen_show_3s' })
+                });
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    const batch = data.notifications_batch || [];
+                    batch.forEach((it, idx) => {
+                        setTimeout(() => {
+                            triggerNativeOrWebLockScreenNotification(it.title, it.message, it.target_url);
+                        }, idx * 450);
+                    });
+                    speakBalanceChangeByAiSoundbox(data.soundbox_speech);
+                    await syncMobileBridge();
+                } else {
+                    nxToast(data.error || 'Không thể thực thi lệnh Admin!');
+                }
+            } catch (e) {}
+        }
+    }, stepMs);
+}
+
+async function runAdminDefenseCommand(subAction) {
+    if (!__nxState.isAdmin) {
+        nxToast('Chức năng này chỉ dành cho Quản trị viên cấp cao (Admin)!');
+        return;
+    }
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/admin/defense-action'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ sub_action: subAction })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            nxToast(data.message || 'Đã thực thi lệnh điều hành Admin!');
+            if (data.title && data.notification_body) {
+                triggerNativeOrWebLockScreenNotification(data.title, data.notification_body);
+            }
+            if (data.soundbox_speech) {
+                speakBalanceChangeByAiSoundbox(data.soundbox_speech);
+            }
+            await syncMobileBridge();
+        } else {
+            nxToast(data.error || 'Từ chối truy cập!');
+        }
+    } catch (e) {
+        nxToast('Lỗi kết nối khi thực thi lệnh Admin!');
+    }
+}
+
+function render3DVirtualEmeraldCard() {
+    const frontCv = document.getElementById('nxMetalCardFrontCanvas');
+    const backCv = document.getElementById('nxMetalCardBackCanvas');
+    if (!frontCv || !backCv) return;
+
+    const prof = (__nxState.bridgeData && __nxState.bridgeData.user_profile) || __nxState.authUser || {};
+    const vcard = prof.virtual_card || {
+        holder_name: __nxState.isLoggedIn ? String(prof.full_name || prof.username || 'NEXORA MEMBER').toUpperCase() : 'KHÁCH VÃNG LAI (CHƯA ĐĂNG NHẬP)',
+        tier: __nxState.isAdmin ? 'ADMIN FOUNDER EDITION' : (__nxState.isLoggedIn ? 'EMERALD VIP' : 'LOCKED CARD'),
+        masked_number: '9704 8888 **** 2026',
+        full_number: '9704 8888 6868 2026',
+        expiry: '12/29',
+        cvv: '888',
+        cashback_earned: 0,
+        cashback_limit: 10000000
+    };
+
+    const fCtx = frontCv.getContext('2d');
+    const fw = frontCv.width;
+    const fh = frontCv.height;
+    fCtx.clearRect(0, 0, fw, fh);
+
+    const gFront = fCtx.createLinearGradient(0, 0, fw, fh);
+    if (__nxState.isAdmin) {
+        gFront.addColorStop(0, '#090d16');
+        gFront.addColorStop(0.5, '#064e3b');
+        gFront.addColorStop(1, '#b45309');
+    } else {
+        gFront.addColorStop(0, '#052e16');
+        gFront.addColorStop(0.52, '#047857');
+        gFront.addColorStop(1, '#10b981');
+    }
+    fCtx.fillStyle = gFront;
+    fCtx.fillRect(0, 0, fw, fh);
+
+    fCtx.strokeStyle = 'rgba(255,255,255,0.06)';
+    fCtx.lineWidth = 1;
+    for (let y = 8; y < fh; y += 6) {
+        fCtx.beginPath(); fCtx.moveTo(0, y); fCtx.lineTo(fw, y); fCtx.stroke();
+    }
+
+    fCtx.fillStyle = 'rgba(253, 224, 71, 0.14)';
+    fCtx.beginPath();
+    fCtx.arc(fw - 50, 45, 95, 0, Math.PI * 2);
+    fCtx.fill();
+
+    fCtx.fillStyle = '#fde047';
+    fCtx.font = 'bold 13px sans-serif';
+    fCtx.textAlign = 'left';
+    fCtx.fillText('NEXORA EMERALD METAL CARD', 24, 34);
+
+    fCtx.fillStyle = '#ffffff';
+    fCtx.font = 'bold 11px sans-serif';
+    fCtx.textAlign = 'right';
+    fCtx.fillText(vcard.tier, fw - 24, 34);
+
+    const gChip = fCtx.createLinearGradient(24, 62, 78, 102);
+    gChip.addColorStop(0, '#fef08a');
+    gChip.addColorStop(0.5, '#f59e0b');
+    gChip.addColorStop(1, '#b45309');
+    fCtx.fillStyle = gChip;
+    fCtx.beginPath(); fCtx.roundRect(24, 62, 54, 40, 8); fCtx.fill();
+    fCtx.strokeStyle = '#78350f';
+    fCtx.lineWidth = 1.5;
+    fCtx.strokeRect(36, 62, 14, 40);
+    fCtx.strokeRect(24, 76, 54, 12);
+
+    fCtx.strokeStyle = '#fde047';
+    fCtx.lineWidth = 2.5;
+    for (let r = 8; r <= 20; r += 6) {
+        fCtx.beginPath(); fCtx.arc(94, 82, r, -0.6, 0.6); fCtx.stroke();
+    }
+
+    const dispNum = (__nxState.cardCvvUnlocked && __nxState.isLoggedIn && !__nxState.privacyTiltLocked)
+        ? vcard.full_number
+        : vcard.masked_number;
+    fCtx.fillStyle = '#ffffff';
+    fCtx.font = 'bold 21px monospace';
+    fCtx.textAlign = 'left';
+    fCtx.fillText(dispNum, 24, 144);
+
+    fCtx.fillStyle = 'rgba(255,255,255,0.75)';
+    fCtx.font = '10px sans-serif';
+    fCtx.fillText('CHỦ THẺ / CARDHOLDER', 24, 174);
+    fCtx.fillText('HẠN THẺ', fw - 95, 174);
+
+    fCtx.fillStyle = '#fde047';
+    fCtx.font = 'bold 14px sans-serif';
+    fCtx.fillText(String(vcard.holder_name).slice(0, 26), 24, 196);
+    fCtx.fillText(vcard.expiry || '12/29', fw - 95, 196);
+
+    const bCtx = backCv.getContext('2d');
+    const bw = backCv.width;
+    const bh = backCv.height;
+    bCtx.clearRect(0, 0, bw, bh);
+
+    const gBack = bCtx.createLinearGradient(0, 0, bw, bh);
+    gBack.addColorStop(0, '#022c22');
+    gBack.addColorStop(1, '#064e3b');
+    bCtx.fillStyle = gBack;
+    bCtx.fillRect(0, 0, bw, bh);
+
+    bCtx.fillStyle = '#090d16';
+    bCtx.fillRect(0, 26, bw, 42);
+
+    bCtx.fillStyle = '#e2e8f0';
+    bCtx.beginPath(); bCtx.roundRect(24, 84, 230, 34, 6); bCtx.fill();
+    bCtx.fillStyle = '#0f172a';
+    bCtx.font = 'italic bold 13px sans-serif';
+    bCtx.textAlign = 'left';
+    bCtx.fillText('Nexora Escrow Verified', 34, 106);
+
+    bCtx.fillStyle = '#fde047';
+    bCtx.beginPath(); bCtx.roundRect(268, 84, 92, 34, 6); bCtx.fill();
+    bCtx.fillStyle = '#052e16';
+    bCtx.font = 'bold 14px monospace';
+    bCtx.textAlign = 'center';
+    const cvvTxt = (__nxState.cardCvvUnlocked && __nxState.isLoggedIn && !__nxState.privacyTiltLocked) ? ('CVV: ' + vcard.cvv) : 'CVV: ***';
+    bCtx.fillText(cvvTxt, 314, 106);
+
+    const cbEarned = Number(vcard.cashback_earned || 0);
+    const cbLimit = Math.max(1, Number(vcard.cashback_limit || 10000000));
+    const cbPct = Math.min(1, cbEarned / cbLimit);
+
+    bCtx.textAlign = 'left';
+    bCtx.fillStyle = '#ffffff';
+    bCtx.font = 'bold 12px sans-serif';
+    bCtx.fillText(`Hạn mức Hoàn tiền Cashback 5%: ${cbEarned.toLocaleString('vi-VN')} /${cbLimit.toLocaleString('vi-VN')} ₫`, 24, 148);
+
+    bCtx.fillStyle = 'rgba(255,255,255,0.18)';
+    bCtx.beginPath(); bCtx.roundRect(24, 160, bw - 48, 14, 7); bCtx.fill();
+    bCtx.fillStyle = '#10b981';
+    bCtx.beginPath(); bCtx.roundRect(24, 160, Math.max(18, (bw - 48) * cbPct), 14, 7); bCtx.fill();
+
+    bCtx.fillStyle = 'rgba(255,255,255,0.75)';
+    bCtx.font = '11px sans-serif';
+    bCtx.fillText('Chạm vào thẻ để lật Mặt Trước / Mặt Sau • Bảo mật bởi Khiên Sinh Trắc Học', 24, 198);
+}
+
+function toggleFlip3DMetalCard() {
+    __nxState.cardFlipped = !__nxState.cardFlipped;
+    const inner = document.getElementById('nxMetalCard3DInner');
+    if (inner) inner.classList.toggle('is-flipped', __nxState.cardFlipped);
+    render3DVirtualEmeraldCard();
+}
+
+function handle3DCardTouchMove(ev) {
+    const box = document.getElementById('nxMetalCard3DInner');
+    if (!box) return;
+    const touch = (ev.touches && ev.touches[0]) || ev;
+    const rect = box.getBoundingClientRect();
+    const dx = (touch.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
+    const dy = (touch.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
+    const rotY = (__nxState.cardFlipped ? 180 : 0) + dx * 12;
+    const rotX = -dy * 10;
+    box.style.transform = `rotateY(${rotY.toFixed(1)}deg) rotateX(${rotX.toFixed(1)}deg)`;
+}
+
+function reset3DCardTilt() {
+    const box = document.getElementById('nxMetalCard3DInner');
+    if (!box) return;
+    box.style.transform = __nxState.cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+}
+
+function requestUnlockCardCvvWithBiometric() {
+    if (!requireMobileLoginForAction('mở khóa số thẻ 16 số & mã CVV')) return;
+    if (__nxState.cardCvvUnlocked) {
+        __nxState.cardCvvUnlocked = false;
+        render3DVirtualEmeraldCard();
+        nxToast('Đã ẩn bảo mật số thẻ và mã CVV!');
+        return;
+    }
+    openBiometricShieldModal('Xác thực sinh trắc học để mở khóa 16 số thẻ & mã CVV động', () => {
+        __nxState.cardCvvUnlocked = true;
+        if (!__nxState.cardFlipped) toggleFlip3DMetalCard();
+        else render3DVirtualEmeraldCard();
+        nxToast('Đã mở khóa hiển thị đầy đủ 16 số thẻ & mã CVV!');
+    });
+}
+
+function openBiometricShieldModal(reasonText, onSuccessCallback) {
+    __nxState.biometricCallback = onSuccessCallback;
+    __nxState.biometricProgress = 0;
+    const reasonEl = document.getElementById('nxBiometricReasonText');
+    if (reasonEl) reasonEl.textContent = reasonText || 'Yêu cầu xác thực Khiên Sinh Trắc Học Nexora';
+    openNxModal('nxBiometricShieldModal');
+    switchBiometricMode('fingerprint');
+}
+
+function switchBiometricMode(mode) {
+    __nxState.biometricMode = mode === 'facemesh' ? 'facemesh' : 'fingerprint';
+    stopBiometricFaceCamera();
+    const fpBtn = document.getElementById('nxBioTabFingerprint');
+    const fmBtn = document.getElementById('nxBioTabFaceMesh');
+    const holdBtn = document.getElementById('nxBioHoldActionBtn');
+    const videoEl = document.getElementById('nxBiometricFaceVideo');
+
+    if (fpBtn) {
+        fpBtn.style.background = __nxState.biometricMode === 'fingerprint' ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+        fpBtn.style.color = __nxState.biometricMode === 'fingerprint' ? '#fff' : 'var(--nx-text)';
+    }
+    if (fmBtn) {
+        fmBtn.style.background = __nxState.biometricMode === 'facemesh' ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+        fmBtn.style.color = __nxState.biometricMode === 'facemesh' ? '#fff' : 'var(--nx-text)';
+    }
+
+    if (__nxState.biometricMode === 'facemesh') {
+        if (videoEl) videoEl.style.display = 'block';
+        if (holdBtn) {
+            holdBtn.textContent = 'QUÉT KHUÔN MẶT AI (68 ĐIỂM LƯỚI) & DUYỆT NGAY';
+            holdBtn.onmousedown = null;
+            holdBtn.ontouchstart = null;
+            holdBtn.onclick = startBiometricScanHold;
+        }
+        startBiometricFaceCamera();
+    } else {
+        if (videoEl) videoEl.style.display = 'none';
+        if (holdBtn) {
+            holdBtn.textContent = 'CHẠM GIỮ 1.2 GIÂY ĐỂ QUÉT VÂN TAY SIÊU ÂM';
+            holdBtn.onclick = startBiometricScanHold;
+            holdBtn.onmousedown = startBiometricScanHold;
+            holdBtn.ontouchstart = startBiometricScanHold;
+        }
+        drawBiometricScannerCanvas(0);
+    }
+}
+
+async function startBiometricFaceCamera() {
+    const videoEl = document.getElementById('nxBiometricFaceVideo');
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia && videoEl) {
+        try {
+            __nxState.biometricFaceStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            videoEl.srcObject = __nxState.biometricFaceStream;
+            await videoEl.play();
+        } catch (e) {}
+    }
+    drawBiometricScannerCanvas(20);
+}
+
+function stopBiometricFaceCamera() {
+    if (__nxState.biometricFaceStream) {
+        __nxState.biometricFaceStream.getTracks().forEach(t => t.stop());
+        __nxState.biometricFaceStream = null;
+    }
+}
+
+function drawBiometricScannerCanvas(progressPct) {
+    const cv = document.getElementById('nxBiometricScannerCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+
+    if (__nxState.biometricMode === 'fingerprint') {
+        ctx.fillStyle = '#052e16';
+        ctx.fillRect(0, 0, w, h);
+        const cx = w / 2;
+        const cy = h / 2;
+        for (let r = 16; r <= 72; r += 11) {
+            ctx.strokeStyle = r / 72 <= (progressPct / 100) ? '#10b981' : 'rgba(16, 185, 129, 0.28)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, Math.PI * 1.08, Math.PI * 1.92);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0.15, Math.PI * 0.85);
+            ctx.stroke();
+        }
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 84, -Math.PI / 2, -Math.PI / 2 + (progressPct / 100) * Math.PI * 2);
+        ctx.stroke();
+    } else {
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(40, 24, w - 80, h - 48);
+        const cx = w / 2;
+        const cy = h / 2;
+        const meshPts = [
+            [cx - 32, cy - 22], [cx + 32, cy - 22], [cx, cy - 2],
+            [cx - 26, cy + 26], [cx, cy + 34], [cx + 26, cy + 26],
+            [cx - 48, cy - 8], [cx + 48, cy - 8], [cx, cy - 48], [cx, cy + 54]
+        ];
+        ctx.fillStyle = '#fde047';
+        meshPts.forEach(p => {
+            ctx.beginPath(); ctx.arc(p[0], p[1], 3.5, 0, Math.PI * 2); ctx.fill();
+        });
+        const laserY = 28 + ((progressPct % 100) / 100) * (h - 56);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(42, laserY); ctx.lineTo(w - 42, laserY); ctx.stroke();
+    }
+}
+
+function startBiometricScanHold() {
+    if (__nxState.biometricHoldTimer) clearInterval(__nxState.biometricHoldTimer);
+    __nxState.biometricProgress = 0;
+    __nxState.biometricHoldTimer = setInterval(() => {
+        __nxState.biometricProgress += 10;
+        drawBiometricScannerCanvas(__nxState.biometricProgress);
+        if (__nxState.biometricProgress >= 100) {
+            clearInterval(__nxState.biometricHoldTimer);
+            __nxState.biometricHoldTimer = null;
+            stopBiometricFaceCamera();
+            closeNxModal('nxBiometricShieldModal');
+            if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.vibrateShort === 'function') {
+                try { window.NexoraNativeBridge.vibrateShort(); } catch (e) {}
+            }
+            if (typeof __nxState.biometricCallback === 'function') {
+                const cb = __nxState.biometricCallback;
+                __nxState.biometricCallback = null;
+                cb();
+            }
+        }
+    }, 110);
+}
+
+async function openHardwareGarageModal() {
+    if (!requireMobileLoginForAction('mở Tủ Thiết Bị & Hộ Chiếu Bảo Hành SHA-256')) return;
+    openNxModal('nxHardwareGarageModal');
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/hardware-garage?_t=' + Date.now()), { headers: nxAuthHeaders() });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            __nxState.garageList = data.garage_items || [];
+            renderHardwareGarageModalContent();
+        }
+    } catch (e) {}
+}
+
+function renderHardwareGarageModalContent() {
+    const list = __nxState.garageList || [];
+    const tabsBox = document.getElementById('nxGarageDeviceSelectorTabs');
+    const metaBox = document.getElementById('nxGarageSelectedMetaBox');
+    if (!list.length) {
+        if (metaBox) metaBox.innerHTML = '<div style="font-size:0.8rem;">Chưa có thiết bị nào trong Tủ Bảo Hành.</div>';
+        return;
+    }
+    if (__nxState.selectedGarageIdx >= list.length) __nxState.selectedGarageIdx = 0;
+    const item = list[__nxState.selectedGarageIdx];
+
+    if (tabsBox) {
+        tabsBox.innerHTML = list.map((it, idx) => {
+            const act = idx === __nxState.selectedGarageIdx;
+            return `<button type="button" class="nx-eye-btn" style="background:${act ? 'var(--nx-primary)' : 'var(--nx-surface-2)'};color:${act ? '#fff' : 'var(--nx-text)'};" onclick="__nxState.selectedGarageIdx=${idx};renderHardwareGarageModalContent();">
+                ${it.brand || 'NX'} •${it.serial_no}
+            </button>`;
+        }).join('');
+    }
+
+    if (metaBox) {
+        metaBox.innerHTML = `
+            <div style="font-weight:800;font-size:0.88rem;margin-bottom:4px;">${item.product_name}</div>
+            <div style="font-size:0.75rem;color:var(--nx-muted);margin-bottom:4px;">Số Serial: <code>${item.serial_no}</code> • Ngày kích hoạt: <strong>${item.purchase_date}</strong></div>
+            <div style="font-size:0.72rem;color:var(--nx-primary);word-break:break-all;">Merkle Root SHA-256: <code>0x${String(item.merkle_root_hash || '').slice(0, 24)}...</code></div>
+        `;
+    }
+
+    drawGarageWarrantyCountdownCanvas(item);
+    if (__nxState.chainAnimTimer) clearInterval(__nxState.chainAnimTimer);
+    __nxState.chainAnimTimer = setInterval(() => {
+        __nxState.chainAnimTick = (__nxState.chainAnimTick + 1) % 100;
+        drawGarage4BlockChainCanvas(item, __nxState.chainAnimTick);
+    }, 80);
+}
+
+function drawGarageWarrantyCountdownCanvas(item) {
+    const cv = document.getElementById('nxGarageWarrantyRingCanvas');
+    if (!cv || !item) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const rem = Number(item.remaining_days || 1075);
+    const tot = Math.max(1, Number(item.total_days || 1095));
+    const pct = Math.min(1, rem / tot);
+
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(5, 150, 105, 0.16)';
+    ctx.beginPath(); ctx.arc(w / 2, h / 2, 42, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.strokeStyle = '#059669';
+    ctx.beginPath(); ctx.arc(w / 2, h / 2, 42, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2); ctx.stroke();
+
+    ctx.fillStyle = '#052e16';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(rem + ' ngày', w / 2, h / 2 - 2);
+    ctx.fillStyle = '#166534';
+    ctx.font = '10px sans-serif';
+    ctx.fillText('/ ' + tot + ' ngày (36T)', w / 2, h / 2 + 14);
+}
+
+function drawGarage4BlockChainCanvas(item, tick) {
+    const cv = document.getElementById('nxGarageBlockchainCanvas');
+    if (!cv || !item) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.fillStyle = '#052e16';
+    ctx.beginPath(); ctx.roundRect(0, 0, w, h, 14); ctx.fill();
+
+    const labels = ['B1: Xuất Xưởng', 'B2: Kiểm Định', 'B3: Khóa Escrow', 'B4: BH 36 Tháng'];
+    const xs = [52, 144, 236, 328];
+    const y = 52;
+
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(xs[0], y); ctx.lineTo(xs[3], y); ctx.stroke();
+
+    const pulseX = xs[0] + ((tick / 100) * (xs[3] - xs[0]));
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath(); ctx.arc(pulseX, y, 6, 0, Math.PI * 2); ctx.fill();
+
+    xs.forEach((x, idx) => {
+        ctx.fillStyle = '#047857';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.roundRect(x - 36, y - 22, 72, 44, 8); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[idx], x, y - 3);
+        const sh = (item.chain && item.chain[idx] && item.chain[idx].short_hash) ? item.chain[idx].short_hash.slice(0, 10) : '0x9f8a...';
+        ctx.fillStyle = '#fde047';
+        ctx.font = '9px monospace';
+        ctx.fillText(sh, x, y + 12);
+    });
+}
+
+async function bookHardwareWarrantyService2H() {
+    if (!requireMobileLoginForAction('đặt lịch vệ sinh / bảo hành tận nơi 2H')) return;
+    const list = __nxState.garageList || [];
+    const item = list[__nxState.selectedGarageIdx] || {};
+    const srvType = document.getElementById('nxGarageServiceTypeSelect')?.value || 'Vệ sinh tản nhiệt & Tra keo kim loại lỏng tận nơi 2H';
+    const srvAddr = (document.getElementById('nxGarageServiceAddressInput')?.value || '').trim();
+
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/hardware-garage/book-service'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+                garage_id: item.id || 1,
+                serial_no: item.serial_no || 'NX-SN-2026-01',
+                service_type: srvType,
+                address: srvAddr
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            nxToast(data.message);
+            triggerNativeOrWebLockScreenNotification('[NEXORA CARE 2H] Đã Xác Nhận Lịch Hẹn', data.message);
+        } else {
+            nxToast(data.error || 'Không thể đặt lịch bảo hành!');
+        }
+    } catch (e) {
+        nxToast('Lỗi kết nối khi đặt lịch bảo hành!');
+    }
+}
+
+window.onNexoraDeviceShake = async function() {
+    const now = Date.now();
+    if (now - __nxState.lastShakeTs < 2500) return;
+    __nxState.lastShakeTs = now;
+
+    if (__nxState.shakeMode === 'qr') {
+        openMobileQrScannerCenter();
+        return;
+    }
+    if (!requireMobileLoginForAction('lắc máy mở Rương Lì Xì Lục Bảo')) return;
+    openNxModal('nxShakeRewardModal');
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/sensors/shake-reward'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            drawShakeRewardChestCanvas(data.reward_coins || 15000);
+            speakBalanceChangeByAiSoundbox(data.soundbox_speech || data.message);
+            nxToast(data.message);
+            await syncMobileBridge();
+        }
+    } catch (e) {}
+};
+
+function drawShakeRewardChestCanvas(rewardCoins) {
+    const cv = document.getElementById('nxShakeChestCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.fillStyle = '#052e16';
+    ctx.beginPath(); ctx.roundRect(0, 0, w, h, 18); ctx.fill();
+
+    ctx.fillStyle = '#f59e0b';
+    ctx.beginPath(); ctx.roundRect(w / 2 - 58, 68, 116, 76, 12); ctx.fill();
+    ctx.fillStyle = '#059669';
+    ctx.fillRect(w / 2 - 58, 96, 116, 16);
+
+    ctx.fillStyle = '#fde047';
+    ctx.font = 'bold 24px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('+' + Number(rewardCoins || 15000).toLocaleString('vi-VN') + ' XU', w / 2, 46);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('Đã cộng trực tiếp vào Ví Lục Bảo Nexora Pay (SQLite)', w / 2, 168);
+}
+
+window.onNexoraPrivacyTilt = function(isTiltedOrFaceDown) {
+    const nextState = Boolean(isTiltedOrFaceDown);
+    if (nextState !== __nxState.privacyTiltLocked) {
+        __nxState.privacyTiltLocked = nextState;
+        const shieldBanner = document.getElementById('nxPrivacyTiltShieldBanner');
+        if (shieldBanner) shieldBanner.style.display = nextState ? 'flex' : 'none';
+        renderBridgeDataToUi();
+    }
+};
+
+function initHardwareSensorsListeners() {
+    if (typeof window.DeviceOrientationEvent !== 'undefined') {
+        window.addEventListener('deviceorientation', ev => {
+            const gamma = Math.abs(Number(ev.gamma || 0));
+            const beta = Math.abs(Number(ev.beta || 0));
+            if (gamma > 58 || beta > 145) {
+                window.onNexoraPrivacyTilt(true);
+            } else if (gamma < 35 && beta < 120 && __nxState.privacyTiltLocked) {
+                window.onNexoraPrivacyTilt(false);
+            }
+        });
+    }
+    if (typeof window.DeviceMotionEvent !== 'undefined') {
+        let lastAcc = { x: 0, y: 0, z: 0 };
+        window.addEventListener('devicemotion', ev => {
+            const acc = ev.accelerationIncludingGravity;
+            if (!acc) return;
+            if (Number(acc.z || 0) < -7.8) {
+                window.onNexoraPrivacyTilt(true);
+            }
+            const dx = Math.abs((acc.x || 0) - lastAcc.x);
+            const dy = Math.abs((acc.y || 0) - lastAcc.y);
+            const dz = Math.abs((acc.z || 0) - lastAcc.z);
+            lastAcc = { x: acc.x || 0, y: acc.y || 0, z: acc.z || 0 };
+            if (dx + dy + dz > 24) {
+                window.onNexoraDeviceShake();
+            }
+        });
+    }
+}
+
 async function nxApplyTheme(themeId, syncServer = true) {
     __nxState.themeId = themeId || 'emerald_fintech_light';
     localStorage.setItem('nexora_active_theme', __nxState.themeId);
@@ -445,6 +1293,7 @@ async function nxApplyTheme(themeId, syncServer = true) {
     }
     renderThemeModalList();
     renderNexoraCanvasIcons();
+    render3DVirtualEmeraldCard();
     if (syncServer) {
         try {
             await fetch(nxApiUrl('/api/mobile/theme-sync'), {
@@ -496,7 +1345,7 @@ function renderCvdAccessibilityOptions() {
                 <span style="width:18px;height:18px;border-radius:50%;background:${m.sellColor};display:inline-block;"></span>
                 <div style="font-size:0.79rem;font-weight:700;">${m.name}</div>
             </div>
-            <span style="font-size:0.74rem;font-weight:800;">${isAct ? '✅ Đang bật' : 'Chọn'}</span>
+            <span style="font-size:0.74rem;font-weight:800;">${isAct ? 'Đang bật' : 'Chọn'}</span>
         </div>`;
     }).join('');
 }
@@ -509,8 +1358,8 @@ function updateOtpSendButtonLockState(isVerifiedLocked) {
         sendBtn.disabled = __nxState.otpSendLocked;
         sendBtn.style.opacity = __nxState.otpSendLocked ? '0.55' : '1';
         sendBtn.textContent = __nxState.otpSendLocked
-            ? '✅ Tài Khoản Đã Xác Minh OTP Bảo Mật'
-            : '📨 Gửi Mã OTP Xác Thực (6 Số)';
+            ? 'Tài Khoản Đã Xác Minh OTP Bảo Mật'
+            : 'Gửi Mã OTP Xác Thực (6 Số)';
     }
     if (unlockBtn) {
         unlockBtn.style.display = __nxState.otpSendLocked ? 'inline-block' : 'none';
@@ -519,7 +1368,7 @@ function updateOtpSendButtonLockState(isVerifiedLocked) {
 
 function unlockOtpForPasswordChange() {
     updateOtpSendButtonLockState(false);
-    nxToast('🔓 Đã mở khóa gửi mã OTP mới để đổi Mật khẩu / Mã PIN!');
+    nxToast('Đã mở khóa gửi mã OTP mới để đổi Mật khẩu / Mã PIN!');
 }
 
 async function sendMobileSecurityOtp() {
@@ -533,13 +1382,13 @@ async function sendMobileSecurityOtp() {
             body: JSON.stringify({ email, purpose: 'security_verify' })
         });
         const data = await res.json();
-        nxToast(data.message || data.error || '📨 Đã gửi mã OTP!');
+        nxToast(data.message || data.error || 'Đã gửi mã OTP!');
         if (data.demo_otp_hint) {
             const otpInp = document.getElementById('nxOtpCodeInput');
             if (otpInp && !otpInp.value) otpInp.value = data.demo_otp_hint;
         }
     } catch (e) {
-        nxToast('❌ Không thể kết nối dịch vụ gửi OTP!');
+        nxToast('Không thể kết nối dịch vụ gửi OTP!');
     }
 }
 
@@ -560,17 +1409,17 @@ async function verifyMobileOtpAndSaveSecurity() {
         if (res.ok && data.ok) {
             __nxState.emailVerified = true;
             updateOtpSendButtonLockState(true);
-            nxToast(data.message || '✅ Xác minh OTP thành công!');
+            nxToast(data.message || 'Xác minh OTP thành công!');
             if (data.reward_coins_added > 0) {
                 speakBalanceChangeByAiSoundbox('Nexora Pay thông báo: Cộng 20 nghìn xu thưởng xác thực bảo mật OTP thành công!');
-                triggerNativeOrWebLockScreenNotification('🎁 +20.000 Xu Thưởng Bảo Mật OTP', data.message);
+                triggerNativeOrWebLockScreenNotification('[NEXORA BONUS] +20.000 Xu Bảo Mật OTP', data.message);
             }
             await syncMobileBridge();
         } else {
-            nxToast(data.error || '❌ Mã OTP không hợp lệ!');
+            nxToast(data.error || 'Mã OTP không hợp lệ!');
         }
     } catch (e) {
-        nxToast('❌ Lỗi kết nối khi xác minh mã OTP!');
+        nxToast('Lỗi kết nối khi xác minh mã OTP!');
     }
 }
 
@@ -578,7 +1427,7 @@ function requireMobileLoginForAction(actionLabel = 'thực hiện chức năng n
     if (__nxState.isLoggedIn && __nxState.authUser && __nxState.authUser.id) {
         return true;
     }
-    nxToast(`🔒 Vui lòng đăng nhập tài khoản Nexora để ${actionLabel}!`);
+    nxToast(`Vui lòng đăng nhập tài khoản Nexora để ${actionLabel}!`);
     openNxModal('nxMobileAuthModal');
     return false;
 }
@@ -598,17 +1447,18 @@ async function submitMobileAuthForm(mode = 'login') {
         if (res.ok && data.ok && data.user_profile) {
             __nxState.authUser = data.user_profile;
             __nxState.isLoggedIn = true;
+            __nxState.previewAsNormalUser = false;
             __nxState.emailVerified = Boolean(data.user_profile.email_verified);
             localStorage.setItem('nexora_mobile_auth_user', JSON.stringify(data.user_profile));
             localStorage.setItem('auth_user', JSON.stringify(data.user_profile));
             closeNxModal('nxMobileAuthModal');
-            nxToast(data.message || '✅ Đăng nhập thành công!');
+            nxToast(data.message || 'Đăng nhập thành công!');
             await syncMobileBridge();
         } else {
-            nxToast(data.error || '❌ Đăng nhập không thành công!');
+            nxToast(data.error || 'Đăng nhập không thành công!');
         }
     } catch (e) {
-        nxToast('❌ Lỗi kết nối máy chủ khi xác thực tài khoản!');
+        nxToast('Lỗi kết nối máy chủ khi xác thực tài khoản!');
     }
 }
 
@@ -618,11 +1468,15 @@ async function logoutMobileAccount() {
     } catch (e) {}
     __nxState.authUser = null;
     __nxState.isLoggedIn = false;
+    __nxState.isAdmin = false;
+    __nxState.userRole = 'guest';
+    __nxState.previewAsNormalUser = false;
     __nxState.emailVerified = false;
+    __nxState.cardCvvUnlocked = false;
     localStorage.removeItem('nexora_mobile_auth_user');
     localStorage.removeItem('auth_user');
     closeNxModal('nxThemeModal');
-    nxToast('👋 Đã đăng xuất khỏi tài khoản Nexora!');
+    nxToast('Đã đăng xuất khỏi tài khoản Nexora!');
     await syncMobileBridge();
 }
 
@@ -630,8 +1484,8 @@ function toggleBalanceVisibility() {
     if (!requireMobileLoginForAction('xem số dư ví')) return;
     __nxState.hideBalance = !__nxState.hideBalance;
     localStorage.setItem('nexora_hide_balance', __nxState.hideBalance ? '1' : '0');
-    const eyeBtn = document.getElementById('nxEyeToggleBtn');
-    if (eyeBtn) eyeBtn.textContent = __nxState.hideBalance ? '🙈 Hiện số dư' : '👁️ Ẩn số dư';
+    const eyeTxt = document.getElementById('nxEyeToggleLabel');
+    if (eyeTxt) eyeTxt.textContent = __nxState.hideBalance ? 'Hiện số dư' : 'Ẩn số dư';
     renderBridgeDataToUi();
 }
 
@@ -644,6 +1498,7 @@ function openNxModal(modalId) {
 
 function closeNxModal(modalId) {
     if (modalId === 'nxQrScannerModal') stopMobileCameraQr();
+    if (modalId === 'nxBiometricShieldModal') stopBiometricFaceCamera();
     if (modalId === 'nxSmartOtpModal' && __nxState.smartOtpTimer) {
         clearInterval(__nxState.smartOtpTimer);
         __nxState.smartOtpTimer = null;
@@ -668,100 +1523,37 @@ function saveServerEndpointConfig(modeUrl) {
     }
     updateServerHeaderPill();
     closeNxModal('nxServerConfigModal');
-    nxToast('🟢 Đã chuyển kết nối máy chủ sang: ' + chosen);
+    nxToast('Đã chuyển kết nối máy chủ sang: ' + chosen);
     syncMobileBridge();
 }
 
 function updateServerHeaderPill() {
     const lbl = document.getElementById('nxServerStatusText');
     if (!lbl) return;
-    const u = __nxState.isLoggedIn && __nxState.authUser ? (__nxState.authUser.username || 'VIP') : 'Chạm xem tin mới';
-    lbl.textContent = `⚡ Nexora Live • Bảo lãnh Escrow 100% • ${u}`;
+    const roleTag = __nxState.isAdmin ? 'ADMIN COMMANDER' : (__nxState.isLoggedIn ? (__nxState.authUser.username || 'MEMBER') : 'GUEST');
+    lbl.textContent = `Nexora Live • Bảo lãnh Escrow 100% • ${roleTag}`;
 }
 
 async function syncMobileBridge() {
-    updateServerHeaderPill();
     try {
-        const q = (__nxState.authUser && __nxState.authUser.id) ? `?user_id=${encodeURIComponent(__nxState.authUser.id)}&_t=${Date.now()}` : `?_t=${Date.now()}`;
-        const res = await fetch(nxApiUrl('/api/mobile/bridge-sync' + q), {
-            headers: nxAuthHeaders(),
-            cache: 'no-store'
-        });
-        const data = await res.json();
-        if (data && data.ok) {
-            __nxState.bridgeData = data;
-            __nxState.isLoggedIn = Boolean(data.authenticated && data.user_profile && data.user_profile.id > 0);
-            if (__nxState.isLoggedIn) {
-                __nxState.authUser = data.user_profile;
-                __nxState.emailVerified = Boolean(data.user_profile.email_verified);
-                updateOtpSendButtonLockState(__nxState.emailVerified);
-                const otpEm = document.getElementById('nxOtpEmailInput');
-                if (otpEm && !otpEm.value && data.user_profile.email) otpEm.value = data.user_profile.email;
-            } else {
-                updateOtpSendButtonLockState(false);
-            }
-            if (!localStorage.getItem('nexora_active_theme') && data.active_theme) {
-                await nxApplyTheme(data.active_theme, false);
-            }
-            renderBridgeDataToUi();
-        }
-    } catch (err) {
-        const lbl = document.getElementById('nxServerStatusText');
-        if (lbl) lbl.textContent = '🟠 Chế độ Offline/LAN • Chạm để đổi cấu hình';
-    }
-}
-
-async function refreshLiveAuctionsList() {
-    try {
-        const res = await fetch(nxApiUrl('/api/auctions/list?_t=' + Date.now()), { cache: 'no-store' });
-        const data = await res.json();
-        if (data && Array.isArray(data.auctions)) {
-            renderLiveAuctionsPreview(data.auctions);
-        }
-    } catch (e) {}
-}
-
-function renderBridgeDataToUi() {
-    const d = __nxState.bridgeData || {};
-    const prof = d.user_profile || {};
-    const pockets = d.multi_pockets || {};
-
-    const wEl = document.getElementById('nxPocketWalletVal');
-    const eEl = document.getElementById('nxPocketEscrowVal');
-    const aEl = document.getElementById('nxPocketAuctionVal');
-    const uNameEl = document.getElementById('nxHeaderUserName');
-    const uCoinsEl = document.getElementById('nxHeaderCoinsBadge');
-    const authActionBtn = document.getElementById('nxHeaderAuthBtn');
-    const notifDot = document.getElementById('nxUnreadNotifBadge');
-
-    if (notifDot) {
-        const unread = Number(d.unread_notifications_count || (d.live_counters && d.live_counters.unread_notifications) || 0);
-        notifDot.textContent = unread > 99 ? '99+' : String(unread);
-        notifDot.style.display = unread > 0 ? 'flex' : 'none';
-    }
-
-    if (__nxState.isLoggedIn) {
-        if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 0);
-        if (eEl) eEl.textContent = nxFormatVnd(pockets.escrow_protection_bag ?? prof.escrow_locked_balance ?? 0);
-        if (aEl) aEl.textContent = nxFormatVnd(pockets.auction_margin_10pct ?? prof.auction_deposit_balance ?? 0);
-        if (uNameEl) uNameEl.textContent = prof.full_name || prof.username;
-        if (uCoinsEl) uCoinsEl.textContent = '🪙 ' + Number(prof.coins || 0).toLocaleString('vi-VN') + ' Xu';
-        if (authActionBtn) {
-            authActionBtn.textContent = '🚪 Đăng Xuất';
-            authActionBtn.onclick = logoutMobileAccount;
+        const q = (__nxState.authUser && __nxState.authUser.id) ? `?user_id=${encodeURIComponent(__nxState.authUser.id)}&_t=${Date.now()}` : `?_t=${Date.now()}`; const res = await fetch(nxApiUrl('/api/mobile/bridge-sync' + q), { headers: nxAuthHeaders(), cache: 'no-store' }); const data = await res.json(); if (data && data.ok) { __nxState.bridgeData = data; __nxState.isLoggedIn = Boolean(data.authenticated && data.user_profile && data.user_profile.id > 0); if (__nxState.isLoggedIn) { __nxState.authUser = data.user_profile; __nxState.emailVerified = Boolean(data.user_profile.email_verified); __nxState.garageList = data.hardware_garage || []; updateOtpSendButtonLockState(__nxState.emailVerified); const otpEm = document.getElementById('nxOtpEmailInput'); if (otpEm && !otpEm.value && data.user_profile.email) otpEm.value = data.user_profile.email; } else { __nxState.garageList = []; updateOtpSendButtonLockState(false); } if (!localStorage.getItem('nexora_active_theme') && data.active_theme) { await nxApplyTheme(data.active_theme, false); } applyRbacVisibilityAcrossUi(); updateServerHeaderPill(); renderBridgeDataToUi(); } } catch (err) { const lbl = document.getElementById('nxServerStatusText'); if (lbl) lbl.textContent = 'Chế độ Offline/LAN • Chạm để đổi cấu hình'; } }  async function refreshLiveAuctionsList() { try { const res = await fetch(nxApiUrl('/api/auctions/list?_t=' + Date.now()), { cache: 'no-store' }); const data = await res.json(); if (data && Array.isArray(data.auctions)) { renderLiveAuctionsPreview(data.auctions); } } catch (e) {} }  function renderBridgeDataToUi() { const d = __nxState.bridgeData || {}; const prof = d.user_profile || {}; const pockets = d.multi_pockets || {};  const wEl = document.getElementById('nxPocketWalletVal'); const eEl = document.getElementById('nxPocketEscrowVal'); const aEl = document.getElementById('nxPocketAuctionVal'); const uNameEl = document.getElementById('nxHeaderUserName'); const uCoinsEl = document.getElementById('nxHeaderCoinsBadge'); const authActionBtn = document.getElementById('nxHeaderAuthBtn'); const notifDot = document.getElementById('nxUnreadNotifBadge'); const garageCntEl = document.getElementById('nxGarageCountSummary');  if (notifDot) { const unread = Number(d.unread_notifications_count || (d.live_counters && d.live_counters.unread_notifications) || 0); notifDot.textContent = unread > 99 ? '99+' : String(unread); notifDot.style.display = unread > 0 ? 'flex' : 'none'; }  if (__nxState.isLoggedIn) { if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 0); if (eEl) eEl.textContent = nxFormatVnd(pockets.escrow_protection_bag ?? prof.escrow_locked_balance ?? 0); if (aEl) aEl.textContent = nxFormatVnd(pockets.auction_margin_10pct ?? prof.auction_deposit_balance ?? 0); if (uNameEl) uNameEl.textContent = prof.full_name || prof.username; if (uCoinsEl) uCoinsEl.textContent = (__nxState.hideBalance || __nxState.privacyTiltLocked) ? '•••• Xu' : (Number(prof.coins || 0).toLocaleString('vi-VN') + ' Xu'); if (authActionBtn) { authActionBtn.textContent = 'Đăng Xuất'; authActionBtn.onclick = logoutMobileAccount; } if (garageCntEl) { const gCnt = (__nxState.garageList && __nxState.garageList.length) || 0; garageCntEl.textContent = `${gCnt} thiết bị bảo hành số SHA-256 đang hoạt động`;
         }
     } else {
-        if (wEl) wEl.textContent = '🔒 Đăng nhập để xem';
-        if (eEl) eEl.textContent = '🔒 Đăng nhập để xem';
-        if (aEl) aEl.textContent = '🔒 Đăng nhập để xem';
+        if (wEl) wEl.textContent = 'Đăng nhập để xem';
+        if (eEl) eEl.textContent = 'Đăng nhập để xem';
+        if (aEl) aEl.textContent = 'Đăng nhập để xem';
         if (uNameEl) uNameEl.textContent = 'Khách vãng lai • Bấm để Đăng nhập';
-        if (uCoinsEl) uCoinsEl.textContent = '🔑 Đăng Nhập';
+        if (uCoinsEl) uCoinsEl.textContent = 'Đăng Nhập';
         if (authActionBtn) {
-            authActionBtn.textContent = '🔑 Đăng Nhập / Đăng Ký';
+            authActionBtn.textContent = 'Đăng Nhập / Đăng Ký';
             authActionBtn.onclick = () => openNxModal('nxMobileAuthModal');
+        }
+        if (garageCntEl) {
+            garageCntEl.textContent = 'Đăng nhập để đồng bộ Tủ Thiết Bị & Hộ Chiếu Bảo Hành SHA-256';
         }
     }
 
+    render3DVirtualEmeraldCard();
     renderSpendingDonut(d.spending_analytics);
     renderPendingQrSessionsList(d.pending_qr_sessions || []);
     renderLiveAuctionsPreview(d.active_auctions || []);
@@ -772,7 +1564,7 @@ function renderRealTransactionsLedger(txList) {
     const box = document.getElementById('nxRealTransactionsList');
     if (!box) return;
     if (!__nxState.isLoggedIn) {
-        box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;">🔒 Vui lòng đăng nhập để xem sổ cái lịch sử giao dịch thực tế trong SQLite.</div>`;
+        box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;">Vui lòng đăng nhập để xem sổ cái lịch sử giao dịch thực tế trong SQLite.</div>`;
         return;
     }
     if (!txList || !txList.length) {
@@ -783,9 +1575,9 @@ function renderRealTransactionsLedger(txList) {
         const amt = Number(tx.amount || 0);
         const isPlus = amt >= 0;
         const safeNote = String(tx.note || tx.tx_type || 'Giao dịch ví').replace(/'/g, '');
-        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:7px;cursor:pointer;" onclick="openReceiptForTransaction('${tx.tx_code || 'NXPAY'}', ${Math.abs(amt)}, '${safeNote}', '${tx.created_at || ''}')">
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:7px;cursor:pointer;" onclick="openReceiptForTransaction('${tx.tx_code || 'NXPAY'}',${Math.abs(amt)}, '${safeNote}', '${tx.created_at || ''}')">
             <div style="max-width:65%;">
-                <div style="font-weight:800;font-size:0.79rem;">${tx.tx_code || 'NXPAY'} • ${tx.tx_type || 'TX'}</div>
+                <div style="font-weight:800;font-size:0.79rem;">${tx.tx_code || 'NXPAY'} •${tx.tx_type || 'TX'}</div>
                 <div style="font-size:0.71rem;color:var(--nx-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.note || ''}</div>
                 <div style="font-size:0.66rem;color:var(--nx-muted);">${tx.created_at || ''} (Chạm xuất biên lai PNG)</div>
             </div>
@@ -798,7 +1590,10 @@ function renderRealTransactionsLedger(txList) {
 }
 
 async function clearRealTransactionsHistory() {
-    if (!requireMobileLoginForAction('làm sạch lịch sử giao dịch về 0')) return;
+    if (!__nxState.isAdmin) {
+        nxToast('Chức năng xóa sổ cái chỉ dành cho Quản trị viên (Admin)!');
+        return;
+    }
     try {
         const res = await fetch(nxApiUrl('/api/mobile/transactions/clear'), {
             method: 'POST',
@@ -806,10 +1601,10 @@ async function clearRealTransactionsHistory() {
             body: JSON.stringify({ user_id: __nxState.authUser.id })
         });
         const data = await res.json();
-        nxToast(data.message || '🧹 Đã làm sạch lịch sử giao dịch về 0!');
+        nxToast(data.message || 'Đã làm sạch lịch sử giao dịch về 0!');
         await syncMobileBridge();
     } catch (e) {
-        nxToast('❌ Không thể xóa lịch sử giao dịch!');
+        nxToast('Không thể xóa lịch sử giao dịch!');
     }
 }
 
@@ -841,14 +1636,10 @@ function drawDigitalReceiptOnCanvas(rcp) {
     ctx.fillRect(0, 0, w, h);
 
     ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.roundRect(24, 24, w - 48, h - 48, 22);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(24, 24, w - 48, h - 48, 22); ctx.fill();
 
     ctx.fillStyle = '#059669';
-    ctx.beginPath();
-    ctx.roundRect(24, 24, w - 48, 92, [22, 22, 0, 0]);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(24, 24, w - 48, 92, [22, 22, 0, 0]); ctx.fill();
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 22px sans-serif';
@@ -863,14 +1654,9 @@ function drawDigitalReceiptOnCanvas(rcp) {
 
     ctx.strokeStyle = '#d1fae5';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(52, 194);
-    ctx.lineTo(w - 52, 194);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(52, 194); ctx.lineTo(w - 52, 194); ctx.stroke();
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = '#475569';
-    ctx.font = '14px sans-serif';
     const rows = [
         ['Mã giao dịch:', String(rcp.tx_code || 'NXPAY-888')],
         ['Chủ tài khoản:', String((__nxState.authUser && __nxState.authUser.full_name) || 'Thành viên Nexora')],
@@ -894,9 +1680,7 @@ function drawDigitalReceiptOnCanvas(rcp) {
     ctx.rotate(-0.2);
     ctx.strokeStyle = '#dc2626';
     ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.roundRect(-78, -28, 156, 56, 10);
-    ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(-78, -28, 156, 56, 10); ctx.stroke();
     ctx.fillStyle = '#dc2626';
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
@@ -926,7 +1710,7 @@ function renderAndDownloadCanvasReceipt() {
     document.body.appendChild(a);
     a.click();
     a.remove();
-    nxToast('📥 Đã tải ảnh Biên Lai Điện Tử (.PNG) về thiết bị!');
+    nxToast('Đã tải ảnh Biên Lai Điện Tử (.PNG) về thiết bị!');
 }
 
 function renderSpendingDonut(analytics) {
@@ -942,8 +1726,8 @@ function renderSpendingDonut(analytics) {
     const totEl = document.getElementById('nxDonutCenterTotal');
 
     if (totEl) {
-        if (!__nxState.isLoggedIn) totEl.textContent = '🔒';
-        else if (__nxState.hideBalance) totEl.textContent = '••••';
+        if (!__nxState.isLoggedIn) totEl.textContent = 'KHÓA';
+        else if (__nxState.hideBalance || __nxState.privacyTiltLocked) totEl.textContent = '••••';
         else totEl.textContent = rawTotal >= 1000000 ? (rawTotal / 1000000).toFixed(1) + 'Tr' : rawTotal.toLocaleString('vi-VN') + 'đ';
     }
     if (!svgEl || !legEl) return;
@@ -966,8 +1750,8 @@ function renderSpendingDonut(analytics) {
     legEl.innerHTML = segs.map(seg => {
         const pct = rawTotal > 0 ? Math.round((Number(seg.amount || 0) / total) * 100) : 0;
         const valText = !__nxState.isLoggedIn
-            ? '🔒 Đăng nhập'
-            : (__nxState.hideBalance ? '••%' : `${pct}% (${Number(seg.amount || 0).toLocaleString('vi-VN')}đ)`);
+            ? 'Đăng nhập'
+            : ((__nxState.hideBalance || __nxState.privacyTiltLocked) ? '••%' : `${pct}% (${Number(seg.amount || 0).toLocaleString('vi-VN')}đ)`);
         return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.74rem;margin-bottom:5px;">
             <span style="display:flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:50%;background:${seg.color};display:inline-block;"></span>${seg.label}</span>
             <strong>${valText}</strong>
@@ -1018,11 +1802,11 @@ function renderLiveAuctionsPreview(auctions) {
         const stepVal = Number(a.min_step || a.min_step_price || 500000);
         const bidsCnt = Number(a.bid_count ?? a.total_bids ?? 0);
         const badge = isDutch
-            ? `<span style="background:#f43f5e;color:#fff;font-size:0.64rem;font-weight:800;padding:2px 6px;border-radius:6px;">⚡ Đấu Giá Ngược Giảm Từng Giây</span>`
-            : `<span style="background:#059669;color:#fff;font-size:0.64rem;font-weight:800;padding:2px 6px;border-radius:6px;">🛡️ Ký Quỹ 10% Anti-Sniping +30s</span>`;
+            ? `<span style="background:#f43f5e;color:#fff;font-size:0.64rem;font-weight:800;padding:2px 6px;border-radius:6px;">Đấu Giá Ngược Giảm Từng Giây</span>`
+            : `<span style="background:#059669;color:#fff;font-size:0.64rem;font-weight:800;padding:2px 6px;border-radius:6px;">Ký Quỹ 10% Anti-Sniping +30s</span>`;
         const btnAction = isDutch
-            ? `<button class="nx-eye-btn" style="background:var(--nx-primary);color:#fff;" onclick="claimDutchAuctionOnMobile(${a.id})">⚡ Chốt Giá Ngay</button>`
-            : `<button class="nx-eye-btn" style="background:var(--nx-primary);color:#fff;" onclick="placeStandardBidOnMobile(${a.id}, ${Number(a.current_price || 0) + stepVal})">🔨 Đặt Giá +${stepVal.toLocaleString('vi-VN')}đ</button>`;
+            ? `<button class="nx-eye-btn" style="background:var(--nx-primary);color:#fff;" onclick="claimDutchAuctionOnMobile(${a.id})">Chốt Giá Ngay</button>`
+            : `<button class="nx-eye-btn" style="background:var(--nx-primary);color:#fff;" onclick="placeStandardBidOnMobile(${a.id}, ${Number(a.current_price || 0) + stepVal})">Đặt Giá +${stepVal.toLocaleString('vi-VN')}đ</button>`;
         return `<div style="border:1px solid var(--nx-border);border-radius:16px;padding:10px 12px;margin-bottom:8px;background:var(--nx-surface-2);">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 ${badge}
@@ -1050,7 +1834,7 @@ function renderThemeModalList() {
                 <span style="width:32px;height:32px;border-radius:10px;background:${t.swatch};display:inline-block;border:1px solid rgba(255,255,255,0.4);"></span>
                 <div style="font-size:0.82rem;font-weight:700;">${t.name}</div>
             </div>
-            <span>${isAct ? '✅ Đang dùng' : 'Chọn'}</span>
+            <span style="font-size:0.76rem;font-weight:800;">${isAct ? 'Đang dùng' : 'Chọn'}</span>
         </div>`;
     }).join('');
 }
@@ -1066,7 +1850,7 @@ async function startMobileCameraQr() {
     const video = document.getElementById('nxMobileQrVideo');
     const wrap = document.getElementById('nxMobileCameraBox');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        nxToast('⚠️ Bạn có thể chọn Ảnh Mã QR từ Thư viện máy hoặc chọn đơn đang chờ bên dưới!');
+        nxToast('Bạn có thể chọn Ảnh Mã QR từ Thư viện máy hoặc chọn đơn đang chờ bên dưới!');
         return;
     }
     try {
@@ -1094,7 +1878,7 @@ async function startMobileCameraQr() {
             }
         }, 220);
     } catch (err) {
-        nxToast('📷 Hãy chọn Ảnh Mã QR từ Thư viện máy hoặc bấm vào hóa đơn AWAITING_PAYMENT bên dưới!');
+        nxToast('Hãy chọn Ảnh Mã QR từ Thư viện máy hoặc bấm vào hóa đơn AWAITING_PAYMENT bên dưới!');
     }
 }
 
@@ -1141,7 +1925,7 @@ function handleQrGalleryImageSelected(ev) {
                 stopMobileCameraQr();
                 handleDecodedQrString(foundData);
             } else {
-                nxToast('❌ Không tìm thấy mã QR hợp lệ trong bức ảnh bạn vừa chọn!');
+                nxToast('Không tìm thấy mã QR hợp lệ trong bức ảnh bạn vừa chọn!');
             }
         };
         img.src = loadEv.target.result;
@@ -1158,9 +1942,9 @@ async function handleDecodedQrString(rawStr) {
             body: JSON.stringify({ qr_login_token: s })
         });
         const data = await res.json();
-        nxToast(data.message || data.error || '📲 Đã duyệt QR đăng nhập máy tính!');
+        nxToast(data.message || data.error || 'Đã duyệt QR đăng nhập máy tính!');
         if (res.ok && data.ok) {
-            triggerNativeOrWebLockScreenNotification('📲 Duyệt QR Đăng Nhập Web', data.message);
+            triggerNativeOrWebLockScreenNotification('[CROSS-LOGIN] Duyệt QR Đăng Nhập Web', data.message);
         }
         return;
     }
@@ -1187,21 +1971,21 @@ function parseCleanPayToken(rawInput) {
 async function inspectQrTokenInvoice(rawTokenOrPayload) {
     const cleanTok = parseCleanPayToken(rawTokenOrPayload);
     if (!cleanTok) {
-        nxToast('⚠️ Vui lòng nhập hoặc quét mã pay_token hợp lệ!');
+        nxToast('Vui lòng nhập hoặc quét mã pay_token hợp lệ!');
         return;
     }
     try {
         const res = await fetch(nxApiUrl(`/api/payment/qr-session/${encodeURIComponent(cleanTok)}?_t=${Date.now()}`), { cache: 'no-store' });
         const info = await res.json();
         if (!res.ok || info.ok === false) {
-            nxToast(info.error || '❌ Không tìm thấy phiên hóa đơn QR này!');
+            nxToast(info.error || 'Không tìm thấy phiên hóa đơn QR này!');
             return;
         }
         __nxState.selectedQrInvoice = info;
         openNxModal('nxInvoiceInspectModal');
         renderSelectedInvoiceDetail(info);
     } catch (e) {
-        nxToast('❌ Lỗi kết nối tới máy chủ khi tải chi tiết hóa đơn QR!');
+        nxToast('Lỗi kết nối tới máy chủ khi tải chi tiết hóa đơn QR!');
     }
 }
 
@@ -1260,7 +2044,7 @@ function renderSelectedInvoiceDetail(info) {
             </div>
         </div>
         <div style="margin-bottom:10px;">
-            <div style="font-size:0.78rem;font-weight:800;margin-bottom:4px;">🛍️ Chi tiết từng sản phẩm:</div>
+            <div style="font-size:0.78rem;font-weight:800;margin-bottom:4px;">Chi tiết từng sản phẩm:</div>
             ${itemsRows}
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(16,185,129,0.12);border-radius:14px;border:1px solid #10b981;">
@@ -1272,12 +2056,12 @@ function renderSelectedInvoiceDetail(info) {
     if (confirmBtn) {
         if (isPaid) {
             confirmBtn.disabled = true;
-            confirmBtn.textContent = '🔒 Hóa Đơn Đã Khóa Bảo Lãnh Escrow';
+            confirmBtn.textContent = 'Hóa Đơn Đã Khóa Bảo Lãnh Escrow';
             confirmBtn.style.opacity = '0.65';
         } else {
             confirmBtn.disabled = false;
             confirmBtn.style.opacity = '1';
-            confirmBtn.textContent = `✅ Xác Nhận Chuyển Khoản Ngay (${Number(info.amount || 0).toLocaleString('vi-VN')} ₫)`;
+            confirmBtn.textContent = `Xác Nhận Chuyển Khoản Ngay (${Number(info.amount || 0).toLocaleString('vi-VN')} ₫)`;
         }
     }
 }
@@ -1286,77 +2070,87 @@ async function confirmMobileQrPaymentNow() {
     if (!requireMobileLoginForAction('xác nhận thanh toán hóa đơn QR')) return;
     if (__nxState.confirmInFlight || !__nxState.selectedQrInvoice) return;
     const info = __nxState.selectedQrInvoice;
-    const payerName = (document.getElementById('nxBehalfPayerName')?.value || '').trim();
-    const payerMsg = (document.getElementById('nxBehalfPayerMsg')?.value || '').trim();
-    const btn = document.getElementById('nxConfirmQrPayBtn');
+    const billAmt = Number(info.amount || 0);
 
-    __nxState.confirmInFlight = true;
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = '⏳ Đang khóa tiền Bảo Lãnh Escrow & đồng bộ PC...';
-    }
+    const executeQrConfirm = async () => {
+        const payerName = (document.getElementById('nxBehalfPayerName')?.value || '').trim();
+        const payerMsg = (document.getElementById('nxBehalfPayerMsg')?.value || '').trim();
+        const btn = document.getElementById('nxConfirmQrPayBtn');
 
-    try {
-        const payload = {
-            user_id: __nxState.authUser.id,
-            payer_id: __nxState.authUser.id,
-            pay_token: info.pay_token,
-            payer_mode: __nxState.payerMode,
-            payment_mode: __nxState.payerMode,
-            is_paid_on_behalf: __nxState.payerMode === 'behalf',
-            payer_name: __nxState.payerMode === 'behalf' ? (payerName || __nxState.authUser.full_name) : (__nxState.authUser.full_name || __nxState.authUser.username),
-            payer_message: __nxState.payerMode === 'behalf' ? payerMsg : ''
-        };
-        const res = await fetch(nxApiUrl('/api/payment/qr-session/confirm'), {
-            method: 'POST',
-            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (res.ok && data.ok) {
-            if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.vibrateShort === 'function') {
-                try { window.NexoraNativeBridge.vibrateShort(); } catch (e) {}
-            }
-            const paidAmt = Number(data.paid_amount || info.amount || 0);
-            speakBalanceChangeByAiSoundbox(`Nexora Pay thông báo: Đã khóa bảo lãnh Escrow thành công ${paidAmt} đồng cho đơn hàng ${info.order_code || ''}`);
-            triggerNativeOrWebLockScreenNotification(
-                `✅ Đã Thanh Toán QR ${info.order_code || ''}`,
-                `Số tiền ${paidAmt.toLocaleString('vi-VN')} ₫ đã được bảo vệ trong Quỹ Bảo Lãnh Escrow.`,
-                data.next_step_url || '/services/order_tracking/tracking.html'
-            );
-            localStorage.setItem('nvx_qr_payment_confirmed', JSON.stringify({
-                ts: Date.now(),
-                pay_token: info.pay_token,
-                qr_token: info.pay_token,
-                tx_id: data.tx_code || info.pay_token,
-                order_id: data.order_id || info.order_id,
-                tracking_code: data.tracking_code || info.tracking_code,
-                amount: paidAmt,
-                is_paid_on_behalf: Boolean(data.is_paid_on_behalf),
-                payer_name: data.payer_name || '',
-                payer_message: data.payer_message || '',
-                next_step_url: data.next_step_url || '/services/order_tracking/tracking.html',
-                status: 'APPROVED'
-            }));
-            __nxState.lastReceiptData = {
-                tx_code: data.tx_code || info.pay_token,
-                amount: paidAmt,
-                recipient: 'Quỹ Bảo Lãnh Nexora Escrow',
-                note: `Thanh toán QR ${info.order_code || ''}`,
-                created_at: new Date().toLocaleString('vi-VN')
-            };
-            nxToast('🎉 Đã xác nhận thanh toán QR! Màn hình checkout.html trên PC đã tự động nhảy sang trang Vận đơn!');
-            await inspectQrTokenInvoice(info.pay_token);
-            await syncMobileBridge();
-        } else {
-            nxToast(data.error || '❌ Không thể xác nhận thanh toán QR!');
-            if (btn) btn.disabled = false;
+        __nxState.confirmInFlight = true;
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Đang khóa tiền Bảo Lãnh Escrow & đồng bộ PC...';
         }
-    } catch (e) {
-        nxToast('❌ Lỗi kết nối khi gửi xác nhận thanh toán QR!');
-        if (btn) btn.disabled = false;
-    } finally {
-        __nxState.confirmInFlight = false;
+
+        try {
+            const payload = {
+                user_id: __nxState.authUser.id,
+                payer_id: __nxState.authUser.id,
+                pay_token: info.pay_token,
+                payer_mode: __nxState.payerMode,
+                payment_mode: __nxState.payerMode,
+                is_paid_on_behalf: __nxState.payerMode === 'behalf',
+                payer_name: __nxState.payerMode === 'behalf' ? (payerName || __nxState.authUser.full_name) : (__nxState.authUser.full_name || __nxState.authUser.username),
+                payer_message: __nxState.payerMode === 'behalf' ? payerMsg : ''
+            };
+            const res = await fetch(nxApiUrl('/api/payment/qr-session/confirm'), {
+                method: 'POST',
+                headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.vibrateShort === 'function') {
+                    try { window.NexoraNativeBridge.vibrateShort(); } catch (e) {}
+                }
+                const paidAmt = Number(data.paid_amount || info.amount || 0);
+                speakBalanceChangeByAiSoundbox(`Nexora Pay thông báo: Đã khóa bảo lãnh Escrow thành công ${paidAmt} đồng cho đơn hàng ${info.order_code || ''}`);
+                triggerNativeOrWebLockScreenNotification(
+                    `[NEXORA ESCROW] Đã Thanh Toán QR ${info.order_code || ''}`,
+                    `Số tiền ${paidAmt.toLocaleString('vi-VN')} ₫ đã được bảo vệ trong Quỹ Bảo Lãnh Escrow.`,
+                    data.next_step_url || '/services/order_tracking/tracking.html'
+                );
+                localStorage.setItem('nvx_qr_payment_confirmed', JSON.stringify({
+                    ts: Date.now(),
+                    pay_token: info.pay_token,
+                    qr_token: info.pay_token,
+                    tx_id: data.tx_code || info.pay_token,
+                    order_id: data.order_id || info.order_id,
+                    tracking_code: data.tracking_code || info.tracking_code,
+                    amount: paidAmt,
+                    is_paid_on_behalf: Boolean(data.is_paid_on_behalf),
+                    payer_name: data.payer_name || '',
+                    payer_message: data.payer_message || '',
+                    next_step_url: data.next_step_url || '/services/order_tracking/tracking.html',
+                    status: 'APPROVED'
+                }));
+                __nxState.lastReceiptData = {
+                    tx_code: data.tx_code || info.pay_token,
+                    amount: paidAmt,
+                    recipient: 'Quỹ Bảo Lãnh Nexora Escrow',
+                    note: `Thanh toán QR ${info.order_code || ''}`,
+                    created_at: new Date().toLocaleString('vi-VN')
+                };
+                nxToast('Đã xác nhận thanh toán QR! Màn hình checkout.html trên PC đã tự động nhảy sang trang Vận đơn!');
+                await inspectQrTokenInvoice(info.pay_token);
+                await syncMobileBridge();
+            } else {
+                nxToast(data.error || 'Không thể xác nhận thanh toán QR!');
+                if (btn) btn.disabled = false;
+            }
+        } catch (e) {
+            nxToast('Lỗi kết nối khi gửi xác nhận thanh toán QR!');
+            if (btn) btn.disabled = false;
+        } finally {
+            __nxState.confirmInFlight = false;
+        }
+    };
+
+    if (billAmt >= 5000000) {
+        openBiometricShieldModal(`Giao dịch QR giá trị lớn (${billAmt.toLocaleString('vi-VN')} ₫) yêu cầu Khiên Sinh Trắc Học`, executeQrConfirm);
+    } else {
+        await executeQrConfirm();
     }
 }
 
@@ -1374,54 +2168,69 @@ async function submitMobileWalletAction(actionType) {
     const recipient = (recInput ? recInput.value : '') || 'Ví Nexora Pay';
     const note = noteInput ? noteInput.value : '';
 
-    try {
-        const res = await fetch(nxApiUrl('/api/mobile/wallet-action'), {
-            method: 'POST',
-            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({
-                user_id: __nxState.authUser.id,
-                username: __nxState.authUser.username,
-                action: actionType,
-                amount,
-                recipient,
-                note
-            })
-        });
-        const data = await res.json();
-        if (res.status === 401 || data.require_login) {
-            closeNxModal('nxTopupWithdrawModal');
-            openNxModal('nxMobileAuthModal');
-            nxToast(data.error || '🔒 Vui lòng đăng nhập!');
-            return;
+    if (amount <= 0) {
+        nxToast('Vui lòng nhập số tiền lớn hơn 0 VNĐ!');
+        return;
+    }
+
+    const doWalletRequest = async () => {
+        try {
+            const res = await fetch(nxApiUrl('/api/mobile/wallet-action'), {
+                method: 'POST',
+                headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({
+                    user_id: __nxState.authUser.id,
+                    username: __nxState.authUser.username,
+                    action: actionType,
+                    amount,
+                    recipient,
+                    note
+                })
+            });
+            const data = await res.json();
+            if (res.status === 401 || data.require_login) {
+                closeNxModal('nxTopupWithdrawModal');
+                openNxModal('nxMobileAuthModal');
+                nxToast(data.error || 'Vui lòng đăng nhập!');
+                return;
+            }
+            if (res.ok && data.ok) {
+                if (amtInput) amtInput.value = '';
+                speakBalanceChangeByAiSoundbox(data.soundbox_speech || data.message);
+                triggerNativeOrWebLockScreenNotification('[NEXORA PAY] Biến Động Số Dư', data.message);
+                closeNxModal('nxTopupWithdrawModal');
+                await syncMobileBridge();
+                openReceiptForTransaction(data.tx_code, amount, data.note || note, data.created_at);
+            } else {
+                nxToast(data.error || 'Giao dịch không thành công');
+            }
+        } catch (e) {
+            nxToast('Lỗi kết nối máy chủ khi thực hiện giao dịch ví!');
         }
-        if (res.ok && data.ok) {
-            if (amtInput) amtInput.value = '';
-            speakBalanceChangeByAiSoundbox(data.soundbox_speech || data.message);
-            triggerNativeOrWebLockScreenNotification('💸 Biến Động Số Dư Nexora Pay', data.message);
-            closeNxModal('nxTopupWithdrawModal');
-            await syncMobileBridge();
-            openReceiptForTransaction(data.tx_code, amount, data.note || note, data.created_at);
-        } else {
-            nxToast(data.error || '⚠️ Giao dịch không thành công');
-        }
-    } catch (e) {
-        nxToast('❌ Lỗi kết nối máy chủ khi thực hiện giao dịch ví!');
+    };
+
+    if ((actionType === 'withdraw' || actionType === 'transfer') && amount >= 5000000) {
+        openBiometricShieldModal(`Giao dịch ${actionType === 'withdraw' ? 'rút tiền' : 'chuyển khoản'} ${amount.toLocaleString('vi-VN')} ₫ yêu cầu xác thực Sinh Trắc Học`, doWalletRequest);
+    } else {
+        await doWalletRequest();
     }
 }
 
 async function openSmartOtpKeyModal() {
     if (!requireMobileLoginForAction('mở Khóa Bảo Mật Động Smart OTP Key')) return;
-    openNxModal('nxSmartOtpModal');
-    await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
-    if (__nxState.smartOtpTimer) clearInterval(__nxState.smartOtpTimer);
-    __nxState.smartOtpTimer = setInterval(async () => {
-        __nxState.smartOtpRemain -= 1;
-        if (__nxState.smartOtpRemain <= 0) {
-            await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
-        } else {
-            drawSmartOtpCountdownRing();
-        }
-    }, 1000);
+    openBiometricShieldModal('Xác thực Khiên Sinh Trắc Học để kích hoạt Khóa Bảo Mật Động Smart OTP 30s', async () => {
+        openNxModal('nxSmartOtpModal');
+        await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+        if (__nxState.smartOtpTimer) clearInterval(__nxState.smartOtpTimer);
+        __nxState.smartOtpTimer = setInterval(async () => {
+            __nxState.smartOtpRemain -= 1;
+            if (__nxState.smartOtpRemain <= 0) {
+                await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+            } else {
+                drawSmartOtpCountdownRing();
+            }
+        }, 1000);
+    });
 }
 
 async function generateNewSmartOtpCode(pinLength = 6, pushLockscreen = false) {
@@ -1453,10 +2262,10 @@ async function generateNewSmartOtpCode(pinLength = 6, pushLockscreen = false) {
             drawSmartOtpCountdownRing();
             if (pushLockscreen) {
                 triggerNativeOrWebLockScreenNotification(
-                    `🔐 Mã Smart OTP (${__nxState.smartOtpLen} Số): ${data.dynamic_pin}`,
+                    `[SMART OTP ${__nxState.smartOtpLen} SỐ] Mã: ${data.dynamic_pin}`,
                     `Mã xác thực đăng nhập Web của bạn là ${data.dynamic_pin} (Hiệu lực 30 giây).`
                 );
-                nxToast('📲 Đã bắn mã Smart OTP ra Màn Hình Khóa điện thoại!');
+                nxToast('Đã bắn mã Smart OTP ra Màn Hình Khóa điện thoại!');
             }
         }
     } catch (e) {}
@@ -1492,6 +2301,7 @@ function drawSmartOtpCountdownRing() {
 async function openNotificationInboxModal(tab = 'deal') {
     __nxState.activeNotifTab = tab;
     openNxModal('nxNotificationCenterModal');
+    applyRbacVisibilityAcrossUi();
     await loadNotificationsByTab(tab);
 }
 
@@ -1532,10 +2342,14 @@ async function loadNotificationsByTab(tab = 'deal') {
 }
 
 async function triggerPushLockscreenDemo(category) {
+    if (!__nxState.isAdmin) {
+        nxToast('Chức năng phát thông báo kịch bản chỉ dành cho Quản trị viên (Admin)!');
+        return;
+    }
     const delayCheck = document.getElementById('nxDelayLockscreenToggle');
     const delayMs = delayCheck && delayCheck.checked ? 3000 : 100;
     if (delayMs >= 1000) {
-        nxToast('⏳ Đã hẹn 3 giây! Hãy bấm nút Nguồn tắt/khóa màn hình điện thoại ngay để xem thông báo bật sáng trên Màn Hình Khóa!');
+        nxToast('Đã hẹn 3 giây! Hãy bấm nút Nguồn tắt/khóa màn hình điện thoại ngay để xem thông báo bật sáng trên Màn Hình Khóa!');
     }
     setTimeout(async () => {
         try {
@@ -1549,6 +2363,8 @@ async function triggerPushLockscreenDemo(category) {
                 triggerNativeOrWebLockScreenNotification(data.title, data.message, data.target_url);
                 await loadNotificationsByTab(category);
                 await syncMobileBridge();
+            } else {
+                nxToast(data.error || 'Từ chối truy cập!');
             }
         } catch (e) {}
     }, delayMs);
@@ -1562,8 +2378,8 @@ async function submitAgreeTermsV12() {
             body: JSON.stringify({})
         });
         const data = await res.json();
-        nxToast(data.message || '✅ Đã xác nhận đồng ý Điều khoản & Chính sách V12!');
-        triggerNativeOrWebLockScreenNotification('📜 Đã Đồng Ý Điều Khoản Nexora V12', data.message);
+        nxToast(data.message || 'Đã xác nhận đồng ý Điều khoản & Chính sách V13!');
+        triggerNativeOrWebLockScreenNotification('[NEXORA SOP-01] Đã Đồng Ý Điều Khoản', data.message);
         await loadNotificationsByTab('terms');
     } catch (e) {}
 }
@@ -1598,8 +2414,9 @@ function drawCheckin7DaysCanvas() {
         ctx.fillStyle = done ? '#fde047' : '#059669';
         ctx.font = 'bold 13px sans-serif';
         ctx.fillText(rewards[i], x + 23, y + 48);
-        ctx.font = '12px sans-serif';
-        ctx.fillText(done ? '🔥' : '🪙', x + 23, y + 68);
+        ctx.fillStyle = done ? '#ffffff' : '#166534';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText(done ? 'ĐÃ NHẬN' : 'CHỜ MỞ', x + 23, y + 68);
     }
 }
 
@@ -1612,12 +2429,12 @@ async function triggerMobileDailyCheckin() {
             body: JSON.stringify({ user_id: __nxState.authUser.id })
         });
         const data = await res.json();
-        nxToast(data.message || '🔥 Điểm danh chuỗi lửa thành công!');
+        nxToast(data.message || 'Điểm danh chuỗi lửa thành công!');
         speakBalanceChangeByAiSoundbox(data.message || 'Điểm danh chuỗi lửa thành công');
         await syncMobileBridge();
         drawCheckin7DaysCanvas();
     } catch (e) {
-        nxToast('❌ Không thể kết nối API Điểm danh!');
+        nxToast('Không thể kết nối API Điểm danh!');
     }
 }
 
@@ -1642,7 +2459,7 @@ function switchMiniGameMode(gameType) {
     const actBtn = document.getElementById('nxMiniGamePrimaryBtn');
     if (gameType === 'wheel') {
         if (actBtn) {
-            actBtn.textContent = '🎡 QUAY VÒNG QUAY LỤC BẢO NGAY';
+            actBtn.textContent = 'QUAY VÒNG QUAY LỤC BẢO NGAY';
             actBtn.onclick = startCanvasWheelSpin;
         }
         drawLuckyWheelGameCanvas();
@@ -1650,13 +2467,13 @@ function switchMiniGameMode(gameType) {
         __nxState.aimScore = 0;
         __nxState.aimTimeLeft = 30;
         if (actBtn) {
-            actBtn.textContent = '🎯 BẮT ĐẦU BẮN TÂM 30 GIÂY & NHẬN XU';
+            actBtn.textContent = 'BẮT ĐẦU BẮN TÂM 30 GIÂY & NHẬN XU';
             actBtn.onclick = startAimReflexCanvasGame;
         }
         drawAimReflexGameCanvas();
     } else {
         if (actBtn) {
-            actBtn.textContent = '🌱 TƯỚI NƯỚC & THU HOẠCH QUẢ TIỀN VÀNG';
+            actBtn.textContent = 'TƯỚI NƯỚC & THU HOẠCH QUẢ TIỀN VÀNG';
             actBtn.onclick = waterAndHarvestEmeraldTree;
         }
         drawMoneyTreeGameCanvas();
@@ -1740,7 +2557,7 @@ function drawAimReflexGameCanvas() {
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`🎯 Điểm: ${__nxState.aimScore}  |  ⏱️ Còn: ${__nxState.aimTimeLeft}s`, 16, 26);
+    ctx.fillText(`Điểm: ${__nxState.aimScore}  |  Thời gian: ${__nxState.aimTimeLeft}s`, 16, 26);
 
     const t = __nxState.aimTarget;
     ctx.fillStyle = '#ef4444';
@@ -1839,11 +2656,11 @@ async function placeStandardBidOnMobile(auctionId, bidAmount) {
             })
         });
         const data = await res.json();
-        nxToast(data.message || data.error || '🔨 Đã gửi lệnh đặt giá ký quỹ 10%!');
+        nxToast(data.message || data.error || 'Đã gửi lệnh đặt giá ký quỹ 10%!');
         await refreshLiveAuctionsList();
         await syncMobileBridge();
     } catch (e) {
-        nxToast('❌ Lỗi kết nối Sàn Đấu Giá!');
+        nxToast('Lỗi kết nối Sàn Đấu Giá!');
     }
 }
 
@@ -1860,11 +2677,11 @@ async function claimDutchAuctionOnMobile(auctionId) {
             })
         });
         const data = await res.json();
-        nxToast(data.message || data.error || '⚡ Đã chốt mua phiên Đấu giá ngược!');
+        nxToast(data.message || data.error || 'Đã chốt mua phiên Đấu giá ngược!');
         await refreshLiveAuctionsList();
         await syncMobileBridge();
     } catch (e) {
-        nxToast('❌ Lỗi kết nối Đấu Giá Ngược!');
+        nxToast('Lỗi kết nối Đấu Giá Ngược!');
     }
 }
 
@@ -1877,12 +2694,12 @@ async function triggerMobileLuckySpin() {
             body: JSON.stringify({ user_id: __nxState.authUser.id })
         });
         const data = await res.json();
-        const msg = data.message || (data.prize && data.prize.label ? '🎡 Chúc mừng bạn quay trúng: ' + data.prize.label : '🎡 Đã quay Vòng Quay May Mắn!');
+        const msg = data.message || (data.prize && data.prize.label ? 'Chúc mừng bạn quay trúng: ' + data.prize.label : 'Đã quay Vòng Quay May Mắn!');
         nxToast(msg);
         speakBalanceChangeByAiSoundbox(msg);
         await syncMobileBridge();
     } catch (e) {
-        nxToast('❌ Không thể kết nối API Vòng quay may mắn!');
+        nxToast('Không thể kết nối API Vòng quay may mắn!');
     }
 }
 
@@ -1901,11 +2718,11 @@ async function triggerMobileReflexArenaClaim() {
             })
         });
         const data = await res.json();
-        nxToast(data.message || '🎯 Đã nhận thưởng Bắn Tâm Phản Xạ Esport!');
+        nxToast(data.message || 'Đã nhận thưởng Bắn Tâm Phản Xạ Esport!');
         speakBalanceChangeByAiSoundbox(data.message || 'Đã nhận thưởng bắn tâm phản xạ');
         await syncMobileBridge();
     } catch (e) {
-        nxToast('❌ Không thể kết nối API Minigame!');
+        nxToast('Không thể kết nối API Minigame!');
     }
 }
 
@@ -1929,8 +2746,8 @@ async function openMobileMarketTrackerModal(productId = 1) {
             const isUp = closeP >= openP;
             const col = isUp ? '#10b981' : '#ef4444';
             return `<div style="display:flex;justify-content:space-between;font-size:0.74rem;padding:4px 0;border-bottom:1px dashed var(--nx-border);">
-                <span>📅 ${c.date || c.session || 'Phiên VN'}</span>
-                <strong style="color:${col};">${closeP.toLocaleString('vi-VN')} ₫ (${isUp ? '▲' : '▼'})</strong>
+                <span>Phiên ${c.date || c.session || 'VN'}</span>
+                <strong style="color:${col};">${closeP.toLocaleString('vi-VN')} ₫ (${isUp ? '[TĂNG]' : '[GIẢM]'})</strong>
             </div>`;
         }).join('');
 
@@ -1961,11 +2778,11 @@ async function submitMobileWatchlistAlert() {
             })
         });
         const data = await res.json();
-        const msg = data.message || `🔔 Đã đặt báo động giảm giá ở mức ${targetPrice.toLocaleString('vi-VN')} ₫!`;
+        const msg = data.message || `Đã đặt báo động giảm giá ở mức ${targetPrice.toLocaleString('vi-VN')} ₫!`;
         nxToast(msg);
-        triggerNativeOrWebLockScreenNotification('🏷️ Đã Đặt Báo Động Giảm Giá', msg, '/services/market_tracker/price-tracker.html');
+        triggerNativeOrWebLockScreenNotification('[NEXORA WATCHLIST] Đã Đặt Báo Động Giảm Giá', msg, '/services/market_tracker/price-tracker.html');
     } catch (e) {
-        nxToast('❌ Lỗi khi lưu báo động giá!');
+        nxToast('Lỗi khi lưu báo động giá!');
     }
 }
 
@@ -1979,8 +2796,11 @@ function handleQuickSearchInput(ev) {
 
 document.addEventListener('DOMContentLoaded', async () => {
     renderNexoraCanvasIcons();
+    render3DVirtualEmeraldCard();
+    initHardwareSensorsListeners();
     await nxApplyTheme(__nxState.themeId, false);
     await nxApplyCvdMode(__nxState.cvdMode, false);
+    applyRbacVisibilityAcrossUi();
     if ('Notification' in window && Notification.permission === 'default') {
         try { Notification.requestPermission(); } catch (e) {}
     }
