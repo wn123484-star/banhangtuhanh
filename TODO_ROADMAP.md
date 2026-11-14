@@ -190,3 +190,12 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 - [x] **11.6. Nhiệm vụ 6, 7, 8 & 9 — Mở rộng Bản đồ 45 Mã Tính Năng Con `[FEAT-xxx.y]`, Chiến dịch Săn & Diệt 100/100 Bug (`BUG_HUNT_100_REPORT.md`), Nâng cấp Đội Quân 10 Bot QA (`V12.0-10-BOTS`) & Đồng bộ GitHub (`ver11` & `main`):**
   - [x] Cập nhật `AI_RULES.md` và `FEATURE_ARCHITECTURE_AND_AUDIT.md` với 45 mã tính năng con `[FEAT-xxx.y]`.
   - [x] Lập báo cáo `BUG_HUNT_100_REPORT.md` (100/100 Bug `[x] FIXED & VERIFIED`) và nâng cấp `_deep_synchronized_qa_bot_audit()` lên **QA Bot Squad V12.0 — 10 Bots** đạt **100% PASS (0 lỗi)**.
+
+---
+
+## GIAI ĐOẠN 12 (`ver12`): KHÓA STACKING CONTEXT CHA-CON HEADER, BỐ CỤC CÀI ĐẶT 2 CỘT KHOA HỌC, HEADER CHUYÊN BIỆT KÊNH NGƯỜI BÁN & ĐẠI NÂNG CẤP ANDROID APK (`[FEAT-MOB-011]`)
+- [x] **Nhiệm vụ 1 (`[FEAT-HDR-001.1]` & `[FEAT-HDR-001.2]`):** Khóa Stacking Context cha-con cho Header 3 tầng (`Tầng 1 z-index: 30` > `Tầng 2 z-index: 20` > `Tầng 3 z-index: 10`), Menu xổ xuống Topbar (`z-index: 99999 !important`) và hạ `main, .nv-filter-card` xuống `z-index: 1 !important`.
+- [x] **Nhiệm vụ 2 (`[FEAT-ACC-009.5]` & `[FEAT-HDR-001.6]`):** Thiết kế lại trang `/services/settings/settings.html` theo bố cục 2 cột khoa học (Master-Detail Sidebar `290px 1fr` + 6 Thẻ Quick-Action Cards), bổ sung Bộ chỉnh Cỡ chữ toàn sàn (4 mức) và Độ cao thanh Header (4 chế độ).
+- [x] **Nhiệm vụ 3 (`[FEAT-HDR-001.7]`):** Xây dựng Thanh Header chuyên biệt cho Kênh Người Bán (Seller Workspace Header Mode) với 5 KPI thời gian thực từ SQLite và nút chuyển đổi `🛒 Xem Giao Diện Mua Hàng`.
+- [x] **Nhiệm vụ 4 & 5:** Gắn đầy đủ mã định danh `[FEAT-xxx.y] | Trạng thái: PRODUCTION_DB_LINKED | [LOCKED-DESIGN]` trên toàn bộ module và bảo toàn mọi tính năng Web đã khóa thiết kế.
+- [x] **Nhiệm vụ 6 (`[FEAT-MOB-011.1]`, `[FEAT-MOB-011.2]`, `[FEAT-MOB-011.3]`):** Loại bỏ 100% dữ liệu giả lập (Mock Data) trên App APK & `/api/mobile/bridge-sync`, đặt giao diện mặc định `emerald_fintech_light` (Lục Bảo Nexora) và tích hợp Bộ vẽ Icon HTML5 Canvas 2D độ nét cao (`NexoraCanvasIconRenderer`).

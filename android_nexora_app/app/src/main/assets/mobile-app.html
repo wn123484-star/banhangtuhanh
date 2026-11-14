@@ -8,7 +8,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/assets/icons/icon.png">
     <link rel="apple-touch-icon" href="/assets/icons/pwa/icon-192x192.png">
-    <link rel="stylesheet" href="/services/mobile/mobile-app.css">
+    <link rel="stylesheet" href="mobile-app.css">
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body class="nx-mobile-body">
@@ -25,7 +25,7 @@
 
             <div class="nx-brand-strip">
                 <div class="nx-brand-left">
-                    <img src="/assets/icons/nexora_mobile_crest.svg" alt="NX" id="nxMobileCrestLogo" class="nx-crest-avatar">
+                    <img src="nexora_mobile_crest.svg" alt="NX" id="nxMobileCrestLogo" class="nx-crest-avatar">
                     <div>
                         <div style="font-size:0.72rem;opacity:0.9;font-weight:600;">SIÊU ỨNG DỤNG CÔNG NGHỆ NEXORA</div>
                         <div style="font-size:0.98rem;font-weight:800;" id="nxHeaderUserName">William • Nexora VIP</div>
@@ -198,7 +198,7 @@
                     <span id="nxSecVerifiedBadge" style="font-size:0.68rem;padding:3px 8px;border-radius:999px;background:rgba(16,185,129,0.16);color:#10b981;font-weight:800;">🛡️ Đã xác thực OTP Bảo Lãnh Escrow</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px;border-radius:14px;background:var(--nx-surface);border:1px solid var(--nx-border);">
-                    <img src="/assets/icons/nexora_mobile_crest.svg" alt="Avatar" style="width:46px;height:46px;border-radius:14px;background:#0f172a;padding:4px;object-fit:contain;">
+                    <img src="nexora_mobile_crest.svg" alt="Avatar" style="width:46px;height:46px;border-radius:14px;background:#0f172a;padding:4px;object-fit:contain;">
                     <div>
                         <div style="font-weight:800;font-size:0.92rem;" id="nxSecProfileDisplayName">William • Nexora VIP</div>
                         <div style="font-size:0.75rem;color:var(--nx-muted);" id="nxSecProfileDisplayEmail">william.vip@nexora.castle-tech.cloud • 0988889999</div>
@@ -246,9 +246,6 @@
                     </select>
                     <button type="button" id="nxBtnSendSecurityOtp" style="width:100%;padding:11px;border:none;border-radius:12px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="sendMobileSecurityOtp()">
                         📨 Gửi Mã OTP Xác Thực (6 Số)
-                    </button>
-                    <button type="button" id="nxBtnUnlockOtpReverify" style="display:none;width:100%;margin-top:6px;padding:9px;border:1.5px dashed #0ea5e9;border-radius:11px;background:rgba(14,165,233,0.12);color:#0ea5e9;font-size:0.76rem;font-weight:800;cursor:pointer;" onclick="unlockMobileOtpReverification()">
-                        🔄 Yêu cầu xác minh lại (Khi đổi Mật khẩu / Đổi Mã PIN / Đổi Email)
                     </button>
                     <div id="nxSecOtpDemoHintBanner" style="display:none;margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(16,185,129,0.12);border:1px dashed #10b981;font-size:0.76rem;"></div>
                 </div>
@@ -473,7 +470,7 @@
                 <button class="nx-eye-btn" onclick="closeNxModal('nxReceiveQrModal')">✕ Đóng</button>
             </div>
             <div style="background:#fff;padding:16px;border-radius:20px;display:inline-block;border:3px solid var(--nx-primary);margin-bottom:10px;">
-                <img src="/assets/icons/nexora_mobile_crest.svg" alt="Nexora QR" style="width:150px;height:150px;object-fit:contain;">
+                <img src="nexora_mobile_crest.svg" alt="Nexora QR" style="width:150px;height:150px;object-fit:contain;">
             </div>
             <div style="font-weight:800;font-size:0.95rem;">WILLIAM • NEXORA PAY</div>
             <div style="font-size:0.8rem;color:var(--nx-muted);">Số tài khoản NAPAS 247: <strong>8888 9999 2026</strong></div>
@@ -496,6 +493,6 @@
         </div>
     </div>
 
-    <script src="/services/mobile/mobile-app.js"></script>
+    <script src="mobile-app.js"></script>
 </body>
 </html>

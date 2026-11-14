@@ -193,3 +193,21 @@ Mọi tác nhân AI (4 Argon High / Argon Medium / Flash) khi đọc, phân tíc
 ## ĐIỀU 8: QUY TẮC KIỂM TRA TRƯỚC & SAU KHI SỬA CODE
 - Không bao giờ sửa mù quáng: Luôn đọc kỹ đoạn code xung quanh vị trí cần sửa.
 - Sau mỗi giai đoạn, phải chạy kiểm tra cú pháp Python (`python -m py_compile app.py`) và chạy Đội Bot QA (`/api/settings/qa-bot-audit`) để đảm bảo 100% trang và API đạt `HTTP 200 OK` (0 lỗi).
+
+---
+
+## ĐIỀU 9: BẢN CẬP NHẬT HIẾN PHÁP V12.0 (`ver12` — KHÓA STACKING CONTEXT, CÀI ĐẶT 2 CỘT, HEADER KÊNH BÁN & ANDROID APK 100% DỮ LIỆU THẬT)
+9.1. **Khóa Stacking Context Cha-Con cho Header & Menu Dropdown (`[FEAT-HDR-001.1]` & `[FEAT-HDR-001.2]`):**
+- Phần tử `<header>` (và `#mainHeader`) phải cố định `position: fixed !important; top: 0; left: 0; right: 0; z-index: 2147483000 !important; overflow: visible !important`.
+- Phân cấp `z-index` nội bộ 3 tầng của Header: Tầng 1 (`z-index: 30`), Tầng 2 (`z-index: 20`), Tầng 3 (`z-index: 10`), Menu xổ xuống `.nv-topbar-dropdown-menu, .nvx-dropdown-menu` (`z-index: 99999 !important; background: #0f172a !important`).
+- Toàn bộ `<main>`, `main.nvidia-header-shell`, `.nv-filter-card`, `.nv-product-card` phải nằm ở `z-index: 1 !important` để không bao giờ đè lên menu xổ xuống của Topbar.
+9.2. **Bộ Điều Khiển Cỡ Chữ Toàn Sàn (4 Mức) & Độ Cao Header (4 Chế Độ) (`[FEAT-HDR-001.6]`):**
+- Hỗ trợ 4 mức cỡ chữ (`small`: `14px - 92%`, `normal`: `16px - 100%`, `large`: `17.5px - 110%`, `xlarge`: `19px - 120%`) và 4 chế độ độ cao Header (`ultra_compact`, `compact`, `standard`, `comfortable_tall`) đồng bộ qua `syncHeaderSpacerHeight()` và `/api/settings/accessibility`.
+9.3. **Thanh Header Chuyên Biệt Cho Kênh Người Bán (`[FEAT-HDR-001.7]`):**
+- Khi tài khoản `user.role === 'seller'` hoặc đang ở `/services/seller/seller-dashboard.html`, tự động kích hoạt **Seller Workspace Header Mode** (với nút chuyển đổi `🛒 Xem Giao Diện Mua Hàng` / `🏪 Về Chế Độ Quản Lý Shop`, thanh tìm kiếm đơn hàng/SKU, dải 5 KPI thời gian thực từ SQLite và 6 tab tác nghiệp nhanh của Gian hàng).
+9.4. **Bố Cục Trang Cài Đặt Khoa Học 2 Cột (`[FEAT-ACC-009.5]`):**
+- Trang `/services/settings/settings.html` gồm 6 Thẻ Quick-Action Summary ở trên cùng và lưới 2 cột Master-Detail (`290px 1fr`) chia 5 nhóm cài đặt khoa học.
+9.5. **Siêu Ứng Dụng Android APK (`[FEAT-MOB-011]` — `[FEAT-MOB-011.1]`, `[FEAT-MOB-011.2]`, `[FEAT-MOB-011.3]`):**
+- **Loại bỏ 100% Mock Data (`[FEAT-MOB-011.1]`):** Không tự động gán cứng tài khoản `"khach_hang_vip"` hay `"William"`, `"NVXPAY-DEMO-888"`, `50000000.0`, `18990000.0`, `4500000.0`, `3290000.0`, `42500000.0`. Hỗ trợ trạng thái `Khách vãng lai (Chưa đăng nhập)` rõ ràng và truy vấn 100% từ SQLite khi đã đăng nhập.
+- **Giao Diện Mặc Định Lục Bảo Nexora (`[FEAT-MOB-011.2]`):** Mặc định mở giao diện `emerald_fintech_light` (`#ecfdf5` / `#059669` / `#76b900`) thay vì màu hồng MoMo.
+- **Bộ Vẽ Icon Canvas 2D Độ Nét Cao (`[FEAT-MOB-011.3]`):** Vẽ 100% icon chức năng trên App (`NexoraCanvasIconRenderer` / `renderAllMobileCanvasIcons()`) bằng HTML5 Canvas 2D Retina `96x96` thay cho Emoji hệ điều hành.

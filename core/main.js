@@ -4,6 +4,8 @@
 /* [FEAT-HDR-001.3] Chuỗi Điểm Danh 7 Ngày Liên Tiếp Nhận Xu, Lượt Quay & Voucher VIP Mốc Ngày 7 (STREAK7VIP) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-checkin, bảng user_daily_checkins / users | [LOCKED-DESIGN] */
 /* [FEAT-HDR-001.4] Phân Quyền Ẩn Nút Test Điểm Danh (+1 Ngày / Reset) Đối Với Khách Thường (Chỉ Hiện Cho Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js (build7DayStreakStripHtml) | [LOCKED-DESIGN] */
 /* [FEAT-HDR-001.5] Đồng Bộ Đa Bộ Icon 14 Vị Trí Thời Gian Thực Không Cache (No-Store Manifest Sync) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/icon-sets, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.6] Chỉnh Cỡ Chữ Toàn Sàn (4 Mức Font Scale) & Chỉnh Độ Cao Thanh Header (4 Chế Độ Compactness) Đồng Bộ ResizeObserver | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility, core/main.js, core/global.css | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.7] Chế Độ Header Chuyên Môn Người Bán (Seller Workspace Header Mode), Ẩn Giải Trí Khách Mua, Gợi Ý Thông Minh Cho Shop & Thanh Live Seller KPI Strip | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js, services/seller/seller-dashboard.html | [LOCKED-DESIGN] */
 /* [FEAT-CAT-002] Linh vật Mèo Lỏng AI Tầng Cao Nhất (z-index: 2147483645), 5 Giống Mèo, 4 Nhóm Accordion, Hoạt Ảnh Ăn Cá / Trà Sữa Khớp Miệng & Săn Deal 4 Chặng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/cat-assistant/command, core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
 /* [FEAT-CAT-002.6] Tính Năng "Cất Mèo Đi / Gọi Mèo Ra" (tuckCatBehindChat & summonCatBackOut) Nấp Sau Khung Chat Thò Tai/Đuôi/Mặt Tinh Nghịch | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
 /* [FEAT-AUTH-003] Đăng Nhập/Đăng Ký, Xác Minh OTP 6 Số Qua Resend (@mail.castle-tech.cloud), Đổi Mật Khẩu, Mã PIN Ví 6 Số & Phân Quyền RBAC 4 Cấp (Guest / Buyer / Seller / Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auth/*, /api/settings/email-otp/*, bảng users | [LOCKED-DESIGN] */
@@ -11,6 +13,7 @@
 /* [FEAT-AUTH-003.3] Tự Động Làm Mờ & Khóa Nút Gửi OTP Sau Khi Đã Xác Thực Kèm Nút Mở Khóa Xác Minh Lại Khi Đổi Mật Khẩu/PIN | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js, services/settings/settings.js, services/mobile/mobile-app.js | [LOCKED-DESIGN] */
 /* [FEAT-ACC-009] Trung Tâm Trợ Năng Mù Màu (5 Chế độ CVD), Bảng Xem Trước Màu Sắc Thực Tế, Mèo Báo Màu Khi Di Chuột 2 Giây & NLP Tự Bật Hỗ Trợ Mù Màu | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility, core/main.js, core/cat_widget.js | [LOCKED-DESIGN] */
 /* [FEAT-ACC-009.4] Chế Độ Mèo Báo Màu Khi Di Chuột 2 Giây (2000ms Hover Color Inspector) & Nhận Diện Câu Chat Mù Màu Tự Động Bật Hỗ Trợ | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js, core/cat_widget.js, services/product/product-detail.js | [LOCKED-DESIGN] */
+/* [FEAT-ACC-009.5] Bố Cục 2 Cột Khoa Học Trang Cài Đặt (Master-Detail Accordion/Tab Layout) & Hàng 6 Box Lối Tắt Nhảy Nhanh (Quick-Jump Summary Cards) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: services/settings/settings.html, services/settings/settings.js, core/main.js | [LOCKED-DESIGN] */
 /* ==========================================================================
    CORE/MAIN.JS - ĐỒNG BỘ HEADER/FOOTER SẪM MÀU, TRẠM HỢP NHẤT MÈO AI & CHAT
    ========================================================================== */
@@ -673,6 +676,12 @@ function updateHeaderCoinsAndStreakDisplay(streakData) {
     document.querySelectorAll('.nv-header-top-row #nvxHeaderLoginStreakBtn, .nv-header-top-row .nvx-streak-fire-btn').forEach(function(oldBtn) {
         oldBtn.remove();
     });
+
+    /* [FEAT-HDR-001.7] Trong Chế Độ Chuyên Môn Người Bán (Seller Workspace Header), ẩn nút chuỗi điểm danh cá nhân */
+    if (typeof isSellerWorkspaceHeaderActive === 'function' && isSellerWorkspaceHeaderActive()) {
+        document.getElementById('nvxHeaderLoginStreakBtn')?.remove();
+        return;
+    }
 
     /* 3. Gắn hoặc cập nhật nút Icon "🔥 + Số ngày" nằm ngay cạnh Chuông thông báo (🔔) trên thanh Header chính (.nvx-main-header) */
     var streakCount = Number(streakData.login_streak || 0);
@@ -1523,9 +1532,14 @@ async function initHomeBrandAndTypeFilterBar() {
         if (!filterBar) {
             filterBar = document.createElement('section');
             filterBar.id = 'nvxAdvancedCatalogFilterBar';
-            filterBar.className = 'nv-adaptive-card p-3 mb-4 rounded-4 border shadow-sm';
+            filterBar.className = 'nv-adaptive-card nv-filter-card nv-filter-bar p-3 mb-4 rounded-4 border shadow-sm';
+            filterBar.style.cssText = 'position: relative !important; z-index: 1 !important;';
             var refNode = document.getElementById('nvxMultiEventsLiveStrip')?.nextSibling || mainContainer.firstChild;
             mainContainer.insertBefore(filterBar, refNode);
+        } else {
+            filterBar.classList.add('nv-filter-card', 'nv-filter-bar');
+            filterBar.style.setProperty('position', 'relative', 'important');
+            filterBar.style.setProperty('z-index', '1', 'important');
         }
 
         if (prods.length === 0) {
@@ -2509,6 +2523,172 @@ function initSeasonalAnimatedCanvas(skinKey) {
     animateLoop();
 }
 
+/* ==========================================================================
+   [FEAT-HDR-001.7] CHẾ ĐỘ CHUYÊN MÔN NGƯỜI BÁN (SELLER WORKSPACE HEADER MODE)
+   & THANH CHỈ SỐ VẬN HÀNH GIAN HÀNG THỜI GIAN THỰC (LIVE SELLER KPI STRIP)
+   ========================================================================== */
+function isSellerWorkspaceHeaderActive() {
+    try {
+        const user = getAuthUser();
+        const path = (window.location.pathname || '').toLowerCase();
+        const isSellerRoute = path.includes('/seller/seller-dashboard.html') || path.includes('/seller/sell.html') || path.includes('/seller/store-customization.html');
+        const isSellerRole = Boolean(user && String(user.role || '').toLowerCase() === 'seller');
+        if (!isSellerRoute && !isSellerRole) return false;
+        if (sessionStorage.getItem('nvx_seller_buyer_preview_mode') === '1' && !isSellerRoute) {
+            return false;
+        }
+        if (sessionStorage.getItem('nvx_seller_buyer_preview_mode') === '1' && isSellerRoute) {
+            return false;
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+window.isSellerWorkspaceHeaderActive = isSellerWorkspaceHeaderActive;
+
+function toggleSellerBuyerPreviewMode(forceBuyerPreview = undefined) {
+    const curPreview = sessionStorage.getItem('nvx_seller_buyer_preview_mode') === '1';
+    const nextPreview = forceBuyerPreview !== undefined ? Boolean(forceBuyerPreview) : !curPreview;
+    sessionStorage.setItem('nvx_seller_buyer_preview_mode', nextPreview ? '1' : '0');
+    renderGlobalHeaderAndFooter();
+    if (nextPreview) {
+        initSmartSearchSuggestionRotator();
+        loadAndRenderDailyCheckinStreak();
+        notifyToast('🛍️ Đã chuyển sang chế độ Xem Giao Diện Khách Mua (Buyer Preview)!', 'info');
+    } else {
+        renderSellerSmartInsightsStrip();
+        loadLiveSellerHeaderKpis();
+        notifyToast('🏪 Đã kích hoạt Chế Độ Chuyên Môn Người Bán (Seller Workspace Header Mode)!', 'success');
+    }
+}
+window.toggleSellerBuyerPreviewMode = toggleSellerBuyerPreviewMode;
+
+function jumpToSellerDashboardSection(actionKey = 'orders') {
+    const key = String(actionKey || 'orders').toLowerCase();
+    if (key === 'rfq') {
+        window.location.href = '/services/rfq/rfq.html';
+        return;
+    }
+    if (key === 'auction') {
+        window.location.href = '/services/auction/auction.html';
+        return;
+    }
+    const path = (window.location.pathname || '').toLowerCase();
+    if (!path.includes('seller-dashboard.html')) {
+        window.location.href = `/services/seller/seller-dashboard.html?seller_action=${encodeURIComponent(key)}`;
+        return;
+    }
+
+    if (key === 'orders' || key === 'pending_orders') {
+        const btn = document.querySelector('[data-sec="orders"]');
+        if (typeof window.switchSellerSection === 'function') window.switchSellerSection('orders', btn);
+        if (typeof window.jumpToOrderFilter === 'function') window.jumpToOrderFilter('pending');
+        document.getElementById('sec-orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        notifyToast('📦 Đã mở Bảng Điều Phối Đơn Hàng SOP-01 (Đơn chờ đóng gói)!', 'info');
+    } else if (key === 'escrow') {
+        const btn = document.querySelector('[data-sec="overview"]');
+        if (typeof window.switchSellerSection === 'function') window.switchSellerSection('overview', btn);
+        const escrowEl = document.getElementById('statEscrowHolding');
+        if (escrowEl) {
+            escrowEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            escrowEl.closest('.nv-adaptive-card')?.classList.add('cat-target-glow');
+            setTimeout(() => escrowEl.closest('.nv-adaptive-card')?.classList.remove('cat-target-glow'), 2200);
+        }
+        notifyToast('🛡️ Đang hiển thị Quỹ Doanh Thu Bảo Lãnh Escrow của Gian hàng!', 'info');
+    } else if (key === 'low_stock' || key === 'products') {
+        const btn = document.querySelector('[data-sec="products"]');
+        if (typeof window.switchSellerSection === 'function') window.switchSellerSection('products', btn);
+        document.getElementById('sec-products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        notifyToast('⚠️ Đã mở Bảng Quản Lý Kho Sản Phẩm & Cảnh Báo Tồn Kho (Stock < 5)!', 'warning');
+    } else if (key === 'pricing' || key === 'sla') {
+        const btn = document.querySelector('[data-sec="overview"]');
+        if (typeof window.switchSellerSection === 'function') window.switchSellerSection('overview', btn);
+        const aiBox = document.getElementById('sellerAiReportBox');
+        if (aiBox) aiBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (typeof window.runSellerAiAnalysis === 'function') window.runSellerAiAnalysis();
+        notifyToast('📈 Đang chạy Trợ Lý AI Phân Tích Giá VN-Tech Index & Chỉ Số Uy Tín SLA!', 'success');
+    } else if (key === 'studio') {
+        const studioEl = document.getElementById('nvxSellerQuickImageEditorBar');
+        if (studioEl) {
+            studioEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            studioEl.classList.add('cat-target-glow');
+            setTimeout(() => studioEl.classList.remove('cat-target-glow'), 2200);
+            notifyToast('🎨 Đã cuộn tới Studio Đăng & Căn Chỉnh Ảnh Sản Phẩm (Drag & Drop)!', 'info');
+        } else {
+            window.location.href = '/services/seller/sell.html';
+        }
+    }
+}
+window.jumpToSellerDashboardSection = jumpToSellerDashboardSection;
+
+function renderSellerSmartInsightsStrip() {
+    const searchInput = document.getElementById('globalSearchInput');
+    if (searchInput) {
+        searchInput.placeholder = '⚡ Tìm nhanh đơn hàng SOP-01, mã vận đơn NVX, sản phẩm tồn kho hoặc yêu cầu báo giá B2B RFQ của Shop...';
+    }
+    const strip = document.getElementById('nvSmartQuickSuggestRow');
+    if (!strip) return;
+    const sellerInsights = [
+        { label: '📦 Đơn chờ đóng gói SOP-01 (Cần xuất kho trong 2h)', action: 'orders' },
+        { label: '📑 Yêu cầu Báo giá B2B RFQ đang mở (Chào giá ngay để chốt đơn lớn)', action: 'rfq' },
+        { label: '📈 Gợi ý AI: 3 sản phẩm nên điều chỉnh giá theo VN-Tech Index', action: 'pricing' },
+        { label: '🔨 Tạo phiên Đấu giá xả hàng tồn kho', action: 'auction' },
+        { label: '🎨 Mở Studio Đăng sản phẩm mới (Drag & Drop ảnh)', action: 'studio' }
+    ];
+    strip.innerHTML = `
+        <span class="text-warning fw-bold me-1">⚡ Gợi ý thông minh cho Shop:</span>
+        ${sellerInsights.map(item => `
+            <a href="javascript:void(0)"
+               onclick="jumpToSellerDashboardSection('${item.action}')"
+               class="badge text-decoration-none fw-normal px-2 py-1"
+               style="font-size:10.5px;border-color:#10b981 !important;">${item.label}</a>
+        `).join('')}
+    `;
+}
+window.renderSellerSmartInsightsStrip = renderSellerSmartInsightsStrip;
+
+async function loadLiveSellerHeaderKpis() {
+    if (!document.getElementById('nvSellerLiveKpiStrip')) return;
+    try {
+        const user = getAuthUser();
+        const sellerId = (user && user.id) ? user.id : 2;
+        const [ordersRes, prodsRes] = await Promise.all([
+            fetch(`/api/seller/orders?seller_id=${sellerId}`),
+            fetch('/api/home/products?sort_by=popular')
+        ]);
+        let pendingCount = 3;
+        let escrowHold = 42500000;
+        let lowStockCount = 2;
+
+        if (ordersRes && ordersRes.ok) {
+            const oData = await ordersRes.json();
+            const oList = Array.isArray(oData) ? oData : (oData.orders || []);
+            if (oList.length > 0) {
+                pendingCount = oList.filter(o => ['pending', 'confirmed', 'processing', 'shipping'].includes(String(o.status || '').toLowerCase())).length;
+                escrowHold = oList
+                    .filter(o => String(o.status || '').toLowerCase() !== 'completed' && String(o.status || '').toLowerCase() !== 'cancelled')
+                    .reduce((sum, o) => sum + Number(o.total_price || o.total_amount || 0), 0);
+            }
+        }
+        if (prodsRes && prodsRes.ok) {
+            const pData = await prodsRes.json();
+            const pList = Array.isArray(pData) ? pData : (pData.products || []);
+            if (pList.length > 0) {
+                lowStockCount = pList.filter(p => Number(p.stock !== undefined ? p.stock : 10) < 5).length;
+            }
+        }
+
+        const pEl = document.getElementById('nvSellerKpiPendingOrders');
+        const eEl = document.getElementById('nvSellerKpiEscrowRevenue');
+        const lEl = document.getElementById('nvSellerKpiLowStock');
+        if (pEl) pEl.textContent = `${pendingCount} đơn`;
+        if (eEl) eEl.textContent = formatVND(escrowHold);
+        if (lEl) lEl.textContent = `${lowStockCount} SP`;
+    } catch (e) {}
+}
+window.loadLiveSellerHeaderKpis = loadLiveSellerHeaderKpis;
+
 function renderGlobalHeaderAndFooter() {
     const hdrBox = document.getElementById('header-placeholder');
     const ftrBox = document.getElementById('footer-placeholder');
@@ -2517,6 +2697,10 @@ function renderGlobalHeaderAndFooter() {
     const useWebIcon = localStorage.getItem('nvx_use_web_icon') !== '0';
 
     const isAdmin = Boolean(user && user.role === 'admin');
+    const isSellerRoleOrPage = Boolean((user && user.role === 'seller') || (window.location.pathname || '').toLowerCase().includes('/seller/seller-dashboard.html'));
+    const sellerModeActive = isSellerWorkspaceHeaderActive();
+    document.documentElement.setAttribute('data-header-role-mode', sellerModeActive ? 'seller' : 'buyer');
+
     const displayName = user ? (user.full_name || user.username || 'Thành viên') : '';
     const avatarHtml = (user && user.avatar_url)
         ? `<img src="${user.avatar_url}" alt="" class="rounded-circle me-1" style="width:18px;height:18px;object-fit:cover;border:1px solid #059669;">`
@@ -2529,10 +2713,14 @@ function renderGlobalHeaderAndFooter() {
         ? 'Đang ở Chế độ Tối — Bấm để chuyển nhanh sang Chế độ Sáng (Executive Light)'
         : 'Đang ở Chế độ Sáng — Bấm để chuyển nhanh sang Chế độ Tối (Emerald Tech)';
 
-    const streakAndNotifClusterHtml = user ? `
+    const streakBtnHtml = (!sellerModeActive && user) ? `
         <button type="button" id="nvxHeaderLoginStreakBtn" class="btn btn-sm fw-bold d-inline-flex align-items-center gap-1 rounded-pill px-2 py-1 nvx-streak-fire-btn ${isCheckedTodayInit ? 'is-checked-in' : 'is-pending-checkin'}" style="font-size: 12px;" title="Chuỗi điểm danh: ${streakDaysInit} ngày — Bấm để nhận thưởng" onclick="openDailyCheckinModal()">
             <span class="nvx-fire-icon">🔥</span> <span id="nvxHeaderStreakCount">${streakDaysInit}</span>
         </button>
+    ` : '';
+
+    const streakAndNotifClusterHtml = user ? `
+        ${streakBtnHtml}
         <button type="button" id="headerNotifBellBtn" class="btn btn-outline-warning btn-sm py-1 px-2 rounded-pill fw-bold" style="font-size: 11.5px;" title="Thông báo hệ thống" onclick="toggleGlobalNotificationDrawer()">
             🔔 <span id="headerNotifCount">3</span>
         </button>
@@ -2544,6 +2732,12 @@ function renderGlobalHeaderAndFooter() {
             ${quickThemeIcon}
         </button>
     `;
+
+    const sellerPreviewToggleBtnHtml = isSellerRoleOrPage ? (
+        sellerModeActive
+            ? `<button type="button" id="nvxSellerToggleBuyerPreviewBtn" class="nv-topbar-dropdown-btn" style="border-color:#38bdf8;color:#7dd3fc;" onclick="toggleSellerBuyerPreviewMode(true)" title="Chuyển sang giao diện Khách mua để kiểm tra mặt tiền gian hàng">🛍️ Xem Giao Diện Khách Mua</button>`
+            : `<button type="button" id="nvxSellerToggleBuyerPreviewBtn" class="nv-topbar-dropdown-btn" style="border-color:#facc15;color:#fde047;" onclick="toggleSellerBuyerPreviewMode(false)" title="Quay về Chế độ Chuyên môn Quản trị Gian hàng">🏪 Chế Độ Chủ Gian Hàng</button>`
+    ) : '';
 
     const userControlsHtml = user ? `
         ${streakAndNotifClusterHtml}
@@ -2558,11 +2752,68 @@ function renderGlobalHeaderAndFooter() {
         <a href="/services/auth/auth.html" class="btn btn-warning text-dark btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 11.5px;">Đăng Nhập</a>
     `;
 
+    const entertainmentDropdownHtml = sellerModeActive ? '' : `
+        <div class="nv-topbar-dropdown nvx-dropdown">
+            <button type="button" class="nv-topbar-dropdown-btn">🎮 Giải Trí &amp; Săn Thưởng ▾</button>
+            <div class="nv-topbar-dropdown-menu nvx-dropdown-menu">
+                <a href="/services/vouchers_deals/vouchers.html" data-nv-slot="nav_voucher" class="nv-topbar-dropdown-item">🎟️ Kho Siêu Voucher Toàn Sàn</a>
+                <a href="/services/minigame/farm.html" data-nv-slot="nav_farm" class="nv-topbar-dropdown-item">🌱 Nông Trại Cây Voucher</a>
+                <a href="/services/minigame/minigame.html" class="nv-topbar-dropdown-item">🎡 Vòng Quay &amp; Bắn Tâm Esport</a>
+            </div>
+        </div>
+    `;
+
+    const cartOrSellerActionBtnHtml = sellerModeActive ? `
+        <a href="/services/seller/sell.html" id="headerSellerAddProductBtn" class="btn btn-nvidia btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 11.5px;">
+            ➕ Đăng SP Mới
+        </a>
+    ` : `
+        <a href="/services/cart_checkout/cart.html" id="headerCartLinkBtn" class="btn btn-nvidia btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 12px;">
+            🛒 <span id="headerCartCount">${cartCount}</span>
+        </a>
+    `;
+
+    const row3ContentHtml = sellerModeActive ? `
+        <div id="nvSellerLiveKpiStrip" class="nv-seller-kpi-strip">
+            <div class="d-flex align-items-center gap-2 flex-nowrap">
+                <span class="badge bg-warning text-dark fw-bold">🏪 SELLER WORKSPACE KPI</span>
+                <a href="javascript:void(0)" class="nv-seller-kpi-pill" onclick="jumpToSellerDashboardSection('orders')" title="Bấm để mở ngay Bảng Điều Phối Đơn Hàng SOP-01">
+                    📦 Đơn chờ xử lý: <strong class="text-warning" id="nvSellerKpiPendingOrders">3 đơn</strong>
+                </a>
+                <a href="javascript:void(0)" class="nv-seller-kpi-pill" onclick="jumpToSellerDashboardSection('escrow')" title="Bấm để xem Quỹ Doanh thu đang bảo lãnh Escrow">
+                    🛡️ Doanh thu đang bảo lãnh Escrow: <strong class="text-nvidia" id="nvSellerKpiEscrowRevenue">42.500.000 ₫</strong>
+                </a>
+                <a href="javascript:void(0)" class="nv-seller-kpi-pill" onclick="jumpToSellerDashboardSection('low_stock')" title="Bấm để kiểm tra các mã hàng sắp hết tồn kho">
+                    ⚠️ Cảnh báo sắp hết hàng (Stock &lt; 5): <strong class="text-danger" id="nvSellerKpiLowStock">2 SP</strong>
+                </a>
+                <a href="javascript:void(0)" class="nv-seller-kpi-pill" onclick="jumpToSellerDashboardSection('sla')" title="Bấm để xem báo cáo AI &amp; Điểm uy tín Gian hàng SLA">
+                    ⭐ Điểm uy tín Gian hàng: <strong class="text-info" id="nvSellerKpiSlaScore">4.9★ SLA</strong>
+                </a>
+            </div>
+            <a href="javascript:void(0)" onclick="toggleSellerBuyerPreviewMode(true)" class="text-info fw-bold text-decoration-none text-nowrap small">🛍️ Xem Giao Diện Khách Mua ↗</a>
+        </div>
+    ` : `
+        <div class="d-flex align-items-center gap-3">
+            <a href="/services/home/index.html" class="badge bg-nvidia text-decoration-none">Tất cả</a>
+            <a href="/services/home/index.html?category=gpu" data-nv-slot="cat_gpu" class="nv-hdr-link">🔥 Card đồ họa (GPU)</a>
+            <a href="/services/home/index.html?category=cpu" data-nv-slot="cat_cpu" class="nv-hdr-link">Vi xử lý (CPU)</a>
+            <a href="/services/home/index.html?category=mainboard" data-nv-slot="cat_mainboard" class="nv-hdr-link">Mainboard</a>
+            <a href="/services/home/index.html?category=ram" data-nv-slot="cat_ram" class="nv-hdr-link">RAM &amp; SSD</a>
+            <a href="/services/home/index.html?category=keyboard" data-nv-slot="cat_keyboard" class="nv-hdr-link">Bàn phím &amp; Chuột</a>
+            <a href="/services/home/index.html?category=headphones" data-nv-slot="cat_headphones" class="nv-hdr-link">Tai nghe</a>
+            <a href="/services/home/index.html?category=home_living" data-nv-slot="cat_home_living" class="nv-hdr-link">Đèn &amp; Gia dụng</a>
+            <a href="/services/home/index.html?category=health_care" data-nv-slot="cat_health_care" class="nv-hdr-link">Đồng hồ &amp; Sức khỏe</a>
+            <a href="/services/home/index.html?category=fashion" data-nv-slot="cat_fashion" class="nv-hdr-link">Balo &amp; Phụ kiện</a>
+        </div>
+        <a href="/services/compare/compare.html" class="text-nvidia fw-bold text-decoration-none text-nowrap">📊 So Sánh &amp; Wishlist</a>
+    `;
+
     if (hdrBox) {
+        hdrBox.style.cssText = 'position: relative !important; z-index: 2147483000 !important; overflow: visible !important; width: 100% !important; display: block !important;';
         hdrBox.innerHTML = `
-            <header id="mainHeader" class="nvidia-header-bar nv-global-header nvx-header-wrapper">
-                <div class="nvidia-header-shell">
-                    <div class="nv-header-top-row nvx-topbar">
+            <header id="mainHeader" class="nvidia-header-bar nv-global-header nvx-header-wrapper sticky-top" style="position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; width: 100% !important; z-index: 2147483000 !important; overflow: visible !important; transform: none !important; filter: none !important;">
+                <div class="nvidia-header-shell" style="position: relative !important; overflow: visible !important;">
+                    <div class="nv-header-top-row nvx-topbar" style="position: relative !important; z-index: 30 !important; overflow: visible !important;">
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             <a href="${user && (user.role === 'seller' || user.role === 'admin') ? '/services/seller/seller-dashboard.html' : '/services/auth/seller-auth.html'}" class="nv-topbar-dropdown-btn">🏪 Kênh Người Bán</a>
 
@@ -2575,14 +2826,7 @@ function renderGlobalHeaderAndFooter() {
                                 </div>
                             </div>
 
-                            <div class="nv-topbar-dropdown nvx-dropdown">
-                                <button type="button" class="nv-topbar-dropdown-btn">🎮 Giải Trí &amp; Săn Thưởng ▾</button>
-                                <div class="nv-topbar-dropdown-menu nvx-dropdown-menu">
-                                    <a href="/services/vouchers_deals/vouchers.html" data-nv-slot="nav_voucher" class="nv-topbar-dropdown-item">🎟️ Kho Siêu Voucher Toàn Sàn</a>
-                                    <a href="/services/minigame/farm.html" data-nv-slot="nav_farm" class="nv-topbar-dropdown-item">🌱 Nông Trại Cây Voucher</a>
-                                    <a href="/services/minigame/minigame.html" class="nv-topbar-dropdown-item">🎡 Vòng Quay &amp; Bắn Tâm Esport</a>
-                                </div>
-                            </div>
+                            ${entertainmentDropdownHtml}
 
                             <div class="nv-topbar-dropdown nvx-dropdown">
                                 <button type="button" class="nv-topbar-dropdown-btn">🛠️ Tiện Ích ▾</button>
@@ -2598,23 +2842,24 @@ function renderGlobalHeaderAndFooter() {
                             <a href="/services/cart_checkout/bank.html" id="headerBankBalanceBtn" data-nv-slot="nav_bank" class="btn btn-nvidia btn-sm py-0 px-2 fw-bold nv-bank-qr-nav-link text-nowrap" style="font-size: 11.5px;">🏦 Nexora Pay</a>
                         </div>
                         <div class="d-flex align-items-center gap-2">
+                            ${sellerPreviewToggleBtnHtml}
                             <a href="/services/settings/settings.html#themeStudioSection" id="headerThemeStudioLinkBtn" class="nv-topbar-dropdown-btn" style="border-color:#10b981;color:#a7f3d0;">🎨 Giao Diện &amp; Cài Đặt</a>
                         </div>
                     </div>
 
-                    <div class="nv-header-main-row nvx-main-header">
+                    <div class="nv-header-main-row nvx-main-header" style="position: relative !important; z-index: 20 !important; overflow: visible !important;">
                         <a href="/services/home/index.html" class="d-flex align-items-center text-decoration-none">
                             <img id="headerBrandLogoImg" data-nv-slot="brand_logo" src="/assets/icons/icon.png" alt="Nexora" class="${useWebIcon ? '' : 'd-none'}">
                             <span id="headerBrandNBox" class="nv-logo-n-box badge bg-nvidia fs-5 me-2 ${useWebIcon ? 'd-none' : ''}">N</span>
                             <div>
                                 <div class="fw-bold fs-4 text-nvidia lh-1">NEXORA</div>
-                                <small style="font-size: 10.5px; color: #cbd5e1 !important;">Nexora Mall • Công Nghệ &amp; Đời Sống</small>
+                                <small style="font-size: 10.5px; color: #cbd5e1 !important;">${sellerModeActive ? 'Nexora Partner • Trung Tâm Điều Hành Shop' : 'Nexora Mall • Công Nghệ &amp; Đời Sống'}</small>
                             </div>
                         </a>
 
                         <div class="nv-header-search-col">
                             <form onsubmit="handleGlobalHeaderSearch(event)" class="d-flex">
-                                <input type="search" id="globalSearchInput" class="form-control form-control-sm rounded-start-3" placeholder="✨ Tìm kiếm sản phẩm, thương hiệu, linh kiện PC trên Nexora Mall...">
+                                <input type="search" id="globalSearchInput" class="form-control form-control-sm rounded-start-3" placeholder="${sellerModeActive ? '⚡ Tìm nhanh đơn hàng SOP-01, mã vận đơn NVX, sản phẩm tồn kho hoặc yêu cầu báo giá B2B RFQ của Shop...' : '✨ Tìm kiếm sản phẩm, thương hiệu, linh kiện PC trên Nexora Mall...'}">
                                 <button type="button" id="headerVoiceSearchBtn" class="btn btn-dark border-top border-bottom border-secondary btn-sm px-2 text-info" title="Tìm kiếm bằng Giọng nói AI (Mèo AI tự động bấm tìm)" onclick="startGlobalVoiceSearch()">🎙️</button>
                                 <button type="submit" id="globalSearchBtn" class="btn btn-nvidia btn-sm px-3 rounded-end-3 fw-bold">🔍</button>
                             </form>
@@ -2623,26 +2868,12 @@ function renderGlobalHeaderAndFooter() {
 
                         <div class="d-flex align-items-center justify-content-end gap-1">
                             ${userControlsHtml}
-                            <a href="/services/cart_checkout/cart.html" id="headerCartLinkBtn" class="btn btn-nvidia btn-sm py-1 px-2 fw-bold text-nowrap" style="font-size: 12px;">
-                                🛒 <span id="headerCartCount">${cartCount}</span>
-                            </a>
+                            ${cartOrSellerActionBtnHtml}
                         </div>
                     </div>
 
-                    <div class="nv-header-cat-row">
-                        <div class="d-flex align-items-center gap-3">
-                            <a href="/services/home/index.html" class="badge bg-nvidia text-decoration-none">Tất cả</a>
-                            <a href="/services/home/index.html?category=gpu" data-nv-slot="cat_gpu" class="nv-hdr-link">🔥 Card đồ họa (GPU)</a>
-                            <a href="/services/home/index.html?category=cpu" data-nv-slot="cat_cpu" class="nv-hdr-link">Vi xử lý (CPU)</a>
-                            <a href="/services/home/index.html?category=mainboard" data-nv-slot="cat_mainboard" class="nv-hdr-link">Mainboard</a>
-                            <a href="/services/home/index.html?category=ram" data-nv-slot="cat_ram" class="nv-hdr-link">RAM &amp; SSD</a>
-                            <a href="/services/home/index.html?category=keyboard" data-nv-slot="cat_keyboard" class="nv-hdr-link">Bàn phím &amp; Chuột</a>
-                            <a href="/services/home/index.html?category=headphones" data-nv-slot="cat_headphones" class="nv-hdr-link">Tai nghe</a>
-                            <a href="/services/home/index.html?category=home_living" data-nv-slot="cat_home_living" class="nv-hdr-link">Đèn &amp; Gia dụng</a>
-                            <a href="/services/home/index.html?category=health_care" data-nv-slot="cat_health_care" class="nv-hdr-link">Đồng hồ &amp; Sức khỏe</a>
-                            <a href="/services/home/index.html?category=fashion" data-nv-slot="cat_fashion" class="nv-hdr-link">Balo &amp; Phụ kiện</a>
-                        </div>
-                        <a href="/services/compare/compare.html" class="text-nvidia fw-bold text-decoration-none text-nowrap">📊 So Sánh &amp; Wishlist</a>
+                    <div class="nv-header-cat-row" style="position: relative !important; z-index: 10 !important; overflow: visible !important;">
+                        ${row3ContentHtml}
                     </div>
                 </div>
             </header>
@@ -2650,7 +2881,19 @@ function renderGlobalHeaderAndFooter() {
         `;
     }
 
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+        if (!mainEl.id) mainEl.id = 'nvxMainPageContent';
+        mainEl.style.setProperty('position', 'relative', 'important');
+        mainEl.style.setProperty('z-index', '1', 'important');
+    }
+
     bindFixedHeaderSpacerResizeObserver();
+
+    if (sellerModeActive) {
+        renderSellerSmartInsightsStrip();
+        loadLiveSellerHeaderKpis();
+    }
 
     if (ftrBox) {
         ftrBox.innerHTML = `
@@ -2873,6 +3116,10 @@ function startGlobalVoiceSearch() {
 window.startGlobalVoiceSearch = startGlobalVoiceSearch;
 
 function renderSmartQuickSuggestStrip(keywords) {
+    if (typeof isSellerWorkspaceHeaderActive === 'function' && isSellerWorkspaceHeaderActive()) {
+        renderSellerSmartInsightsStrip();
+        return;
+    }
     const searchInput = document.getElementById('globalSearchInput');
     if (!searchInput || !Array.isArray(keywords) || !keywords.length) return;
 
@@ -2895,6 +3142,11 @@ function renderSmartQuickSuggestStrip(keywords) {
 window.renderSmartQuickSuggestStrip = renderSmartQuickSuggestStrip;
 
 async function initSmartSearchSuggestionRotator() {
+    if (typeof isSellerWorkspaceHeaderActive === 'function' && isSellerWorkspaceHeaderActive()) {
+        renderSellerSmartInsightsStrip();
+        loadLiveSellerHeaderKpis();
+        return;
+    }
     try {
         const res = await fetch('/api/settings/smart-search-keywords');
         if (!res.ok) return;
@@ -4180,6 +4432,129 @@ function toggleReadingFocusRuler(enabled, saveToDb = true) {
 }
 window.toggleReadingFocusRuler = toggleReadingFocusRuler;
 
+/* ==========================================================================
+   [FEAT-HDR-001.6] CHỈNH CỠ CHỮ TOÀN SÀN (4 MỨC FONT SCALE)
+   & CHỈNH ĐỘ CAO THANH HEADER (4 CHẾ ĐỘ HEADER HEIGHT / COMPACTNESS)
+   ========================================================================== */
+const NV_FONT_SCALE_MODES = {
+    small: { label: 'A- Nhỏ gọn (14px - 92%)', shortLabel: 'A- Nhỏ gọn (92%)', px: '14px', pct: '92%' },
+    normal: { label: 'A Tiêu chuẩn (16px - 100%)', shortLabel: 'A Tiêu chuẩn (100%)', px: '16px', pct: '100%' },
+    large: { label: 'A+ Chữ lớn dễ đọc (17.5px - 110%)', shortLabel: 'A+ Chữ lớn (110%)', px: '17.5px', pct: '110%' },
+    xlarge: { label: 'A++ Rất lớn cho người lớn tuổi (19px - 120%)', shortLabel: 'A++ Rất lớn (120%)', px: '19px', pct: '120%' }
+};
+window.NV_FONT_SCALE_MODES = NV_FONT_SCALE_MODES;
+
+const NV_HEADER_HEIGHT_MODES = {
+    ultra_compact: {
+        label: '⚡ Siêu Gọn (Ultra-Compact — Tự ẩn dòng danh mục khi cuộn xuống)',
+        shortLabel: 'Siêu Gọn (~76px)',
+        desc: 'Thu nhỏ padding các hàng Header & tự ẩn dòng danh mục phụ khi cuộn xuống, tiết kiệm tối đa diện tích màn hình.'
+    },
+    compact: {
+        label: '📐 Gọn Gàng (Compact — Độ cao ~95px, nút và ô tìm kiếm thanh mảnh)',
+        shortLabel: 'Gọn Gàng (~95px)',
+        desc: 'Độ cao ~95px, nút bấm và ô tìm kiếm thanh mảnh gọn gàng.'
+    },
+    standard: {
+        label: '🏛️ Tiêu Chuẩn (Standard — Độ cao mặc định cân đối ~125px)',
+        shortLabel: 'Tiêu Chuẩn (~125px)',
+        desc: 'Độ cao mặc định cân đối ~125px cho mọi màn hình.'
+    },
+    comfortable_tall: {
+        label: '🔍 Thoáng Rộng / Chữ To (Comfortable Tall — Độ cao ~148px)',
+        shortLabel: 'Thoáng Rộng (~148px)',
+        desc: 'Độ cao ~148px, nút bấm và chữ trên Header to rõ dễ thao tác.'
+    }
+};
+window.NV_HEADER_HEIGHT_MODES = NV_HEADER_HEIGHT_MODES;
+
+function applyGlobalFontScale(scaleMode = 'normal', saveToDb = true) {
+    const valid = NV_FONT_SCALE_MODES[scaleMode] ? scaleMode : 'normal';
+    document.documentElement.setAttribute('data-font-scale', valid);
+    localStorage.setItem('nvx_font_scale', valid);
+
+    document.querySelectorAll('[data-font-scale-btn]').forEach(btn => {
+        const m = btn.getAttribute('data-font-scale-btn');
+        btn.classList.toggle('btn-nvidia', m === valid);
+        btn.classList.toggle('btn-outline-secondary', m !== valid);
+    });
+    const sel = document.getElementById('settingsFontScaleSelect');
+    if (sel && sel.value !== valid) sel.value = valid;
+
+    const previewBox = document.getElementById('settingsFontScaleLivePreviewBox');
+    if (previewBox) {
+        const spec = NV_FONT_SCALE_MODES[valid];
+        previewBox.style.fontSize = spec.px;
+        const badgeEl = document.getElementById('settingsFontScaleLiveBadge');
+        if (badgeEl) badgeEl.textContent = `${spec.shortLabel} • ${spec.px}`;
+    }
+
+    if (typeof window.refreshSettingsQuickJumpCards === 'function') {
+        window.refreshSettingsQuickJumpCards();
+    }
+    bindFixedHeaderSpacerResizeObserver();
+
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        notifyToast(`🔤 Đã áp dụng cỡ chữ toàn sàn: ${NV_FONT_SCALE_MODES[valid].label}`, 'info');
+    }
+    return valid;
+}
+window.applyGlobalFontScale = applyGlobalFontScale;
+
+function bindUltraCompactScrollWatcher() {
+    if (window.__nvUltraCompactScrollBound) return;
+    window.__nvUltraCompactScrollBound = true;
+    window.addEventListener('scroll', () => {
+        const mode = document.documentElement.getAttribute('data-header-height') || localStorage.getItem('nvx_header_height_mode') || 'standard';
+        if (mode === 'ultra_compact') {
+            const scrolledDown = window.scrollY > 48;
+            if (document.body.classList.contains('nv-scroll-down-compact') !== scrolledDown) {
+                document.body.classList.toggle('nv-scroll-down-compact', scrolledDown);
+                bindFixedHeaderSpacerResizeObserver();
+            }
+        } else if (document.body.classList.contains('nv-scroll-down-compact')) {
+            document.body.classList.remove('nv-scroll-down-compact');
+            bindFixedHeaderSpacerResizeObserver();
+        }
+    }, { passive: true });
+}
+window.bindUltraCompactScrollWatcher = bindUltraCompactScrollWatcher;
+
+function applyHeaderHeightMode(heightMode = 'standard', saveToDb = true) {
+    const valid = NV_HEADER_HEIGHT_MODES[heightMode] ? heightMode : 'standard';
+    document.documentElement.setAttribute('data-header-height', valid);
+    localStorage.setItem('nvx_header_height_mode', valid);
+
+    if (valid !== 'ultra_compact') {
+        document.body.classList.remove('nv-scroll-down-compact');
+    }
+    bindUltraCompactScrollWatcher();
+
+    document.querySelectorAll('[data-header-height-btn]').forEach(btn => {
+        const m = btn.getAttribute('data-header-height-btn');
+        btn.classList.toggle('btn-nvidia', m === valid);
+        btn.classList.toggle('btn-outline-secondary', m !== valid);
+    });
+    const sel = document.getElementById('settingsHeaderHeightSelect');
+    if (sel && sel.value !== valid) sel.value = valid;
+
+    const descEl = document.getElementById('settingsHeaderHeightDescText');
+    if (descEl) descEl.textContent = NV_HEADER_HEIGHT_MODES[valid].desc;
+
+    if (typeof window.refreshSettingsQuickJumpCards === 'function') {
+        window.refreshSettingsQuickJumpCards();
+    }
+    setTimeout(() => bindFixedHeaderSpacerResizeObserver(), 20);
+
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        notifyToast(`📏 Đã chuyển độ cao Header sang: ${NV_HEADER_HEIGHT_MODES[valid].shortLabel}`, 'info');
+    }
+    return valid;
+}
+window.applyHeaderHeightMode = applyHeaderHeightMode;
+
 function syncAccessibilityPreferencesToDb() {
     const u = getAuthUser();
     fetch('/api/settings/accessibility', {
@@ -4191,7 +4566,9 @@ function syncAccessibilityPreferencesToDb() {
             large_buttons: localStorage.getItem('nvx_acc_large_buttons') === '1',
             visual_flash: localStorage.getItem('nvx_acc_visual_flash') === '1',
             reading_ruler: localStorage.getItem('nvx_acc_reading_ruler') === '1',
-            hover_color_inspector: localStorage.getItem('nvx_color_hover_assist_enabled') === '1'
+            hover_color_inspector: localStorage.getItem('nvx_color_hover_assist_enabled') === '1',
+            font_scale: localStorage.getItem('nvx_font_scale') || 'normal',
+            header_height_mode: localStorage.getItem('nvx_header_height_mode') || 'standard'
         })
     }).catch(() => {});
 }
@@ -4533,6 +4910,8 @@ function openColorblindPreviewModal() {
 window.openColorblindPreviewModal = openColorblindPreviewModal;
 
 function initGlobalAccessibilityFromSaved() {
+    applyGlobalFontScale(localStorage.getItem('nvx_font_scale') || 'normal', false);
+    applyHeaderHeightMode(localStorage.getItem('nvx_header_height_mode') || 'standard', false);
     const savedCvd = localStorage.getItem('nvx_cvd_mode') || 'standard';
     if (savedCvd !== 'standard') {
         applyColorblindMode(savedCvd, false);
@@ -4549,6 +4928,12 @@ function initGlobalAccessibilityFromSaved() {
     const isHoverOn = localStorage.getItem('nvx_color_hover_assist_enabled') === '1';
     document.body.classList.toggle('nv-hover-color-inspector-active', isHoverOn);
     updateHoverColorInspectorUiButtons(isHoverOn);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const sellerAct = urlParams.get('seller_action');
+    if (sellerAct && (window.location.pathname || '').toLowerCase().includes('seller-dashboard.html')) {
+        setTimeout(() => jumpToSellerDashboardSection(sellerAct), 320);
+    }
 }
 window.initGlobalAccessibilityFromSaved = initGlobalAccessibilityFromSaved;
 

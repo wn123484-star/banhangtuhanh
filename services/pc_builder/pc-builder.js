@@ -1,3 +1,4 @@
+/* [FEAT-HDR-001] & [FEAT-MKT-006] Trình Xây Dựng Cấu Hình PC 8 Khe & Chẩn Đoán Nghẽn Cổ Chai AI | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/pc-builder/parts / products / pc-builder.js | [LOCKED-DESIGN] */
 const PC_SLOT_META = [
     { key: 'cpu', label: '1. Vi xử lý (CPU)', icon: '🧠' },
     { key: 'mainboard', label: '2. Bo mạch chủ (Mainboard)', icon: '🎛️' },

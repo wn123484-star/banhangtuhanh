@@ -2683,19 +2683,26 @@ main {
    HEADER & FOOTER LUÔN MÀU SẪM SANG TRỌNG (#090D16) & CHỮ SÁNG RÕ NÉT 100%
    ========================================================================== */
 #header-placeholder {
-    position: sticky !important;
+    position: relative !important;
     top: 0 !important;
-    z-index: 1065 !important;
+    z-index: 2147483000 !important;
     width: 100% !important;
     display: block;
+    overflow: visible !important;
 }
 
 .nvidia-header-bar,
 #header-placeholder header {
-    position: relative !important;
+    position: fixed !important;
     top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
     margin-top: 0 !important;
-    z-index: 1065;
+    z-index: 2147483000 !important;
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
     background: #090d16 !important;
     color: #f8fafc !important;
     border-bottom: 2px solid #76b900 !important;
@@ -5309,7 +5316,7 @@ html[data-nv-skin="tet_festival"] {
 }
 
 /* ==========================================================================
-   [FEAT-HDR-001.1] THANH HEADER TOPBAR GỌN GÀNG & DROPDOWN THÔNG MINH (KHÓA Z-INDEX TUYỆT ĐỐI)
+   [FEAT-HDR-001.1] & [FEAT-HDR-001.2] THANH HEADER TOPBAR GỌN GÀNG & DROPDOWN THÔNG MINH (KHÓA Z-INDEX CHA-CON TUYỆT ĐỐI)
    ========================================================================== */
 header,
 #mainHeader,
@@ -5321,24 +5328,32 @@ header.sticky-top {
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    width: 100vw !important;
+    width: 100% !important;
     z-index: 2147483000 !important;
     margin: 0 !important;
     transform: none !important;
+    filter: none !important;
     overflow: visible !important;
 }
 
-#header-placeholder,
-.nvidia-header-shell {
+#header-placeholder {
     position: relative !important;
     z-index: 2147483000 !important;
+    overflow: visible !important;
+}
+
+header .nvidia-header-shell,
+#mainHeader .nvidia-header-shell,
+.nvx-header-wrapper .nvidia-header-shell {
+    position: relative !important;
+    z-index: auto !important;
     overflow: visible !important;
 }
 
 .nv-header-top-row,
 .nvx-topbar {
     position: relative !important;
-    z-index: 100050 !important;
+    z-index: 30 !important;
     overflow: visible !important;
     overflow-x: visible !important;
     overflow-y: visible !important;
@@ -5348,7 +5363,13 @@ header.sticky-top {
 .nv-header-main-row,
 .nvx-main-header {
     position: relative !important;
-    z-index: 100010 !important;
+    z-index: 20 !important;
+    overflow: visible !important;
+}
+
+.nv-header-cat-row {
+    position: relative !important;
+    z-index: 10 !important;
     overflow: visible !important;
 }
 
@@ -5356,7 +5377,8 @@ header.sticky-top {
 .nvx-dropdown {
     position: relative !important;
     display: inline-block !important;
-    z-index: 100060 !important;
+    z-index: 99990 !important;
+    overflow: visible !important;
 }
 
 .nv-topbar-dropdown-btn {
@@ -5394,12 +5416,14 @@ header.sticky-top {
     left: 0 !important;
     margin-top: 0 !important;
     min-width: 245px;
+    z-index: 99999 !important;
     background: #0f172a !important;
-    border: 1.5px solid #10b981 !important;
+    color: #f8fafc !important;
+    border: 1px solid #10b981 !important;
     border-radius: 12px;
     padding: 6px;
-    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.72) !important;
-    z-index: 100099 !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65) !important;
+    overflow: visible !important;
     pointer-events: auto !important;
     opacity: 1 !important;
 }
@@ -5892,7 +5916,7 @@ body {
     overflow-x: clip !important;
 }
 
-/* [FEAT-HDR-001.1] Tầng 4 (Header 3 Tầng Cố Định & Menu Xổ Xuống): z-index: 2147483000 - 2147483100 */
+/* [FEAT-HDR-001.1] Tầng 4 (Header 3 Tầng Cố Định & Menu Xổ Xuống): z-index: 2147483000 */
 #header-placeholder {
     position: relative !important;
     width: 100% !important;
@@ -5912,10 +5936,11 @@ header.sticky-top {
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    width: 100vw !important;
+    width: 100% !important;
     z-index: 2147483000 !important;
     margin: 0 !important;
     transform: none !important;
+    filter: none !important;
     overflow: visible !important;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28) !important;
 }
@@ -5930,15 +5955,40 @@ header.sticky-top {
 
 .nv-topbar-dropdown-menu,
 .nvx-dropdown-menu {
-    z-index: 2147483100 !important;
+    position: absolute !important;
+    top: 100% !important;
+    z-index: 99999 !important;
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1px solid #10b981 !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65) !important;
+    overflow: visible !important;
 }
 
-/* [FEAT-HDR-001.2] Tầng 5 (Nội dung trang chính <main>, bộ lọc, thẻ sản phẩm Glassmorphism & Kệ 3 Cột Trong Suốt): z-index <= 20 */
+/* [FEAT-HDR-001.2] Tầng 5 (Nội dung trang chính <main>, bộ lọc trắng, thẻ sản phẩm Glassmorphism & Kệ 3 Cột Trong Suốt): z-index: 1 !important */
 main,
+main.nvidia-header-shell,
+#nvxMainPageContent,
+.container,
+.nv-filter-card,
+.nv-filter-bar,
+#nvxAdvancedCatalogFilterBar,
+#filterSection,
+.card,
 .nv-product-card,
 .product-card {
     position: relative;
-    z-index: 2;
+    z-index: 1 !important;
+}
+
+header .container,
+#mainHeader .container,
+.nvx-header-wrapper .container,
+header .nvidia-header-shell,
+#mainHeader .nvidia-header-shell {
+    position: relative !important;
+    z-index: auto !important;
+    overflow: visible !important;
 }
 
 #productGrid,
@@ -6265,6 +6315,245 @@ body.nv-acc-visual-flash-now {
 body.nv-acc-reading-ruler #nvxReadingFocusRuler {
     display: block !important;
 }
+
+/* ==========================================================================
+   [FEAT-HDR-001.6] CHỈNH CỠ CHỮ TOÀN SÀN (FONT SCALE 4 MỨC)
+   & CHỈNH ĐỘ CAO THANH HEADER (HEADER HEIGHT / COMPACTNESS 4 CHẾ ĐỘ)
+   ========================================================================== */
+html[data-font-scale="small"] {
+    font-size: 14px !important;
+}
+html[data-font-scale="normal"] {
+    font-size: 16px !important;
+}
+html[data-font-scale="large"] {
+    font-size: 17.5px !important;
+}
+html[data-font-scale="xlarge"] {
+    font-size: 19px !important;
+}
+
+/* 1. Chế độ Siêu Gọn (Ultra-Compact): Thu nhỏ padding & tự ẩn dòng danh mục phụ khi cuộn xuống */
+html[data-header-height="ultra_compact"] #header-placeholder header,
+html[data-header-height="ultra_compact"] .nvidia-header-bar {
+    padding-top: 1px !important;
+    padding-bottom: 1px !important;
+}
+html[data-header-height="ultra_compact"] .nv-header-top-row {
+    padding: 1px 0 !important;
+    font-size: 10.5px !important;
+}
+html[data-header-height="ultra_compact"] .nv-header-main-row {
+    padding: 2px 0 !important;
+    gap: 8px !important;
+}
+html[data-header-height="ultra_compact"] #header-placeholder #globalSearchInput {
+    height: 28px !important;
+    font-size: 12px !important;
+}
+html[data-header-height="ultra_compact"] .nv-header-cat-row {
+    padding-top: 2px !important;
+    font-size: 10.5px !important;
+    transition: max-height 0.18s ease, opacity 0.18s ease, padding 0.18s ease;
+}
+html[data-header-height="ultra_compact"] body.nv-scroll-down-compact .nv-header-cat-row {
+    display: none !important;
+}
+
+/* 2. Chế độ Gọn Gàng (Compact — ~95px) */
+html[data-header-height="compact"] #header-placeholder header,
+html[data-header-height="compact"] .nvidia-header-bar {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+html[data-header-height="compact"] .nv-header-top-row {
+    padding: 2px 0 !important;
+    font-size: 11px !important;
+}
+html[data-header-height="compact"] .nv-header-main-row {
+    padding: 3px 0 !important;
+    gap: 10px !important;
+}
+html[data-header-height="compact"] #header-placeholder #globalSearchInput {
+    height: 30px !important;
+    font-size: 12.2px !important;
+}
+html[data-header-height="compact"] .nv-header-cat-row {
+    padding-top: 2px !important;
+    font-size: 11px !important;
+}
+
+/* 3. Chế độ Tiêu Chuẩn (Standard — ~125px) */
+html[data-header-height="standard"] #header-placeholder header,
+html[data-header-height="standard"] .nvidia-header-bar {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+}
+
+/* 4. Chế độ Thoáng Rộng / Chữ To (Comfortable Tall — ~148px) */
+html[data-header-height="comfortable_tall"] #header-placeholder header,
+html[data-header-height="comfortable_tall"] .nvidia-header-bar {
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
+}
+html[data-header-height="comfortable_tall"] .nv-header-top-row {
+    padding: 6px 0 !important;
+    font-size: 12.8px !important;
+}
+html[data-header-height="comfortable_tall"] .nv-topbar-dropdown-btn {
+    padding: 5px 14px !important;
+    font-size: 0.85rem !important;
+}
+html[data-header-height="comfortable_tall"] .nv-header-main-row {
+    padding: 9px 0 !important;
+    gap: 16px !important;
+}
+html[data-header-height="comfortable_tall"] #header-placeholder #globalSearchInput {
+    height: 40px !important;
+    font-size: 14px !important;
+}
+html[data-header-height="comfortable_tall"] .nv-header-cat-row {
+    padding-top: 6px !important;
+    padding-bottom: 2px !important;
+    font-size: 12.8px !important;
+}
+
+/* ==========================================================================
+   [FEAT-HDR-001.7] CHẾ ĐỘ HEADER CHUYÊN MÔN NGƯỜI BÁN (SELLER WORKSPACE HEADER MODE)
+   ========================================================================== */
+.nv-seller-kpi-strip {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+}
+.nv-seller-kpi-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 3px 11px !important;
+    border-radius: 999px !important;
+    background: rgba(15, 23, 42, 0.92) !important;
+    border: 1px solid rgba(16, 185, 129, 0.45) !important;
+    color: #f8fafc !important;
+    font-size: 11.2px !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all 0.16s ease !important;
+}
+.nv-seller-kpi-pill:hover {
+    background: rgba(16, 185, 129, 0.24) !important;
+    border-color: #10b981 !important;
+    transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   [FEAT-ACC-009.5] BỐ CỤC 2 CỘT KHOA HỌC TRANG CÀI ĐẶT (MASTER-DETAIL LAYOUT)
+   & HÀNG 6 BOX LỐI TẮT NHẢY NHANH (QUICK-JUMP SUMMARY CARDS)
+   ========================================================================== */
+.nv-settings-quick-jump-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+}
+@media (max-width: 1199.98px) {
+    .nv-settings-quick-jump-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+@media (max-width: 767.98px) {
+    .nv-settings-quick-jump-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.nv-settings-quick-card {
+    border-radius: 14px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--nv-border-col, #cbd5e1);
+    background: var(--nv-bg-surface, #ffffff);
+    color: var(--nv-text-main, #0f172a);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+}
+.nv-settings-quick-card:hover,
+.nv-settings-quick-card.active {
+    border-color: #10b981 !important;
+    box-shadow: 0 8px 22px rgba(16, 185, 129, 0.18) !important;
+    transform: translateY(-2px);
+}
+
+.nv-settings-master-detail-grid {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    gap: 24px;
+    align-items: start;
+}
+@media (max-width: 991.98px) {
+    .nv-settings-master-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nv-settings-left-sidebar {
+    position: sticky;
+    top: 136px;
+    z-index: 5;
+}
+
+.nv-settings-nav-item {
+    width: 100%;
+    text-align: left;
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1.5px solid transparent;
+    background: transparent;
+    color: var(--nv-text-main, #0f172a);
+    font-weight: 700;
+    font-size: 0.84rem;
+    cursor: pointer;
+    transition: all 0.16s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.nv-settings-nav-item:hover {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(16, 185, 129, 0.35);
+}
+.nv-settings-nav-item.active {
+    background: linear-gradient(135deg, #064e3b 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.28);
+}
+
+.nv-settings-sublist {
+    display: none;
+    padding: 6px 8px 6px 22px;
+    margin-bottom: 6px;
+    font-size: 0.76rem;
+    border-left: 2px solid #10b981;
+    margin-left: 14px;
+}
+.nv-settings-nav-group.active .nv-settings-sublist {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 
 
 

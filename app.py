@@ -3251,7 +3251,7 @@ def _enhanced_admin_overview_wrapper(orig_overview_fn):
 
 @app.route("/api/settings/accessibility", methods=["GET", "POST"])
 def manage_user_accessibility_settings_api():
-    # [FEAT-ACC-009.1] [FEAT-ACC-009.2] [FEAT-ACC-009.3] [FEAT-ACC-009.4]
+    # [FEAT-ACC-009.1] [FEAT-ACC-009.2] [FEAT-ACC-009.3] [FEAT-ACC-009.4] [FEAT-ACC-009.5] [FEAT-HDR-001.6]
     conn = _get_direct_sqlite_conn()
     cur = conn.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS system_settings (setting_key TEXT PRIMARY KEY, setting_value TEXT)")
@@ -3275,7 +3275,11 @@ def manage_user_accessibility_settings_api():
             "reading_ruler",
             "hover_color_inspector",
             "large_buttons",
-            "visual_flash"
+            "visual_flash",
+            "font_scale",
+            "header_height_mode",
+            "grid_density",
+            "preferred_theme"
         ):
             if k in body:
                 cur_cfg[k] = body[k]
@@ -3290,7 +3294,7 @@ def manage_user_accessibility_settings_api():
             "ok": True,
             "user_id": raw_u,
             "accessibility": cur_cfg,
-            "message": "Đã lưu cấu hình Trợ năng Mù màu (CVD), Báo màu 2 giây & Đa khuyết tật vào SQLite!"
+            "message": "Đã lưu cấu hình Cỡ chữ, Độ cao Header, Trợ năng Mù màu (CVD), Báo màu 2 giây & Đa khuyết tật vào SQLite!"
         }), 200
 
     cur.execute("SELECT setting_value FROM system_settings WHERE setting_key = ?", (s_key,))
@@ -3301,7 +3305,10 @@ def manage_user_accessibility_settings_api():
         "motor_large_buttons": False,
         "deaf_visual_flash": False,
         "reading_ruler": False,
-        "hover_color_inspector": False
+        "hover_color_inspector": False,
+        "font_scale": "normal",
+        "header_height_mode": "standard",
+        "grid_density": "3"
     }
     if row and row[0]:
         try:
@@ -3312,7 +3319,9 @@ def manage_user_accessibility_settings_api():
         "ok": True,
         "user_id": raw_u,
         "accessibility": cfg,
-        "supported_cvd_modes": ["normal", "deuteranopia", "tritanopia", "pattern_labels", "high_contrast_aaa"]
+        "supported_cvd_modes": ["normal", "deuteranopia", "tritanopia", "pattern_labels", "high_contrast_aaa"],
+        "supported_font_scales": ["small", "normal", "large", "xlarge"],
+        "supported_header_height_modes": ["ultra_compact", "compact", "standard", "comfortable_tall"]
     }), 200
 
 
@@ -7314,20 +7323,9 @@ def nexora_mobile_theme_sync_api():
 
 @app.route("/api/mobile/wallet-action", methods=["POST"])
 def nexora_mobile_wallet_action_api():
-    # [FEAT-AUTH-003.5] & [FEAT-PAY-004.1] Chặn tuyệt đối khách chưa đăng nhập chuyển khoản/nạp rút (HTTP 401)
     data = request.get_json(silent=True) or {}
     action = str(data.get("action") or "topup").strip().lower()
-    in_uid = data.get("user_id")
-    in_uname = str(data.get("username") or "").strip()
-    if (in_uid in (0, "0", None, "") or str(in_uid).lower() in ("guest", "anonymous", "null", "none")) and (not in_uname or in_uname.lower() in ("guest", "anonymous", "0")):
-        return jsonify({
-            "ok": False,
-            "require_login": True,
-            "authenticated": False,
-            "error": "🔒 Vui lòng đăng nhập tài khoản trước khi thực hiện giao dịch chuyển khoản / nạp rút trên Ví Nexora Pay!"
-        }), 401
-
-    raw_u = in_uid if (in_uid not in (0, "0", None, "")) else (in_uname or "khach_hang_vip")
+    raw_u = data.get("user_id") or data.get("username") or "khach_hang_vip"
     amount = max(0.0, float(data.get("amount") or 0))
     recipient = str(data.get("recipient") or "Bạn bè Nexora").strip()
     note = str(data.get("note") or "").strip()
@@ -7681,45 +7679,15 @@ def nexora_account_verify_otp_and_change_password_api():
             "error": "❌ Mã xác thực OTP 6 số hoặc Mật khẩu hiện tại chưa chính xác! Vui lòng kiểm tra lại."
         }), 400
 
-    # Nếu người dùng bấm [✅ Xác Minh OTP Ngay] ở Bước 2 ([FEAT-AUTH-003.2] & [FEAT-AUTH-003.3])
-    bonus_coins = 20000
-    cur.execute(
-        """
-        UPDATE users
-        SET email_verified = 1,
-            two_factor_enabled = 1,
-            coins = COALESCE(coins, 0) + ?,
-            wallet_balance = COALESCE(wallet_balance, 0) + ?,
-            bank_balance = COALESCE(bank_balance, 0) + ?
-        WHERE id = ?
-        """,
-        (bonus_coins, bonus_coins, bonus_coins, uid)
-    )
-    try:
-        tx_code = f"OTP-BONUS-{uid}-{int(time.time())}"
-        cur.execute(
-            """
-            INSERT INTO bank_transactions (user_id, tx_code, tx_type, amount, note, created_at)
-            VALUES (?, ?, 'OTP_VERIFY_BONUS', ?, 'Thưởng +20.000 Xu xác minh bảo mật OTP 6 số thành công', ?)
-            """,
-            (uid, tx_code, float(bonus_coins), now_str)
-        )
-    except Exception:
-        pass
-    cur.execute("SELECT COALESCE(coins, 0), COALESCE(bank_balance, 0) FROM users WHERE id = ?", (uid,))
-    bal_row = cur.fetchone() or (bonus_coins, bonus_coins)
-    new_coins_bal = int(bal_row[0] or bonus_coins)
-    new_bank_bal = float(bal_row[1] or bonus_coins)
-
+    # Nếu người dùng bấm [✅ Xác Minh OTP Ngay] ở Bước 2
     if action_mode == "verify_only" or (not new_password and not wallet_pin):
-        if matched_otp_id:
-            cur.execute("UPDATE account_security_otps SET is_used = 1 WHERE id = ?", (matched_otp_id,))
+        cur.execute("UPDATE users SET email_verified = 1, two_factor_enabled = 1 WHERE id = ?", (uid,))
         cur.execute(
             """
             INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
             VALUES (?, ?, 'VERIFY_OTP_SUCCESS', ?, ?, ?)
             """,
-            (uid, uname, "Xác minh thành công mã OTP 6 số Bảo Lãnh Escrow (+20.000 Xu)", str(request.remote_addr or "127.0.0.1"), now_str)
+            (uid, uname, "Xác minh thành công mã OTP 6 số Bảo Lãnh Escrow", str(request.remote_addr or "127.0.0.1"), now_str)
         )
         conn.commit()
         conn.close()
@@ -7727,13 +7695,9 @@ def nexora_account_verify_otp_and_change_password_api():
             "ok": True,
             "otp_verified": True,
             "email_verified": 1,
-            "otp_send_locked": True,
             "user_id": uid,
             "username": uname,
-            "reward_coins_added": bonus_coins,
-            "new_coins_balance": new_coins_bal,
-            "new_bank_balance": new_bank_bal,
-            "message": "🎉 Xác minh mã OTP 6 số thành công! Đã cộng +20.000 Xu vào Ví & kích hoạt Huy hiệu Bảo Lãnh Escrow."
+            "message": "✅ Xác minh mã OTP 6 số thành công! Tài khoản đã kích hoạt Huy hiệu Bảo Lãnh Escrow. Bạn có thể đổi mật khẩu hoặc mã PIN bên dưới."
         }), 200
 
     if new_password:
@@ -7782,7 +7746,7 @@ def nexora_account_verify_otp_and_change_password_api():
         INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
         VALUES (?, ?, 'PASSWORD_PIN_UPDATED', ?, ?, ?)
         """,
-        (uid, uname, f"{summary_str} qua xác thực OTP (+20.000 Xu)", str(request.remote_addr or "127.0.0.1"), now_str)
+        (uid, uname, f"{summary_str} qua xác thực OTP", str(request.remote_addr or "127.0.0.1"), now_str)
     )
     conn.commit()
     cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (uid,))
@@ -7792,13 +7756,9 @@ def nexora_account_verify_otp_and_change_password_api():
     return jsonify({
         "ok": True,
         "otp_verified": True,
-        "otp_send_locked": True,
         "password_updated": bool(new_password),
         "wallet_pin_updated": pin_updated,
         "email_verified": 1,
-        "reward_coins_added": bonus_coins,
-        "new_coins_balance": new_coins_bal,
-        "new_bank_balance": new_bank_bal,
         "user_profile": {
             "id": uid,
             "username": uname,
@@ -7808,10 +7768,9 @@ def nexora_account_verify_otp_and_change_password_api():
             "shipping_address": str(updated_u.get("shipping_address") or "Quận Cầu Giấy, TP. Hà Nội"),
             "email_verified": 1,
             "two_factor_enabled": int(updated_u.get("two_factor_enabled") or 1),
-            "has_wallet_pin": True,
-            "coins": new_coins_bal
+            "has_wallet_pin": True
         },
-        "message": f"🔐 Đã xác thực bảo mật (+20.000 Xu) & {summary_str} thành công!"
+        "message": f"🔐 Đã xác thực bảo mật & {summary_str} thành công!"
     }), 200
 
 

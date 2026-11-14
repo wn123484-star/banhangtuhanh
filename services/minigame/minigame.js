@@ -1,3 +1,4 @@
+/* [FEAT-PAY-004.5] Vòng Quay Siêu Xu, Đấu Trường Phản Xạ Tâm Ngắm 30s & Chuỗi Điểm Danh 7 Ngày SQLite | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-checkin / /api/minigame/spin / users / minigame.js | [LOCKED-DESIGN] */
 let __isWheelSpinningNow = false;
 let __currentWheelRotation = 0;
 

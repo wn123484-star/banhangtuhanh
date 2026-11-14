@@ -1,3 +1,4 @@
+/* [FEAT-PAY-004] Trung Tâm Săn Siêu Voucher & Ví Ưu Đãi Toàn Sàn | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/vouchers/list / user_vouchers / vouchers.js | [LOCKED-DESIGN] */
 let __vouchersCatalogCache = [];
 let __voucherFilterMode = 'all';
 

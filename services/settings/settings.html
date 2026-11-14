@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cài Đặt Giao Diện 12 Chủ Đề, Mật Độ Lưới &amp; Bảo Mật OTP - Nexora Mall</title>
+    <title>Trung Tâm Cài Đặt Khoa Học 2 Cột: 12 Giao Diện, Cỡ Chữ, Độ Cao Header, CVD &amp; Bảo Mật OTP - Nexora Mall</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/core/global.css">
     <link rel="stylesheet" href="/services/settings/settings.css">
@@ -11,283 +11,625 @@
 <body>
     <div id="header-placeholder"></div>
 
-    <main class="container py-4">
-        <!-- [FEAT-ACC-009] Studio 12 Giao Diện, 5 Chế Độ Mù Màu (CVD) & Hỗ Trợ Đa Khuyết Tật | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility / system_settings / settings.html | [LOCKED-DESIGN] -->
-        <!-- STUDIO 12 GIAO DIỆN ĐA LỨA TUỔI, HIỆU ỨNG NỀN & MẬT ĐỘ LƯỚI SẢN PHẨM -->
-        <section id="themeStudioSection" class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #059669 !important;">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
+    <main class="container py-4" id="nvxSettingsMainContainer">
+        <!-- [FEAT-ACC-009.5] & [FEAT-HDR-001.6] Bố Cục Trang Cài Đặt Khoa Học 2 Cột (Master-Detail), 6 Thẻ Quick-Action, Chỉnh Cỡ Chữ & Độ Cao Header | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility / system_settings / settings.html | [LOCKED-DESIGN] -->
+
+        <!-- TIÊU ĐỀ TRANG CÀI ĐẶT TRUNG TÂM & NÚT CHẾ ĐỘ XEM -->
+        <div class="nv-adaptive-card p-3 p-md-4 mb-3 shadow-sm" style="border-left: 5px solid #059669 !important;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div>
-                    <span class="badge bg-nvidia mb-1">🎨 STUDIO CÁ NHÂN HÓA GIAO DIỆN TOÀN SÀN NEXORA</span>
-                    <h4 class="fw-bold m-0">Bộ 12 Giao Diện Đa Lứa Tuổi &amp; Mật Độ Hiển Thị Kệ Hàng</h4>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <span class="badge bg-nvidia">⚙️ TRUNG TÂM CÁ NHÂN HÓA &amp; BẢO MẬT TOÀN DIỆN NEXORA V12</span>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold" id="settingsSyncStatusBadge">✔ Đã đồng bộ SQLite WAL</span>
+                    </div>
+                    <h3 class="fw-bold m-0">Cài Đặt Giao Diện, Cỡ Chữ, Độ Cao Header, Trợ Năng CVD &amp; Bảo Mật Tài Khoản</h3>
                     <p class="small text-muted mb-0 mt-1">
-                        Mặc định sử dụng <strong>Executive Pearl Light</strong> (Sáng công sở thanh lịch, dịu mắt). Bạn có thể chuyển nhanh giữa 6 chủ đề Sáng Nghiêm Túc và 6 chủ đề Tối Chuyên Sâu, bật/tắt hiệu ứng nền động hoặc chỉnh số cột sản phẩm.
+                        Bố cục 2 cột khoa học (Master-Detail) giúp tra cứu và tùy chỉnh tức thì. Bấm vào <strong>6 Thẻ Phím Tắt Nhanh</strong> bên dưới hoặc <strong>Danh mục cột trái</strong> để chuyển nhóm cài đặt.
                     </p>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                    <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="toggleTheme()">🌓 Đổi Nhanh Sáng / Tối</button>
-                    <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="toggleWebIconMode()">🖼️ Đồng Bộ Icon Web</button>
-                </div>
-            </div>
-
-            <div class="row g-3 align-items-center mb-3">
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold mb-1">🎨 Chọn Chủ Đề Giao Diện (12 Themes):</label>
-                    <select id="settingsThemeSkinSelector" class="form-select form-select-sm fw-bold" onchange="applyNvidiaVisualSkin(this.value)">
-                        <option value="executive_light">⚪ 1. Executive Pearl Light (Sáng Công Sở Thanh Lịch - Mặc định)</option>
-                        <option value="swiss_finance">🏛️ 2. Swiss Financial Banking (Ngân Hàng Thụy Sĩ Nghiêm Túc)</option>
-                        <option value="apple_cupertino">🍎 3. Minimalist Cupertino Silver (Tối Giản Hiện Đại)</option>
-                        <option value="muji_warm_paper">📜 4. Warm Ivory Paper (Giấy Kem Dịu Mắt Cho Người Lớn Tuổi)</option>
-                        <option value="nordic_snow">❄️ 5. Nordic Ice Daylight (Bắc Âu Tinh Khiết)</option>
-                        <option value="oxford_academic">🎓 6. Oxford Scholarly Classic (Cổ Điển Học Thuật)</option>
-                        <option value="bloomberg_terminal">📈 7. Wall Street Night Terminal (Chuyên Gia Dữ Liệu Tối)</option>
-                        <option value="obsidian_luxury">👑 8. Obsidian Gold VIP (Đen Kim Tước Sang Trọng)</option>
-                        <option value="emerald_tech">🟢 9. Nexora Emerald Matrix (Công Nghệ Xanh Lục Bảo)</option>
-                        <option value="ocean_breeze">🌊 10. Deep Ocean Breeze (Đại Dương Xanh Thẳm)</option>
-                        <option value="kyoto_autumn">🍁 11. Kyoto Autumn Leaves (Mùa Thu Lá Đỏ Kyoto)</option>
-                        <option value="tet_festival">🧧 12. Lễ Hội Tết Sum Vầy (Đặc Biệt Mùa Lễ Hội)</option>
-                    </select>
-                </div>
-
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold mb-1">📐 Mật Độ Hiển Thị Lưới Sản Phẩm (Grid Density):</label>
-                    <select id="settingsGridDensitySelect" class="form-select form-select-sm fw-bold" onchange="applyProductGridDensity(this.value)">
-                        <option value="3">3 Cột (Rộng rãi - Chữ to cho người lớn tuổi)</option>
-                        <option value="4" selected>4 Cột (Tiêu chuẩn - Cân đối)</option>
-                        <option value="5">5 Cột (Chuyên nghiệp)</option>
-                        <option value="6">6 Cột (Siêu gọn - Xem nhiều SP cùng lúc)</option>
-                        <option value="list">Danh sách ngang (List View)</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold mb-1 d-block">✨ Hiệu Ứng Nền Động Canvas:</label>
-                    <div class="form-check form-switch mt-1">
-                        <input class="form-check-input" type="checkbox" id="settingsBgFxSwitch" checked onchange="toggleBackgroundEffects(this.checked)">
-                        <label class="form-check-label small fw-semibold" for="settingsBgFxSwitch">Bật hiệu ứng nền</label>
-                    </div>
-                </div>
-            </div>
-
-            <div id="settings12ThemesGridBox" class="row g-2 mb-4"></div>
-
-            <!-- [FEAT-ACC-009] TRUNG TÂM TRỢ NĂNG MÙ MÀU (5 CHẾ ĐỘ CVD), BẢNG XEM TRƯỚC MÀU SẮC & HỖ TRỢ ĐA KHUYẾT TẬT -->
-            <div class="p-3 rounded-4 border" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.35) !important;">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                    <div>
-                        <span class="badge bg-primary">👁️ TRUNG TÂM TRỢ NĂNG THỊ GIÁC &amp; ĐA KHUYẾT TẬT CHUẨN WCAG 2.1 AAA</span>
-                        <h5 class="fw-bold m-0 mt-1">Bảng Màu Thích Ứng Mù Màu (5 Chế Độ CVD) &amp; Xem Trước Màu Sắc Thực Tế</h5>
-                        <p class="small text-muted mb-0">
-                            Hỗ trợ người mù màu Đỏ-Lục (Deuteranopia / Protanopia), Xanh-Vàng (Tritanopia), khiếm thị, run tay và khiếm thính phân biệt chính xác màu sắc sản phẩm, nến giá và nút bấm.
-                        </p>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="if(typeof describeVisibleProductColorByCat==='function') describeVisibleProductColorByCat();">🐱 Mèo AI Đọc &amp; Tả Màu Sản Phẩm</button>
-                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="if(typeof openColorblindPreviewModal==='function') openColorblindPreviewModal();">🔬 Mở Bảng Đối Chiếu Màu Đầy Đủ</button>
-                    </div>
-                </div>
-
-                <div class="row g-3 align-items-end mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold mb-1">👁️ Chọn Chế Độ Bảng Màu Thích Ứng Khiếm Khuyết Sắc Giác (CVD):</label>
-                        <select class="form-select form-select-sm fw-bold nvx-cvd-mode-selector" id="settingsCvdModeSelector" onchange="applyColorblindMode(this.value)">
-                            <option value="normal">👁️ 1. Chế độ Chuẩn (Normal Vision — Xanh lá / Đỏ truyền thống)</option>
-                            <option value="deuteranopia">🔵🟠 2. Mù Đỏ - Xanh Lá (Deuteranopia / Protanopia — Đổi sang Xanh Dương Đậm #0072B2 &amp; Cam Hổ Phách #D55E00)</option>
-                            <option value="tritanopia">🟣🟡 3. Mù Xanh Dương - Vàng (Tritanopia — Đổi sang Đỏ Tím #CC79A7 &amp; Xanh Ngọc #009E73)</option>
-                            <option value="pattern_labels">🔣 4. Chế Độ Nhãn Ký Hiệu &amp; Vân Sọc (Tự động gắn nhãn [▲ TĂNG / ▼ GIẢM / ✔ HỢP LỆ / ✖ CẢNH BÁO])</option>
-                            <option value="high_contrast_aaa">⚡ 5. Tương Phản Siêu Cao WCAG AAA (Nền Đen Tuyền #000000, Chữ Vàng Sáng #FFD700, Viền 2px)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="d-flex flex-wrap gap-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="settingsMotorLargeBtnSwitch" onchange="toggleLargeButtonsMode(this.checked)">
-                                <label class="form-check-label small fw-bold" for="settingsMotorLargeBtnSwitch">🖐️ Nút Bấm Lớn Chống Run Tay (48px)</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="settingsDeafVisualFlashSwitch" onchange="toggleVisualFlashAlertMode(this.checked)">
-                                <label class="form-check-label small fw-bold" for="settingsDeafVisualFlashSwitch">🦻 Viền Sáng Nhấp Nháy (Khiếm Thính)</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="settingsReadingRulerSwitch" onchange="toggleReadingFocusRuler(this.checked)">
-                                <label class="form-check-label small fw-bold" for="settingsReadingRulerSwitch">📏 Thước Đọc Tập Trung</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="settingsHoverColorInspectorSwitch" onchange="toggleHoverColorInspector(this.checked)">
-                                <label class="form-check-label small fw-bold text-primary" for="settingsHoverColorInspectorSwitch">🔍 Bật/Tắt Mèo Báo Màu Khi Di Chuột 2 Giây (Hover Color Inspector)</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bảng Xem Trước Màu Sắc Thực Tế (Live UI Color Previewer) -->
-                <div id="settingsLiveColorPreviewBox" class="nvx-live-color-preview-container"></div>
-            </div>
-        </section>
-
-        <!-- CỐ VẤN HOÀN THIỆN HỒ SƠ BẢO MẬT ĐỂ ĐẢM BẢO KHẢ NĂNG ĐỔI MẬT KHẨU -->
-        <div class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #76b900 !important;">
-            <div class="row g-3 align-items-center">
-                <div class="col-lg-8">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-nvidia">TRUNG TÂM BẢO VỆ TÀI KHOẢN &amp; KHÔI PHỤC MẬT KHẨU</span>
-                        <span id="secHealthScoreBadge" class="badge bg-warning text-dark fw-bold">Độ hoàn thiện bảo mật: 50%</span>
-                    </div>
-                    <h4 class="fw-bold m-0" id="secAdvisorHeadline">🛡️ Gợi Ý Hoàn Thiện Thông Tin Bảo Mật Tài Khoản</h4>
-                    <p class="small text-muted mb-2 mt-1">
-                        Hoàn thiện đầy đủ <strong>Email nhận OTP</strong>, <strong>Số điện thoại</strong> và <strong>Câu hỏi bảo mật</strong> giúp bạn luôn có thể tự đổi hoặc khôi phục mật khẩu tức thì ngay cả khi quên mật khẩu cũ.
-                    </p>
-                    <div id="secMissingChecklistBox" class="d-flex flex-wrap gap-2"></div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="p-3 rounded-3 border text-center">
-                        <div class="small text-muted mb-1">Chỉ Số Sức Khỏe Bảo Mật</div>
-                        <div class="fs-2 fw-bold text-nvidia" id="secScoreBigNumber">50%</div>
-                        <div class="progress mt-1" style="height: 10px;">
-                            <div id="secHealthProgressBar" class="progress-bar bg-nvidia" style="width: 50%;"></div>
-                        </div>
-                    </div>
+                    <button type="button" id="btnToggleShowAllSettings" class="btn btn-outline-primary btn-sm fw-bold" onclick="switchSettingsMasterCategory('all')">
+                        📋 Xem Tất Cả 5 Nhóm
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="toggleTheme()">
+                        🌓 Đổi Nhanh Sáng / Tối
+                    </button>
                 </div>
             </div>
         </div>
 
-        <div class="row g-4 mb-4">
-            <!-- CỘT TRÁI: HOÀN THIỆN HỒ SƠ & CÂU HỎI BẢO MẬT -->
-            <div class="col-lg-6">
-                <div class="nv-adaptive-card p-4 h-100 shadow-sm">
-                    <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">👤 1. Cập Nhật Thông Tin Khôi Phục &amp; Câu Hỏi Bảo Mật</h5>
-                    <form id="securityProfileForm" onsubmit="saveSecurityProfileSettings(event)">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Tên đăng nhập (ID)</label>
-                                <input type="text" id="setUsername" class="form-control form-control-sm font-monospace" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Họ và tên hiển thị *</label>
-                                <input type="text" id="setFullName" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Email nhận mã OTP khôi phục *</label>
-                                <input type="email" id="setEmail" class="form-control form-control-sm" placeholder="Nhập email để nhận OTP..." required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Số điện thoại xác thực *</label>
-                                <input type="tel" id="setPhone" class="form-control form-control-sm" placeholder="VD: 0988 777 666" required>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="p-3 rounded-3 border" style="background: rgba(118, 185, 0, 0.06);">
-                                    <div class="fw-bold small text-nvidia mb-2">❓ Thiết Lập Câu Hỏi &amp; Câu Trả Lời Bảo Mật (Dùng khi Đổi / Quên Mật Khẩu)</div>
-                                    <div class="mb-2">
-                                        <label class="form-label small mb-1 fw-semibold">Chọn câu hỏi bảo mật của bạn</label>
-                                        <select id="setSecurityQuestion" class="form-select form-select-sm">
-                                            <option value="Thương hiệu công nghệ yêu thích nhất của bạn là gì?">1. Thương hiệu công nghệ yêu thích nhất của bạn là gì?</option>
-                                            <option value="Tên thú cưng đầu tiên của bạn là gì?">2. Tên thú cưng đầu tiên của bạn là gì?</option>
-                                            <option value="Thành phố nơi bạn sinh ra là ở đâu?">3. Thành phố nơi bạn sinh ra là ở đâu?</option>
-                                            <option value="Món đồ linh kiện PC đầu tiên bạn mua là gì?">4. Món đồ linh kiện PC đầu tiên bạn mua là gì?</option>
-                                            <option value="Trường đại học hoặc cấp 3 của bạn tên là gì?">5. Trường đại học hoặc cấp 3 của bạn tên là gì?</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="form-label small mb-1 fw-semibold">Câu trả lời bí mật mới *</label>
-                                        <input type="text" id="setSecurityAnswer" class="form-control form-control-sm" placeholder="Nhập câu trả lời bảo mật (VD: nvidia)..." required>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="setTwoFactorSwitch" checked>
-                                    <label class="form-check-label small fw-semibold" for="setTwoFactorSwitch">Bật xác thực Smart OTP 2 lớp khi thay đổi mật khẩu</label>
-                                </div>
-                            </div>
-
-                            <div class="col-12 pt-1">
-                                <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">💾 Lưu Hồ Sơ Bảo Mật (Đạt 100% An Toàn)</button>
-                            </div>
-                        </div>
-                    </form>
+        <!-- 1. THANH PHÍM TẮT NHANH TÓM TẮT Ở TRÊN CÙNG (6 THẺ QUICK-ACTION CARDS) [FEAT-ACC-009.5] -->
+        <section aria-label="6 Thẻ Tóm Tắt Cài Đặt Nhanh" class="nv-settings-quick-jump-grid" id="settingsQuickJumpCardsGrid">
+            <!-- Thẻ 1: Giao Diện & Màu Sắc -->
+            <div class="nv-settings-quick-card active-card" id="quickCard_cat1" onclick="switchSettingsMasterCategory('cat1_theme')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="qc-icon">🎨</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:10px;">Mục 1</span>
                 </div>
+                <div class="qc-title">🎨 Giao Diện &amp; Màu Sắc</div>
+                <div class="qc-status" id="quickStatus_theme">Executive Pearl Light</div>
             </div>
 
-            <!-- CỘT PHẢI: ĐỔI MẬT KHẨU TRỰC TIẾP QUA OTP / CÂU HỎI BẢO MẬT / MK CŨ -->
-            <div class="col-lg-6">
-                <div class="nv-adaptive-card p-4 h-100 shadow-sm">
-                    <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">🔐 2. Đổi Mật Khẩu Nhanh (Qua OTP hoặc Câu Hỏi Bảo Mật)</h5>
-
-                    <div class="btn-group w-100 btn-group-sm mb-3" role="group">
-                        <button type="button" id="setPwTab_otp" class="btn btn-nvidia fw-bold" onclick="switchSettingsPwMethod('otp')">📲 Qua Mã OTP 6 Số</button>
-                        <button type="button" id="setPwTab_question" class="btn btn-outline-info fw-bold" onclick="switchSettingsPwMethod('security_question')">❓ Qua Câu Hỏi Bảo Mật</button>
-                        <button type="button" id="setPwTab_old" class="btn btn-outline-secondary fw-bold" onclick="switchSettingsPwMethod('old_password')">🔒 Qua Mật Khẩu Cũ</button>
-                    </div>
-
-                    <form id="settingsPasswordChangeForm" onsubmit="submitSettingsPasswordChange(event)">
-                        <!-- Phương thức OTP [FEAT-AUTH-003.2] & [FEAT-AUTH-003.3] -->
-                        <div id="setPwBox_otp" class="p-3 rounded-3 border mb-3" style="background: rgba(118, 185, 0, 0.06);">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                                <span class="small fw-bold">Nhận mã OTP 6 số để xác nhận đổi mật khẩu (Tặng +20.000 Xu lần đầu):</span>
-                                <div class="d-flex flex-wrap gap-1">
-                                    <button type="button" id="btnSendOtpInSettings" class="btn btn-warning btn-sm fw-bold text-dark py-0" onclick="sendOtpInSettingsPage()">📩 Gửi Mã OTP</button>
-                                    <button type="button" id="btnUnlockOtpInSettingsPage" class="btn btn-outline-info btn-sm fw-bold py-0 d-none" onclick="unlockOtpReverification()">🔄 Yêu cầu xác minh lại (Khi đổi Mật khẩu / Đổi Mã PIN / Đổi Email)</button>
-                                </div>
-                            </div>
-                            <div id="setSmartOtpBanner" class="p-2 rounded border border-success mb-2 d-none small"></div>
-                            <input type="text" id="setOtpInput" class="form-control form-control-sm font-monospace text-center fw-bold fs-6" maxlength="6" placeholder="Nhập mã OTP 6 số...">
-                        </div>
-
-                        <!-- Phương thức Câu hỏi bảo mật -->
-                        <div id="setPwBox_security_question" class="p-3 rounded-3 border mb-3 d-none" style="background: rgba(14, 165, 233, 0.08);">
-                            <div class="small mb-2">
-                                <strong>Câu hỏi bảo mật của bạn:</strong>
-                                <div id="setActiveQuestionLabel" class="text-nvidia fw-bold">Thương hiệu công nghệ yêu thích nhất của bạn là gì?</div>
-                            </div>
-                            <input type="text" id="setAnswerVerifyInput" class="form-control form-control-sm" placeholder="Nhập câu trả lời bảo mật của bạn...">
-                        </div>
-
-                        <!-- Phương thức Mật khẩu cũ -->
-                        <div id="setPwBox_old_password" class="p-3 rounded-3 border mb-3 d-none">
-                            <label class="form-label small fw-bold mb-1">Mật khẩu hiện tại</label>
-                            <input type="password" id="setOldPwInput" class="form-control form-control-sm" placeholder="Nhập mật khẩu đang dùng...">
-                        </div>
-
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Mật khẩu mới *</label>
-                                <input type="password" id="setNewPwInput" class="form-control form-control-sm" placeholder="Mật khẩu mới (>= 4 ký tự)" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold">Nhập lại mật khẩu mới *</label>
-                                <input type="password" id="setConfirmPwInput" class="form-control form-control-sm" placeholder="Xác nhận mật khẩu mới" required>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">✅ Xác Nhận Đổi Mật Khẩu Ngay</button>
-                    </form>
-
-                    <hr class="my-3">
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <span class="text-muted">Chế độ giao diện toàn web:</span>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="if(typeof toggleTheme==='function') toggleTheme(); else document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');">🌓 Đổi Giao Diện Sáng / Tối</button>
-                    </div>
+            <!-- Thẻ 2: Cỡ Chữ & Độ Cao Header -->
+            <div class="nv-settings-quick-card" id="quickCard_cat2" onclick="switchSettingsMasterCategory('cat2_typography_header')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="qc-icon">🔤</span>
+                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size:10px;">Mục 2</span>
                 </div>
+                <div class="qc-title">🔤 Cỡ Chữ &amp; Độ Cao Header</div>
+                <div class="qc-status" id="quickStatus_fontHeader">Cỡ chữ 100% • Header Tiêu chuẩn</div>
             </div>
-        </div>
 
-        <!-- KHỐI NẠP JSON & QUẢN LÝ ICON WEB (#jsonSeedCard) -->
-        <section id="jsonSeedCard" class="nv-adaptive-card p-4 shadow-sm">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-2 mb-3">
-                <div>
-                    <span class="badge bg-nvidia">CÔNG CỤ HỆ THỐNG &amp; DỮ LIỆU</span>
-                    <h5 class="fw-bold m-0 mt-1">⚡ Đồng Bộ Dữ Liệu JSON &amp; Trạng Thái Hệ Thống</h5>
+            <!-- Thẻ 3: Trợ Năng & Mù Màu CVD -->
+            <div class="nv-settings-quick-card" id="quickCard_cat3" onclick="switchSettingsMasterCategory('cat3_accessibility')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="qc-icon">♿</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:10px;">Mục 3</span>
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="/services/admin_dispute/admin-center.html" class="btn btn-outline-warning btn-sm">🛡️ Về Trung Tâm Admin</a>
-                    <a href="/services/seller/seller-dashboard.html" class="btn btn-outline-info btn-sm">🏪 Về Kênh Người Bán</a>
-                </div>
+                <div class="qc-title">♿ Trợ Năng &amp; Mù Màu CVD</div>
+                <div class="qc-status" id="quickStatus_cvd">Chuẩn • Báo màu 2s: Bật</div>
             </div>
-            <div class="small text-muted">
-                Hệ thống cơ sở dữ liệu SQLite (WAL Mode) đã đồng bộ đầy đủ cấu trúc Bảo mật OTP, Câu hỏi bảo mật, Ví Voucher và Vận đơn NX Express trên <strong>nexora.castle-tech.cloud</strong>.
+
+            <!-- Thẻ 4: Bảo Mật OTP & Mật Khẩu -->
+            <div class="nv-settings-quick-card" id="quickCard_cat4" onclick="switchSettingsMasterCategory('cat4_security_otp')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="qc-icon">🔐</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle" style="font-size:10px;">Mục 4</span>
+                </div>
+                <div class="qc-title">🔐 Bảo Mật OTP &amp; Mật Khẩu</div>
+                <div class="qc-status" id="quickStatus_otp">Đã xác minh OTP (+20.000 Xu)</div>
+            </div>
+
+            <!-- Thẻ 5: Ví Nexora Pay & Mã PIN -->
+            <div class="nv-settings-quick-card" id="quickCard_cat4_pin" onclick="switchSettingsMasterCategory('cat4_security_otp', 'walletPinAnchorBox')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="qc-icon">🏦</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:10px;">Escrow</span>
+                </div>
+                <div class="qc-title">🏦 Ví Nexora Pay &amp; Mã PIN</div>
+                <div class="qc-status" id="quickStatus_walletPin">Bảo vệ PIN 6 số &amp; 2FA</div>
+            </div>
+
+            <!-- Thẻ 6: Studio 14 Vị Trí Icon -->
+            <div class="nv-settings-quick-card" id="quickCard_cat5" onclick="switchSettingsMasterCategory('cat5_icons_audio')">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="qc-icon">🖼️</span>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle" style="font-size:10px;">Mục 5</span>
+                </div>
+                <div class="qc-title">🖼️ Studio 14 Vị Trí Icon</div>
+                <div class="qc-status" id="quickStatus_iconSet">Bộ Icon Mặc định (14 Vị trí)</div>
             </div>
         </section>
+
+        <!-- 2. BỐ CỤC 2 CỘT KHOA HỌC (LEFT SIDEBAR STICKY 290PX + RIGHT DETAIL PANEL) [FEAT-ACC-009.5] -->
+        <div class="nv-settings-master-detail-grid" id="settingsMasterDetailContainer">
+            <!-- CỘT TRÁI: STICKY SIDEBAR (5 NHÓM CÀI ĐẶT + THANH TIẾN ĐỘ + ACCORDION MỤC CON) -->
+            <aside class="nv-settings-left-sidebar nv-adaptive-card p-3 shadow-sm" aria-label="Danh mục cài đặt khoa học">
+                <div class="pb-3 mb-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-bold text-uppercase text-muted">Tiến Độ Hồ Sơ &amp; Cá Nhân Hóa</span>
+                        <span class="badge bg-nvidia" id="sidebarCompletionPctBadge">90%</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div id="sidebarCompletionProgressBar" class="progress-bar bg-nvidia" style="width: 90%;"></div>
+                    </div>
+                    <div class="small text-muted mt-1" style="font-size: 11.5px;">
+                        Chọn từng mục bên dưới để tập trung chỉnh sửa hoặc bấm <strong>Xem tất cả</strong>.
+                    </div>
+                </div>
+
+                <!-- Nhóm 1 -->
+                <button type="button" class="nv-settings-nav-item active-nav" id="settingsNavBtn_cat1_theme" onclick="switchSettingsMasterCategory('cat1_theme')">
+                    <span>🎨 1. Giao Diện, Nền Sáng/Tối &amp; Hiệu Ứng</span>
+                    <span class="badge bg-success-subtle text-success">12 Themes</span>
+                </button>
+                <div class="ps-3 pb-2 small text-muted settings-sub-accordion" id="subAcc_cat1_theme">
+                    <div class="py-1">• 6 Giao diện Sáng Công Sở &amp; Học Thuật</div>
+                    <div class="py-1">• 6 Giao diện Tối Chuyên Sâu &amp; Lễ Hội</div>
+                    <div class="py-1">• Hiệu ứng nền động Canvas 2D</div>
+                </div>
+
+                <!-- Nhóm 2 -->
+                <button type="button" class="nv-settings-nav-item" id="settingsNavBtn_cat2_typography_header" onclick="switchSettingsMasterCategory('cat2_typography_header')">
+                    <span>📏 2. Cỡ Chữ, Độ Cao Header &amp; Mật Độ Kệ Hàng</span>
+                    <span class="badge bg-info-subtle text-info">Mới V12</span>
+                </button>
+                <div class="ps-3 pb-2 small text-muted d-none settings-sub-accordion" id="subAcc_cat2_typography_header">
+                    <div class="py-1">• 4 Mức cỡ chữ (`A-`, `A`, `A+`, `A++`)</div>
+                    <div class="py-1">• 4 Chế độ độ cao &amp; thu gọn Header</div>
+                    <div class="py-1">• Mật độ kệ hàng (3, 4, 5, 6 cột, List)</div>
+                </div>
+
+                <!-- Nhóm 3 -->
+                <button type="button" class="nv-settings-nav-item" id="settingsNavBtn_cat3_accessibility" onclick="switchSettingsMasterCategory('cat3_accessibility')">
+                    <span>♿ 3. Trợ Năng Mù Màu (5 Chế Độ CVD) &amp; Đa Khuyết Tật</span>
+                    <span class="badge bg-primary-subtle text-primary">WCAG AAA</span>
+                </button>
+                <div class="ps-3 pb-2 small text-muted d-none settings-sub-accordion" id="subAcc_cat3_accessibility">
+                    <div class="py-1">• 5 Bảng màu CVD &amp; Xem trước thực tế</div>
+                    <div class="py-1">• Mèo AI báo màu khi di chuột 2 giây</div>
+                    <div class="py-1">• Chống run tay 48px, Khiếm thính, Thước đọc</div>
+                </div>
+
+                <!-- Nhóm 4 -->
+                <button type="button" class="nv-settings-nav-item" id="settingsNavBtn_cat4_security_otp" onclick="switchSettingsMasterCategory('cat4_security_otp')">
+                    <span>🔐 4. Xác Thực Email OTP (+20.000 Xu) &amp; Đổi Mật Khẩu</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis">+20K Xu</span>
+                </button>
+                <div class="ps-3 pb-2 small text-muted d-none settings-sub-accordion" id="subAcc_cat4_security_otp">
+                    <div class="py-1">• Hồ sơ khôi phục &amp; Câu hỏi bảo mật</div>
+                    <div class="py-1">• Xác thực OTP 6 số &amp; Đổi mật khẩu</div>
+                    <div class="py-1">• Cài đặt Mã PIN 6 số Ví Nexora Pay</div>
+                </div>
+
+                <!-- Nhóm 5 -->
+                <button type="button" class="nv-settings-nav-item" id="settingsNavBtn_cat5_icons_audio" onclick="switchSettingsMasterCategory('cat5_icons_audio')">
+                    <span>🖼️ 5. Quản Lý Đa Bộ Icon (14 Vị Trí) &amp; Âm Thanh</span>
+                    <span class="badge bg-secondary-subtle text-secondary">14 Slots</span>
+                </button>
+                <div class="ps-3 pb-2 small text-muted d-none settings-sub-accordion" id="subAcc_cat5_icons_audio">
+                    <div class="py-1">• Chuyển đổi nhanh 3 Bộ Icon &amp; Mặc định</div>
+                    <div class="py-1">• Âm thanh thông báo &amp; Giọng nói Mèo AI</div>
+                    <div class="py-1">• Đồng bộ dữ liệu JSON &amp; Trạng thái SQLite</div>
+                </div>
+
+                <hr class="my-2">
+                <button type="button" class="btn btn-nvidia w-100 btn-sm fw-bold py-2" id="sidebarShowAllBtn" onclick="switchSettingsMasterCategory('all')">
+                    📋 Hiển Thị Tất Cả 5 Nhóm Cùng Lúc
+                </button>
+            </aside>
+
+            <!-- CỘT PHẢI: NỘI DUNG CHI TIẾT CỦA TỪNG NHÓM CÀI ĐẶT -->
+            <div id="settingsDetailPanelsColumn">
+
+                <!-- ======================================================================= -->
+                <!-- MỤC 1: GIAO DIỆN, NỀN SÁNG/TỐI & HIỆU ỨNG (12 CHỦ ĐỀ)                    -->
+                <!-- ======================================================================= -->
+                <section id="themeStudioSection" data-settings-panel="cat1_theme" class="nv-adaptive-card p-4 mb-4 shadow-sm settings-master-panel" style="border-left: 5px solid #059669 !important;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
+                        <div>
+                            <span class="badge bg-nvidia mb-1">🎨 MỤC 1 • STUDIO CÁ NHÂN HÓA 12 GIAO DIỆN TOÀN SÀN NEXORA</span>
+                            <h4 class="fw-bold m-0">Bộ 12 Giao Diện Đa Lứa Tuổi, Chế Độ Sáng/Tối &amp; Hiệu Ứng Nền</h4>
+                            <p class="small text-muted mb-0 mt-1">
+                                Mặc định sử dụng <strong>Executive Pearl Light</strong> (Sáng công sở thanh lịch, dịu mắt). Bạn có thể chuyển nhanh giữa 6 chủ đề Sáng Nghiêm Túc và 6 chủ đề Tối Chuyên Sâu hoặc bật/tắt hiệu ứng nền động Canvas.
+                            </p>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="toggleTheme()">🌓 Đổi Nhanh Sáng / Tối</button>
+                            <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="switchSettingsMasterCategory('cat2_typography_header')">🔤 Chỉnh Cỡ Chữ &amp; Độ Cao Header ➔</button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold mb-1">🎨 Chọn Chủ Đề Giao Diện (12 Themes):</label>
+                            <select id="settingsThemeSkinSelector" class="form-select form-select-sm fw-bold" onchange="applyNvidiaVisualSkin(this.value); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                <option value="executive_light">⚪ 1. Executive Pearl Light (Sáng Công Sở Thanh Lịch - Mặc định)</option>
+                                <option value="swiss_finance">🏛️ 2. Swiss Financial Banking (Ngân Hàng Thụy Sĩ Nghiêm Túc)</option>
+                                <option value="apple_cupertino">🍎 3. Minimalist Cupertino Silver (Tối Giản Hiện Đại)</option>
+                                <option value="muji_warm_paper">📜 4. Warm Ivory Paper (Giấy Kem Dịu Mắt Cho Người Lớn Tuổi)</option>
+                                <option value="nordic_snow">❄️ 5. Nordic Ice Daylight (Bắc Âu Tinh Khiết)</option>
+                                <option value="oxford_academic">🎓 6. Oxford Scholarly Classic (Cổ Điển Học Thuật)</option>
+                                <option value="bloomberg_terminal">📈 7. Wall Street Night Terminal (Chuyên Gia Dữ Liệu Tối)</option>
+                                <option value="obsidian_luxury">👑 8. Obsidian Gold VIP (Đen Kim Tước Sang Trọng)</option>
+                                <option value="emerald_tech">🟢 9. Nexora Emerald Matrix (Công Nghệ Xanh Lục Bảo)</option>
+                                <option value="ocean_breeze">🌊 10. Deep Ocean Breeze (Đại Dương Xanh Thẳm)</option>
+                                <option value="kyoto_autumn">🍁 11. Kyoto Autumn Leaves (Mùa Thu Lá Đỏ Kyoto)</option>
+                                <option value="tet_festival">🧧 12. Lễ Hội Tết Sum Vầy (Đặc Biệt Mùa Lễ Hội)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold mb-1 d-block">✨ Hiệu Ứng Nền Động Canvas:</label>
+                            <div class="form-check form-switch mt-1">
+                                <input class="form-check-input" type="checkbox" id="settingsBgFxSwitch" checked onchange="toggleBackgroundEffects(this.checked)">
+                                <label class="form-check-label small fw-semibold" for="settingsBgFxSwitch">Bật hiệu ứng hạt ánh sáng nền</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="settings12ThemesGridBox" class="row g-2 mb-2"></div>
+                </section>
+
+                <!-- ======================================================================= -->
+                <!-- MỤC 2: CỠ CHỮ TOÀN SÀN, ĐỘ CAO HEADER & MẬT ĐỘ KỆ HÀNG [FEAT-HDR-001.6]  -->
+                <!-- ======================================================================= -->
+                <section id="typographyAndHeaderHeightSection" data-settings-panel="cat2_typography_header" class="nv-adaptive-card p-4 mb-4 shadow-sm settings-master-panel d-none" style="border-left: 5px solid #0284c7 !important;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
+                        <div>
+                            <span class="badge bg-info text-dark fw-bold mb-1">📏 MỤC 2 • BỘ ĐIỀU KHIỂN CỠ CHỮ TOÀN SÀN, ĐỘ CAO HEADER &amp; MẬT ĐỘ KỆ HÀNG</span>
+                            <h4 class="fw-bold m-0">Tuỳ Chỉnh Cỡ Chữ (4 Mức), Độ Cao Thanh Header (4 Chế Độ) &amp; Số Cột Sản Phẩm</h4>
+                            <p class="small text-muted mb-0 mt-1">
+                                Mọi thay đổi được áp dụng tức thì trên toàn sàn (thẻ sản phẩm, giá bán, menu, khung chat) và tự động tính toán lại chiều cao đệm <code>#header-placeholder</code> để không bao giờ che khuất nội dung.
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="resetTypographyAndHeaderDefaults()">
+                            🔄 Khôi Phục Mặc Định (100% • Tiêu Chuẩn)
+                        </button>
+                    </div>
+
+                    <!-- 2.1. Thanh Chỉnh Cỡ Chữ Toàn Sàn (Font Scale - 4 mức trực quan) -->
+                    <div class="p-3 rounded-4 border mb-4" style="background: rgba(2, 132, 199, 0.04); border-color: rgba(2, 132, 199, 0.28) !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold m-0">🔤 1. Thanh Chỉnh Cỡ Chữ Toàn Sàn (Font Scale — 4 Mức Trực Quan):</label>
+                            <span class="badge bg-primary" id="settingsCurrentFontScaleBadge">Đang dùng: A Tiêu chuẩn (16px - 100%)</span>
+                        </div>
+                        <div class="row g-2 mb-3" id="settingsFontScaleButtonsRow">
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-primary w-100 h-100 py-2 text-start nv-font-scale-btn" data-scale-key="small" onclick="selectSettingsFontScale('small')">
+                                    <div class="fw-bold" style="font-size: 13px;">A- Nhỏ gọn</div>
+                                    <div class="small opacity-75" style="font-size: 11px;">14px - 92% (Màn hình nhỏ)</div>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-primary w-100 h-100 py-2 text-start nv-font-scale-btn" data-scale-key="normal" onclick="selectSettingsFontScale('normal')">
+                                    <div class="fw-bold" style="font-size: 15px;">A Tiêu chuẩn</div>
+                                    <div class="small opacity-75" style="font-size: 11px;">16px - 100% (Mặc định)</div>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-primary w-100 h-100 py-2 text-start nv-font-scale-btn" data-scale-key="large" onclick="selectSettingsFontScale('large')">
+                                    <div class="fw-bold" style="font-size: 16.5px;">A+ Chữ lớn dễ đọc</div>
+                                    <div class="small opacity-75" style="font-size: 11px;">17.5px - 110% (Dịu mắt)</div>
+                                </button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="button" class="btn btn-outline-primary w-100 h-100 py-2 text-start nv-font-scale-btn" data-scale-key="xlarge" onclick="selectSettingsFontScale('xlarge')">
+                                    <div class="fw-bold" style="font-size: 18px;">A++ Rất lớn</div>
+                                    <div class="small opacity-75" style="font-size: 11px;">19px - 120% (Người lớn tuổi)</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hộp Xem Trước Cỡ Chữ Trực Tiếp (#settingsFontScaleLivePreviewBox) -->
+                        <div id="settingsFontScaleLivePreviewBox" class="p-3 rounded-3 border bg-body-tertiary">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                                <span class="badge bg-success">👁️ XEM TRƯỚC CỠ CHỮ TRỰC TIẾP (LIVE FONT PREVIEW)</span>
+                                <span class="small text-muted font-monospace" id="settingsFontPreviewMetaLabel">root font-size: 16px | scale: 1.00</span>
+                            </div>
+                            <div class="fw-bold mt-1" id="settingsFontPreviewTitle" style="font-size: calc(1.05rem * var(--nv-font-scale, 1));">
+                                Card Đồ Họa NVIDIA GeForce RTX 4090 Founders Edition 24GB GDDR6X
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center gap-3 mt-1">
+                                <span class="fw-bold text-danger" style="font-size: calc(1.15rem * var(--nv-font-scale, 1));">51.990.000 ₫</span>
+                                <span class="text-muted text-decoration-line-through small">56.900.000 ₫</span>
+                                <span class="badge bg-nvidia">🛡️ Bảo Lãnh Escrow 100% • Giao Nhanh NX 2H</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.2. Bộ Chỉnh Độ Cao & Độ Gọn Thanh Header (Header Height / Compactness Mode - 4 chế độ) -->
+                    <div class="p-3 rounded-4 border mb-4" style="background: rgba(16, 185, 129, 0.04); border-color: rgba(16, 185, 129, 0.28) !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold m-0">🏛️ 2. Bộ Chỉnh Độ Cao &amp; Độ Gọn Thanh Header (Header Height Mode — 4 Chế Độ):</label>
+                            <span class="badge bg-success" id="settingsCurrentHeaderHeightBadge">Đang dùng: 🏛️ Tiêu Chuẩn (~125px)</span>
+                        </div>
+                        <div class="row g-2" id="settingsHeaderHeightButtonsRow">
+                            <div class="col-md-6 col-lg-3">
+                                <button type="button" class="btn btn-outline-success w-100 h-100 p-2 text-start nv-header-height-btn" data-height-key="ultra_compact" onclick="selectSettingsHeaderHeightMode('ultra_compact')">
+                                    <div class="fw-bold small">⚡ 1. Siêu Gọn (Ultra Compact)</div>
+                                    <div class="text-muted mt-1" style="font-size: 11px;">
+                                        Thu nhỏ đệm 3 tầng &amp; tự động ẩn Tầng 3 khi cuộn xuống, hiện lại khi cuộn lên (tối ưu màn hình laptop nhỏ).
+                                    </div>
+                                </button>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <button type="button" class="btn btn-outline-success w-100 h-100 p-2 text-start nv-header-height-btn" data-height-key="compact" onclick="selectSettingsHeaderHeightMode('compact')">
+                                    <div class="fw-bold small">📐 2. Gọn Gàng (~95px)</div>
+                                    <div class="text-muted mt-1" style="font-size: 11px;">
+                                        Giữ đủ 3 tầng cố định nhưng thu gọn chiều cao nút bấm, ô tìm kiếm và logo.
+                                    </div>
+                                </button>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <button type="button" class="btn btn-success w-100 h-100 p-2 text-start nv-header-height-btn" data-height-key="standard" onclick="selectSettingsHeaderHeightMode('standard')">
+                                    <div class="fw-bold small">🏛️ 3. Tiêu Chuẩn (~125px)</div>
+                                    <div class=" opacity-90 mt-1" style="font-size: 11px;">
+                                        Kích thước cân đối tiêu chuẩn mặc định, hiển thị đầy đủ thông tin 3 tầng.
+                                    </div>
+                                </button>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <button type="button" class="btn btn-outline-success w-100 h-100 p-2 text-start nv-header-height-btn" data-height-key="comfortable_tall" onclick="selectSettingsHeaderHeightMode('comfortable_tall')">
+                                    <div class="fw-bold small">🔍 4. Thoáng Rộng (~148px)</div>
+                                    <div class="text-muted mt-1" style="font-size: 11px;">
+                                        Tăng chiều cao nút Header lên 44px, chữ to và khoảng cách rộng giúp người lớn tuổi bấm không trượt.
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2.3. Mật Độ Hiển Thị Lưới Sản Phẩm (Grid Density) -->
+                    <div class="row g-3 align-items-center">
+                        <div class="col-md-7">
+                            <label class="form-label small fw-bold mb-1">📐 3. Mật Độ Hiển Thị Kệ Hàng Trang Chủ (Product Grid Density):</label>
+                            <select id="settingsGridDensitySelect" class="form-select form-select-sm fw-bold" onchange="applyProductGridDensity(this.value); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                <option value="3" selected>3 Cột Kính Mờ Trong Suốt (Mặc định - Rộng rãi, hiện nền động tinh tế)</option>
+                                <option value="4">4 Cột (Tiêu chuẩn - Cân đối)</option>
+                                <option value="5">5 Cột (Chuyên nghiệp)</option>
+                                <option value="6">6 Cột (Siêu gọn - Xem nhiều SP cùng lúc)</option>
+                                <option value="list">Danh sách ngang (List View)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="p-2 rounded-3 border small text-muted">
+                                💡 <strong>Mẹo bố cục:</strong> Chế độ <strong>3 Cột</strong> kết hợp hiệu ứng Kính Mờ (Glassmorphism) giúp nhìn xuyên thấu hiệu ứng nền động của từng chủ đề.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ======================================================================= -->
+                <!-- MỤC 3: TRỢ NĂNG MÙ MÀU (5 CHẾ ĐỘ CVD) & ĐA KHUYẾT TẬT [FEAT-ACC-009]    -->
+                <!-- ======================================================================= -->
+                <section id="accessibilityStudioSection" data-settings-panel="cat3_accessibility" class="nv-adaptive-card p-4 mb-4 shadow-sm settings-master-panel d-none" style="border-left: 5px solid #2563eb !important;">
+                    <div class="p-3 rounded-4 border" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.35) !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                            <div>
+                                <span class="badge bg-primary">👁️ MỤC 3 • TRUNG TÂM TRỢ NĂNG THỊ GIÁC &amp; ĐA KHUYẾT TẬT CHUẨN WCAG 2.1 AAA</span>
+                                <h5 class="fw-bold m-0 mt-1">Bảng Màu Thích Ứng Mù Màu (5 Chế Độ CVD), Báo Màu Di Chuột 2s &amp; Đa Khuyết Tật</h5>
+                                <p class="small text-muted mb-0">
+                                    Hỗ trợ người mù màu Đỏ-Lục (Deuteranopia / Protanopia), Xanh-Vàng (Tritanopia), khiếm thị, run tay và khiếm thính phân biệt chính xác màu sắc sản phẩm, nến giá và nút bấm.
+                                </p>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="if(typeof describeVisibleProductColorByCat==='function') describeVisibleProductColorByCat();">🐱 Mèo AI Đọc &amp; Tả Màu Sản Phẩm</button>
+                                <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="if(typeof openColorblindPreviewModal==='function') openColorblindPreviewModal();">🔬 Mở Bảng Đối Chiếu Màu Đầy Đủ</button>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 align-items-end mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold mb-1">👁️ Chọn Chế Độ Bảng Màu Thích Ứng Khiếm Khuyết Sắc Giác (CVD):</label>
+                                <select class="form-select form-select-sm fw-bold nvx-cvd-mode-selector" id="settingsCvdModeSelector" onchange="applyColorblindMode(this.value); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                    <option value="normal">👁️ 1. Chế độ Chuẩn (Normal Vision — Xanh lá / Đỏ truyền thống)</option>
+                                    <option value="deuteranopia">🔵🟠 2. Mù Đỏ - Xanh Lá (Deuteranopia / Protanopia — Đổi sang Xanh Dương Đậm #0072B2 &amp; Cam Hổ Phách #D55E00)</option>
+                                    <option value="tritanopia">🟣🟡 3. Mù Xanh Dương - Vàng (Tritanopia — Đổi sang Đỏ Tím #CC79A7 &amp; Xanh Ngọc #009E73)</option>
+                                    <option value="pattern_labels">🔣 4. Chế Độ Nhãn Ký Hiệu &amp; Vân Sọc (Tự động gắn nhãn [▲ TĂNG / ▼ GIẢM / ✔ HỢP LỆ / ✖ CẢNH BÁO])</option>
+                                    <option value="high_contrast_aaa">⚡ 5. Tương Phản Siêu Cao WCAG AAA (Nền Đen Tuyền #000000, Chữ Vàng Sáng #FFD700, Viền 2px)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="settingsMotorLargeBtnSwitch" onchange="toggleLargeButtonsMode(this.checked); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                        <label class="form-check-label small fw-bold" for="settingsMotorLargeBtnSwitch">🖐️ Nút Bấm Lớn Chống Run Tay (48px)</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="settingsDeafVisualFlashSwitch" onchange="toggleVisualFlashAlertMode(this.checked); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                        <label class="form-check-label small fw-bold" for="settingsDeafVisualFlashSwitch">🦻 Viền Sáng Nhấp Nháy (Khiếm Thính)</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="settingsReadingRulerSwitch" onchange="toggleReadingFocusRuler(this.checked); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                        <label class="form-check-label small fw-bold" for="settingsReadingRulerSwitch">📏 Thước Đọc Tập Trung</label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="settingsHoverColorInspectorSwitch" onchange="toggleHoverColorInspector(this.checked); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">
+                                        <label class="form-check-label small fw-bold text-primary" for="settingsHoverColorInspectorSwitch">🔍 Bật/Tắt Mèo Báo Màu Khi Di Chuột 2 Giây (Hover Color Inspector)</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bảng Xem Trước Màu Sắc Thực Tế (Live UI Color Previewer) -->
+                        <div id="settingsLiveColorPreviewBox" class="nvx-live-color-preview-container"></div>
+                    </div>
+                </section>
+
+                <!-- ======================================================================= -->
+                <!-- MỤC 4: XÁC THỰC EMAIL OTP (+20.000 XU), ĐỔI MẬT KHẨU & MÃ PIN VÍ         -->
+                <!-- ======================================================================= -->
+                <section id="securityAndOtpSection" data-settings-panel="cat4_security_otp" class="settings-master-panel d-none">
+                    <!-- CỐ VẤN HOÀN THIỆN HỒ SƠ BẢO MẬT -->
+                    <div class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #76b900 !important;">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-lg-8">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge bg-nvidia">🔐 MỤC 4 • TRUNG TÂM BẢO VỆ TÀI KHOẢN, OTP (+20.000 XU) &amp; MÃ PIN VÍ</span>
+                                    <span id="secHealthScoreBadge" class="badge bg-warning text-dark fw-bold">Độ hoàn thiện bảo mật: 50%</span>
+                                </div>
+                                <h4 class="fw-bold m-0" id="secAdvisorHeadline">🛡️ Gợi Ý Hoàn Thiện Thông Tin Bảo Mật Tài Khoản</h4>
+                                <p class="small text-muted mb-2 mt-1">
+                                    Hoàn thiện đầy đủ <strong>Email nhận OTP</strong>, <strong>Số điện thoại</strong>, <strong>Câu hỏi bảo mật</strong> và <strong>Mã PIN Ví 6 số</strong> giúp bạn luôn có thể tự đổi hoặc khôi phục mật khẩu tức thì.
+                                </p>
+                                <div id="secMissingChecklistBox" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="p-3 rounded-3 border text-center">
+                                    <div class="small text-muted mb-1">Chỉ Số Sức Khỏe Bảo Mật</div>
+                                    <div class="fs-2 fw-bold text-nvidia" id="secScoreBigNumber">50%</div>
+                                    <div class="progress mt-1" style="height: 10px;">
+                                        <div id="secHealthProgressBar" class="progress-bar bg-nvidia" style="width: 50%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <!-- CỘT TRÁI: HOÀN THIỆN HỒ SƠ, MÃ PIN VÍ 6 SỐ & CÂU HỎI BẢO MẬT -->
+                        <div class="col-lg-6">
+                            <div class="nv-adaptive-card p-4 h-100 shadow-sm" id="walletPinAnchorBox">
+                                <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">👤 1. Hồ Sơ Khôi Phục, Câu Hỏi Bảo Mật &amp; Mã PIN Ví</h5>
+                                <form id="securityProfileForm" onsubmit="saveSecurityProfileSettings(event)">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Tên đăng nhập (ID)</label>
+                                            <input type="text" id="setUsername" class="form-control form-control-sm font-monospace" readonly>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Họ và tên hiển thị *</label>
+                                            <input type="text" id="setFullName" class="form-control form-control-sm" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Email nhận mã OTP khôi phục *</label>
+                                            <input type="email" id="setEmail" class="form-control form-control-sm" placeholder="Nhập email để nhận OTP..." required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Số điện thoại xác thực *</label>
+                                            <input type="tel" id="setPhone" class="form-control form-control-sm" placeholder="VD: 0988 777 666" required>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="p-3 rounded-3 border" style="background: rgba(16, 185, 129, 0.06);">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label class="form-label small fw-bold text-success m-0">🏦 Mã PIN 6 Số Bảo Vệ Ví Nexora Pay &amp; Thanh Toán Escrow</label>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle" id="setWalletPinMaskedBadge">••••88</span>
+                                                </div>
+                                                <input type="password" id="setWalletPinInput" class="form-control form-control-sm font-monospace" maxlength="6" placeholder="Nhập 6 chữ số nếu muốn đổi Mã PIN Ví (Mặc định: 888888)...">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="p-3 rounded-3 border" style="background: rgba(118, 185, 0, 0.06);">
+                                                <div class="fw-bold small text-nvidia mb-2">❓ Thiết Lập Câu Hỏi &amp; Câu Trả Lời Bảo Mật (Dùng khi Đổi / Quên Mật Khẩu)</div>
+                                                <div class="mb-2">
+                                                    <label class="form-label small mb-1 fw-semibold">Chọn câu hỏi bảo mật của bạn</label>
+                                                    <select id="setSecurityQuestion" class="form-select form-select-sm">
+                                                        <option value="Thương hiệu công nghệ yêu thích nhất của bạn là gì?">1. Thương hiệu công nghệ yêu thích nhất của bạn là gì?</option>
+                                                        <option value="Tên thú cưng đầu tiên của bạn là gì?">2. Tên thú cưng đầu tiên của bạn là gì?</option>
+                                                        <option value="Thành phố nơi bạn sinh ra là ở đâu?">3. Thành phố nơi bạn sinh ra là ở đâu?</option>
+                                                        <option value="Món đồ linh kiện PC đầu tiên bạn mua là gì?">4. Món đồ linh kiện PC đầu tiên bạn mua là gì?</option>
+                                                        <option value="Trường đại học hoặc cấp 3 của bạn tên là gì?">5. Trường đại học hoặc cấp 3 của bạn tên là gì?</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label class="form-label small mb-1 fw-semibold">Câu trả lời bí mật mới *</label>
+                                                    <input type="text" id="setSecurityAnswer" class="form-control form-control-sm" placeholder="Nhập câu trả lời bảo mật (VD: nvidia)..." required>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="setTwoFactorSwitch" checked>
+                                                <label class="form-check-label small fw-semibold" for="setTwoFactorSwitch">Bật xác thực Smart OTP 2 lớp khi thay đổi mật khẩu &amp; rút tiền Ví</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 pt-1">
+                                            <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">💾 Lưu Hồ Sơ Bảo Mật &amp; Mã PIN Ví (Đạt 100% An Toàn)</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- CỘT PHẢI: ĐỔI MẬT KHẨU TRỰC TIẾP QUA OTP / CÂU HỎI BẢO MẬT / MK CŨ -->
+                        <div class="col-lg-6">
+                            <div class="nv-adaptive-card p-4 h-100 shadow-sm">
+                                <h5 class="fw-bold text-nvidia border-bottom pb-2 mb-3">🔐 2. Xác Thực OTP (+20.000 Xu) &amp; Đổi Mật Khẩu Nhanh</h5>
+
+                                <div class="btn-group w-100 btn-group-sm mb-3" role="group">
+                                    <button type="button" id="setPwTab_otp" class="btn btn-nvidia fw-bold" onclick="switchSettingsPwMethod('otp')">📲 Qua Mã OTP 6 Số</button>
+                                    <button type="button" id="setPwTab_question" class="btn btn-outline-info fw-bold" onclick="switchSettingsPwMethod('security_question')">❓ Qua Câu Hỏi Bảo Mật</button>
+                                    <button type="button" id="setPwTab_old" class="btn btn-outline-secondary fw-bold" onclick="switchSettingsPwMethod('old_password')">🔒 Qua Mật Khẩu Cũ</button>
+                                </div>
+
+                                <form id="settingsPasswordChangeForm" onsubmit="submitSettingsPasswordChange(event)">
+                                    <!-- Phương thức OTP [FEAT-AUTH-003.2] & [FEAT-AUTH-003.3] -->
+                                    <div id="setPwBox_otp" class="p-3 rounded-3 border mb-3" style="background: rgba(118, 185, 0, 0.06);">
+                                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                            <span class="small fw-bold">Nhận mã OTP 6 số để xác nhận đổi mật khẩu (Tặng +20.000 Xu lần đầu):</span>
+                                            <div class="d-flex flex-wrap gap-1">
+                                                <button type="button" id="btnSendOtpInSettings" class="btn btn-warning btn-sm fw-bold text-dark py-0" onclick="sendOtpInSettingsPage()">📩 Gửi Mã OTP</button>
+                                                <button type="button" id="btnUnlockOtpInSettingsPage" class="btn btn-outline-info btn-sm fw-bold py-0 d-none" onclick="unlockOtpReverification()">🔄 Yêu cầu xác minh lại (Khi đổi Mật khẩu / Đổi Mã PIN / Đổi Email)</button>
+                                            </div>
+                                        </div>
+                                        <div id="setSmartOtpBanner" class="p-2 rounded border border-success mb-2 d-none small"></div>
+                                        <input type="text" id="setOtpInput" class="form-control form-control-sm font-monospace text-center fw-bold fs-6" maxlength="6" placeholder="Nhập mã OTP 6 số...">
+                                    </div>
+
+                                    <!-- Phương thức Câu hỏi bảo mật -->
+                                    <div id="setPwBox_security_question" class="p-3 rounded-3 border mb-3 d-none" style="background: rgba(14, 165, 233, 0.08);">
+                                        <div class="small mb-2">
+                                            <strong>Câu hỏi bảo mật của bạn:</strong>
+                                            <div id="setActiveQuestionLabel" class="text-nvidia fw-bold">Thương hiệu công nghệ yêu thích nhất của bạn là gì?</div>
+                                        </div>
+                                        <input type="text" id="setAnswerVerifyInput" class="form-control form-control-sm" placeholder="Nhập câu trả lời bảo mật của bạn...">
+                                    </div>
+
+                                    <!-- Phương thức Mật khẩu cũ -->
+                                    <div id="setPwBox_old_password" class="p-3 rounded-3 border mb-3 d-none">
+                                        <label class="form-label small fw-bold mb-1">Mật khẩu hiện tại</label>
+                                        <input type="password" id="setOldPwInput" class="form-control form-control-sm" placeholder="Nhập mật khẩu đang dùng...">
+                                    </div>
+
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Mật khẩu mới *</label>
+                                            <input type="password" id="setNewPwInput" class="form-control form-control-sm" placeholder="Mật khẩu mới (>= 4 ký tự)" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small fw-bold">Nhập lại mật khẩu mới *</label>
+                                            <input type="password" id="setConfirmPwInput" class="form-control form-control-sm" placeholder="Xác nhận mật khẩu mới" required>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">✅ Xác Nhận Đổi Mật Khẩu Ngay</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ======================================================================= -->
+                <!-- MỤC 5: QUẢN LÝ ĐA BỘ ICON (14 VỊ TRÍ), ÂM THANH & ĐỒNG BỘ HỆ THỐNG      -->
+                <!-- ======================================================================= -->
+                <section id="jsonSeedCard" data-settings-panel="cat5_icons_audio" class="nv-adaptive-card p-4 shadow-sm settings-master-panel d-none" style="border-left: 5px solid #8b5cf6 !important;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
+                        <div>
+                            <span class="badge bg-nvidia mb-1">🖼️ MỤC 5 • STUDIO ĐA BỘ ICON (14 VỊ TRÍ), ÂM THANH &amp; CÔNG CỤ HỆ THỐNG</span>
+                            <h5 class="fw-bold m-0 mt-1">Chuyển Đổi Bộ Icon 14 Vị Trí, Giọng Nói Mèo AI &amp; Trạng Thái Dữ Liệu SQLite</h5>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="toggleWebIconMode(); if(typeof refreshSettingsQuickSummaryCards==='function') refreshSettingsQuickSummaryCards();">🖼️ Chuyển Chế Độ Icon Web</button>
+                            <a href="/services/admin_dispute/admin-center.html" class="btn btn-outline-warning btn-sm fw-bold">🛡️ Mở Studio 14 Icon (Admin)</a>
+                            <a href="/services/seller/seller-dashboard.html" class="btn btn-outline-success btn-sm fw-bold">🏪 Về Kênh Người Bán</a>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 border h-100">
+                                <div class="fw-bold small mb-2">🎨 Chọn Nhanh Bộ Icon Hiển Thị Trên Toàn Sàn (14 Vị Trí):</div>
+                                <div class="d-flex flex-wrap gap-2" id="settingsIconSetsQuickPicker">
+                                    <button type="button" class="btn btn-sm btn-nvidia fw-bold" onclick="switchActiveIconSetFromSettings('default')">Bộ Mặc Định (SVG)</button>
+                                    <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="switchActiveIconSetFromSettings('set_1')">Bộ Icon #1</button>
+                                    <button type="button" class="btn btn-sm btn-outline-info fw-bold" onclick="switchActiveIconSetFromSettings('set_2')">Bộ Icon #2</button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning fw-bold" onclick="switchActiveIconSetFromSettings('set_3')">Bộ Icon #3</button>
+                                </div>
+                                <div class="small text-muted mt-2" id="settingsActiveIconSetNote">
+                                    Hỗ trợ đầy đủ 14 vị trí Icon (`brand_logo`, `cat_avatar`, `nav_bank`, `nav_ai_cat`, `cat_gpu`... `cat_headphones`) chống lỗi lưu đệm Cache-Busting `?v=timestamp`.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-3 border h-100">
+                                <div class="fw-bold small mb-2">🔊 Cài Đặt Âm Thanh &amp; Trạng Thái Linh Vật Mèo AI:</div>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="if(typeof summonAiCatFromBehindChat==='function') summonAiCatFromBehindChat();">
+                                        😺 Gọi Mèo AI Ra Trèo Leo
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary fw-bold" onclick="if(typeof tuckAiCatBehindChatBox==='function') tuckAiCatBehindChatBox(true);">
+                                        🫣 Cất Mèo Ra Sau Khung Chat
+                                    </button>
+                                </div>
+                                <div class="small text-muted mt-2">
+                                    Mẹo: Nháy đúp (Double-Click) trực tiếp vào chú Mèo AI để cất gọn ra sau khung chat (mèo sẽ thò đầu ngó ra mỗi 8 giây).
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="small text-muted p-3 rounded-3 border bg-body-tertiary">
+                        ✅ Hệ thống cơ sở dữ liệu SQLite (WAL Mode) đã đồng bộ đầy đủ cấu trúc Bảo mật OTP, Câu hỏi bảo mật, Cỡ chữ &amp; Độ cao Header, Ví Voucher và Vận đơn NX Express trên <strong>nexora.castle-tech.cloud</strong>.
+                    </div>
+                </section>
+
+            </div>
+        </div>
     </main>
 
     <div id="footer-placeholder"></div>
