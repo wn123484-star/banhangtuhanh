@@ -1,10 +1,10 @@
-const CACHE_NAME = 'nexora-mobile-pwa-v8';
+const CACHE_NAME = 'nexora-mobile-pwa-v11';
 const CORE_ASSETS = [
     '/services/mobile/mobile-app.html',
     '/services/mobile/mobile-app.css',
     '/services/mobile/mobile-app.js',
     '/assets/icons/nexora_mobile_crest.svg',
-    '/assets/icons/icon.png',
+    '/assets/icons/pwa/icon-192x192.png',
     '/manifest.json'
 ];
 

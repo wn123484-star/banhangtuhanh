@@ -1,13 +1,13 @@
 {
-  "name": "Nexora Mobile — Siêu Ứng Dụng Tài Chính Escrow & Thương Mại Công Nghệ",
+  "name": "Nexora Mobile — Siêu Ứng Dụng Tài Chính Lục Bảo & Thương Mại Công Nghệ",
   "short_name": "Nexora Mobile",
   "description": "Siêu ứng dụng Ví Nexora Pay, Quét QR Xem Giá 2 Bước, Chuyển Khoản Hộ & Sàn Đấu Giá Kép",
   "start_url": "/services/mobile/mobile-app.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b132b",
-  "theme_color": "#d82d8b",
+  "background_color": "#052e16",
+  "theme_color": "#059669",
   "icons": [
     {
       "src": "/assets/icons/pwa/icon-48x48.png",

@@ -56,13 +56,13 @@ public class MainActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
-        rootLayout.setBackgroundColor(Color.parseColor("#0B132B"));
+        rootLayout.setBackgroundColor(Color.parseColor("#052E16"));
 
         LinearLayout topBar = new LinearLayout(this);
         topBar.setOrientation(LinearLayout.HORIZONTAL);
         topBar.setGravity(Gravity.CENTER_VERTICAL);
         topBar.setPadding(24, 14, 24, 14);
-        topBar.setBackgroundColor(Color.parseColor("#111827"));
+        topBar.setBackgroundColor(Color.parseColor("#064E3B"));
 
         serverStatusTv = new TextView(this);
         serverStatusTv.setTextColor(Color.parseColor("#10B981"));
@@ -290,7 +290,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void syncTheme(String themeId) {
             SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-            prefs.edit().putString(KEY_ACTIVE_THEME, themeId != null ? themeId : "momo_lotus_pink").apply();
+            prefs.edit().putString(KEY_ACTIVE_THEME, themeId != null ? themeId : "emerald_fintech_light").apply();
         }
 
         @JavascriptInterface

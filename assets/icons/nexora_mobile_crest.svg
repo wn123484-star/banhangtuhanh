@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
     <linearGradient id="nxBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0b132b"/>
-      <stop offset="52%" stop-color="#112240"/>
-      <stop offset="100%" stop-color="#1a365d"/>
+      <stop offset="0%" stop-color="#052e16"/>
+      <stop offset="52%" stop-color="#064e3b"/>
+      <stop offset="100%" stop-color="#047857"/>
     </linearGradient>
     <linearGradient id="nxGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#a3e635"/>
@@ -11,9 +11,9 @@
       <stop offset="100%" stop-color="#10b981"/>
     </linearGradient>
     <linearGradient id="nxCyanPinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="55%" stop-color="#818cf8"/>
-      <stop offset="100%" stop-color="#f472b6"/>
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="55%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#facc15"/>
     </linearGradient>
   </defs>
   <rect x="28" y="28" width="456" height="456" rx="112" ry="112" fill="url(#nxBgGrad)" stroke="url(#nxGreenGrad)" stroke-width="10"/>
