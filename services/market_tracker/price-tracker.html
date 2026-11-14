@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sàn Theo Dõi Giá Thị Trường Công Nghệ Việt Nam (VN-TECH INDEX) - Nexora Mall</title>
+    <link rel="icon" type="image/png" href="/assets/icons/icon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <style>
+        .vntech-ticker-strip {
+            background: linear-gradient(90deg, #060b16 0%, #0f172a 50%, #091e12 100%);
+            border: 1px solid rgba(118, 185, 0, 0.45);
+            border-radius: 14px;
+            padding: 12px 18px;
+        }
+        .vntech-chart-panel {
+            background: linear-gradient(180deg, #090f1d 0%, #060a12 100%);
+            border: 1.5px solid rgba(56, 189, 248, 0.35);
+            border-radius: 16px;
+            position: relative;
+        }
+        .vntech-watchlist-card {
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .vntech-watchlist-card.triggered-red-alert {
+            border: 2px solid #ef4444 !important;
+            background: linear-gradient(135deg, rgba(127, 29, 29, 0.32) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
+            box-shadow: 0 0 18px rgba(239, 68, 68, 0.35);
+        }
+        .vntech-mover-row {
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+            border-radius: 10px;
+        }
+        .vntech-mover-row:hover {
+            background: rgba(118, 185, 0, 0.12);
+            transform: translateX(3px);
+        }
+        #vntechMainChartCanvas {
+            width: 100%;
+            height: 360px;
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <!-- Băng điện tử VN-TECH INDEX -->
+        <div class="vntech-ticker-strip mb-4 shadow">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-7">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <span class="badge bg-nvidia fw-bold px-3 py-1">📈 VN-TECH HARDWARE INDEX</span>
+                        <span class="badge bg-info text-dark fw-bold" id="vnTechIndexPointsBadge">1,284.65 điểm (-1.26%)</span>
+                        <span class="badge bg-dark border border-secondary text-light" id="vnTechUpdatedAtBadge">Cập nhật: --:--</span>
+                    </div>
+                    <h3 class="fw-bold text-light m-0">Sàn Theo Dõi Giá Thị Trường Công Nghệ Việt Nam &amp; Báo Động Giá 24/7</h3>
+                    <p class="small text-info mb-0 mt-1" id="vnTechSentimentText">
+                        So sánh trực tiếp biến động giá 30 phiên giữa Nexora Mall và mặt bằng giá trung bình thị trường Việt Nam.
+                    </p>
+                </div>
+                <div class="col-lg-5 text-lg-end">
+                    <div class="d-inline-flex flex-wrap gap-2 justify-content-lg-end">
+                        <button type="button" class="btn btn-danger btn-sm fw-bold px-3 py-2 shadow" onclick="simulateMarketFlashDropDemo()">
+                            📉 Giả Lập Biến Động Thị Trường / Hạ Giá Chạm Mốc Kỳ Vọng (Demo)
+                        </button>
+                        <a href="/services/home/index.html" class="btn btn-outline-light btn-sm fw-bold px-3 py-2">🏠 Về Trang Chủ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cột Trái: Biểu đồ Chứng khoán Nến Nhật / Line & Khuyến nghị AI -->
+            <div class="col-lg-8">
+                <div class="nv-adaptive-card p-3 p-md-4 mb-4 shadow-sm">
+                    <div class="row g-2 align-items-center mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-nvidia mb-1">🔍 Chọn Sản Phẩm Công Nghệ Cần Phân Tích Giá 30 Ngày:</label>
+                            <select id="vnTechProductSelect" class="form-select form-select-sm fw-bold" onchange="onSelectTrackerProduct(this.value)">
+                                <option value="1">Đang tải danh mục sản phẩm...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <label class="form-label small fw-bold text-muted d-block mb-1">Chế độ hiển thị Biểu đồ:</label>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" id="btnChartModeCandle" class="btn btn-nvidia fw-bold" onclick="switchVnTechChartMode('candlestick')">
+                                    🕯️ Biểu Đồ Nến Nhật (OHLC + MA7/MA30)
+                                </button>
+                                <button type="button" id="btnChartModeLine" class="btn btn-outline-info fw-bold" onclick="switchVnTechChartMode('line')">
+                                    📈 Đường So Sánh (Giá Nivida vs Thị Trường VN)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thông số nhanh của sản phẩm đang chọn -->
+                    <div class="row g-2 mb-3 text-center">
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded-3 border h-100" style="background: rgba(118, 185, 0, 0.08);">
+                                <div class="small text-muted">Giá Nexora Mall</div>
+                                <div class="fw-bold text-nvidia fs-5" id="statNvStorePrice">0 ₫</div>
+                                <small class="text-success fw-bold" id="statSavingVsVn">Rẻ hơn thị trường VN</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded-3 border h-100" style="background: rgba(56, 189, 248, 0.08);">
+                                <div class="small text-muted">TB Thị Trường VN</div>
+                                <div class="fw-bold text-info fs-5" id="statVnMarketAvg">0 ₫</div>
+                                <small class="text-muted">Khảo sát 24 đại lý lớn</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded-3 border h-100">
+                                <div class="small text-muted">Đáy / Đỉnh 30 Ngày</div>
+                                <div class="fw-bold text-warning small mt-1" id="statLowHigh30d">0 ₫ / 0 ₫</div>
+                                <small class="text-muted" id="statMa7Ma30">MA7: 0 ₫</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="p-2 rounded-3 border h-100 d-flex flex-column justify-content-center">
+                                <a id="btnGoToSelectedProduct" href="/services/product/product-detail.html?id=1" class="btn btn-nvidia btn-sm fw-bold w-100 mb-1">
+                                    🛒 Xem &amp; Mua Sản Phẩm
+                                </a>
+                                <button type="button" class="btn btn-outline-warning btn-sm fw-bold w-100" onclick="prefillTargetPriceFromCurrent()">
+                                    🔔 Gắn Vào Watchlist
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khung Canvas Biểu đồ Chứng khoán -->
+                    <div class="vntech-chart-panel p-3 mb-3">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center small mb-2">
+                            <div class="fw-bold text-light" id="chartSelectedProductTitle">📊 Biểu đồ biến động giá 30 phiên gần nhất</div>
+                            <div class="d-flex flex-wrap gap-3 small">
+                                <span style="color:#22c55e;">■ Nến Tăng / Giá Nivida</span>
+                                <span style="color:#ef4444;">■ Nến Giảm</span>
+                                <span style="color:#facc15;">― Đường MA7</span>
+                                <span style="color:#38bdf8;">-- Giá TB Thị Trường VN / MA30</span>
+                            </div>
+                        </div>
+                        <canvas id="vntechMainChartCanvas" width="820" height="360"></canvas>
+                        <div id="vntechChartHoverBar" class="small text-info font-monospace mt-2 pt-2 border-top border-secondary">
+                            Di chuột lên biểu đồ để xem chi tiết Giá Mở Cửa (Open) • Cao Nhất (High) • Thấp Nhất (Low) • Đóng Cửa (Close) • Giá TB Thị Trường VN từng ngày.
+                        </div>
+                    </div>
+
+                    <!-- Khuyến nghị AI Bắt Đáy -->
+                    <div class="p-3 rounded-3 border" style="background: rgba(15, 23, 42, 0.78); border-color: #76b900 !important;">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                            <span class="badge bg-nvidia fw-bold" id="aiSignalBadge">🟢 TÍN HIỆU PHÂN TÍCH ĐỊNH LƯỢNG AI</span>
+                            <small class="text-warning fw-bold" id="aiSuggestedTargetLabel">Mốc canh mua đề xuất: -- ₫</small>
+                        </div>
+                        <div class="small text-light" id="aiRecommendationSummary">
+                            Đang phân tích dữ liệu lịch sử giá 30 ngày...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng Top Giảm Sâu & Top Sốt Giá tại thị trường VN -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="nv-adaptive-card p-3 h-100 shadow-sm">
+                            <h6 class="fw-bold text-success border-bottom pb-2 mb-2">📉 Top Linh Kiện Giảm Sâu So Với Thị Trường VN</h6>
+                            <div id="topDropsContainer" class="small"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="nv-adaptive-card p-3 h-100 shadow-sm">
+                            <h6 class="fw-bold text-warning border-bottom pb-2 mb-2">🔥 Top Sản Phẩm Sôi Động &amp; Giao Dịch Cao 24h</h6>
+                            <div id="topGainersContainer" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột Phải: Trạm Gắn Theo Dõi Giới Hạn Vật Phẩm (Quota 6 Món) & Báo Động Đỏ -->
+            <div class="col-lg-4">
+                <div class="nv-adaptive-card p-3 p-md-4 mb-4 shadow-sm" style="border: 2px solid #76b900 !important;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold text-nvidia m-0">🔔 Danh Sách Canh Giá Của Bạn</h5>
+                        <span class="badge bg-warning text-dark fw-bold" id="watchlistQuotaBadge">Quota: 0/6 vật phẩm</span>
+                    </div>
+                    <p class="small text-muted mb-3">
+                        Mỗi tài khoản được gắn theo dõi tối đa <strong>6 vật phẩm</strong>. Khi giá giảm chạm hoặc thấp hơn <em>Giá mục tiêu</em>, hệ thống sẽ phát báo động đỏ lên Chuông <strong class="text-warning">🔔</strong> trên Header!
+                    </p>
+
+                    <div class="p-3 rounded-3 border mb-3" style="background: rgba(118, 185, 0, 0.06);">
+                        <div class="small fw-bold mb-1" id="watchFormProductLabel">Sản phẩm đang chọn: #1</div>
+                        <label class="form-label small text-muted mb-1">Đặt mức giá mục tiêu bạn muốn mua (VNĐ):</label>
+                        <div class="input-group input-group-sm mb-2">
+                            <input type="number" id="watchTargetPriceInput" class="form-control fw-bold" placeholder="VD: 25000000" step="50000">
+                            <span class="input-group-text">₫</span>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-nvidia btn-sm fw-bold py-2" onclick="addOrUpdateWatchlistItem()">
+                                🔔 Gắn Theo Dõi &amp; Đặt Giá Mục Tiêu
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm fw-bold py-2" onclick="simulateMarketFlashDropDemo()">
+                                ⚡ Test Giảm Giá Chạm Mốc &amp; Báo Động Chuông 🔔
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="watchlistItemsContainer" class="d-flex flex-column gap-2">
+                        <div class="text-center text-muted small py-3">Đang tải danh sách theo dõi giá...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/core/main.js"></script>
+    <script src="/services/market_tracker/price-tracker.js"></script>
+</body>
+</html>

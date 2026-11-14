@@ -55,52 +55,54 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 
 ---
 
-## GIAI ĐOẠN 3: XÂY DỰNG SÀN THEO DÕI GIÁ THỊ TRƯỜNG CÔNG NGHỆ VIỆT NAM (BIỂU ĐỒ CHỨNG KHOÁN & BÁO ĐỘNG GIÁ)
+## GIAI ĐOẠN 3: XÂY DỰNG SÀN THEO DÕI GIÁ THỊ TRƯỜNG CÔNG NGHỆ VIỆT NAM (BIỂU ĐỒ CHỨNG KHOÁN & BÁO ĐỘNG GIÁ) (ĐÃ HOÀN TẤT)
 
-- [ ] **3.1. Cơ sở dữ liệu & Động cơ Lịch sử Giá 30 Phiên (`product_price_history` & `user_price_watches`):**
-  - [ ] Trong `app.py`, khởi tạo bảng `product_price_history` và tự động tạo dữ liệu lịch sử biến động giá 30 ngày gần nhất tại thị trường Việt Nam (gồm `open_price`, `high_price`, `low_price`, `close_price`, `vn_market_avg_price`, `volume`) cho các sản phẩm công nghệ chủ lực (GPU RTX, CPU Core Ultra/Ryzen, RAM DDR5, SSD NVMe, Laptop, Màn hình OLED).
-  - [ ] Tự động ghi nhận phiên giá mới vào biểu đồ mỗi khi Gian hàng cập nhật giá sản phẩm, Admin bật/tắt Sự kiện giảm giá, hoặc kết thúc phiên Đấu giá.
-- [ ] **3.2. Giao diện Biểu Đồ Giá Kiểu Chứng Khoán (Candlestick / Line + $MA_7$ / $MA_{30}$):**
-  - [ ] Xây dựng khu vực **📈 Sàn Theo Dõi Giá Thị Trường Công Nghệ Việt Nam (VN-TECH INDEX)** (mở công khai cho cả Khách, Người mua và Người bán truy cập hằng ngày).
-  - [ ] Vẽ biểu đồ **Nến Chứng Khoán (Candlestick Chart) & Đường Xu Hướng ($MA_7$, $MA_{30}$)** trên HTML5 Canvas kèm bảng so sánh: *Giá Nivida Store* vs *Giá Trung Bình Thị Trường VN*, *Đáy 30 Ngày*, *Đỉnh 30 Ngày* và *Khuyến nghị AI (Bắt Đáy / Tích Lũy / Chờ Giảm)*.
-- [ ] **3.3. Cơ chế Gắn Theo Dõi Giới Hạn Vật Phẩm (Quota 5–8 Món) & Báo Động Khi Giảm Giá:**
-  - [ ] Cho phép người dùng bấm **`🔔 Gắn Theo Dõi & Đặt Giá Mục Tiêu`** cho sản phẩm (giới hạn tối đa **5 vật phẩm** mặc định, mở rộng lên **8 vật phẩm** nếu đã xác minh OTP hoặc chuỗi điểm danh $\ge 3$ ngày).
-  - [ ] Thêm nút **`📉 Giả Lập Biến Động Thị Trường / Hạ Giá Chạm Mốc Kỳ Vọng (Demo)`**: Khi bấm, giá thị trường giảm xuống chạm mốc `target_price` của người dùng $\rightarrow$ Tự động kích hoạt thông báo Chuông (`🔔`), đổi thẻ theo dõi sang trạng thái **`⚡ ĐÃ CHẠM GIÁ MỤC TIÊU — MUA NGAY`** và hiển thị Toast cảnh báo tức thì.
-
----
-
-## GIAI ĐOẠN 4: XÂY DỰNG SÀN ĐẤU GIÁ KÉP THỜI GIAN THỰC (KÝ QUỸ ANTI-SNIPING 30S & ĐẤU GIÁ NGƯỢC GIẢM TỪNG GIÂY)
-
-- [ ] **4.1. Backend & Database Sàn Đấu Giá Kép (`auctions` & `auction_bids`):**
-  - [ ] Tạo bảng `auctions` và `auction_bids` (kèm index `idx_auctions_status_type`, `idx_auction_bids_auction_id`) trong `app.py`, tự động khởi tạo 6 phiên đấu giá mẫu (3 phiên Đấu giá Ký quỹ tiêu chuẩn `standard` + 3 phiên Đấu giá Ngược Flash `dutch`).
-  - [ ] Xử lý API `POST /api/auctions/bid` (Đấu giá lên): Kiểm tra bước giá `min_step_price`, kiểm tra số dư Ví NVIDIA Pay, tạm khóa cọc 10% (`escrow_deposit_pct`), tự động hoàn trả tiền cọc ngay lập tức (`is_refunded = 1`) cho người đặt giá trước đó trong cùng 1 transaction, và **tự động cộng thêm +30 giây nếu lệnh trả giá diễn ra trong 10 giây cuối cùng (Anti-Sniping)**.
-  - [ ] Xử lý API `POST /api/auctions/dutch-buy` (Đấu giá ngược): Giá giảm tự động mỗi 2 giây theo công thức thời gian thực; người đầu tiên bấm **`⚡ Chốt Giá Mua Ngay`** sẽ thắng ở đúng mức giá tại giây đó và tự động tạo phiên thanh toán QR (`pay_token`) để tự trả hoặc nhờ người khác chuyển khoản hộ.
-- [ ] **4.2. Giao diện Sàn Đấu Giá Thời Gian Thực (`services/market_arena/market-arena.html` & `market-arena.js` + Liên kết toàn sàn):**
-  - [ ] Hiển thị đồng hồ đếm ngược từng giây, hiệu ứng nhảy giá trực tiếp, huy hiệu `+30s Anti-Sniping`, sổ cái lịch sử người trả giá minh bạch (kèm trạng thái *Đang giữ cọc 10%* / *Đã hoàn cọc 100%*) và nút chuyển thẳng sang màn hình Xem giá / Chuyển khoản hộ QR khi thắng đấu giá.
+- [x] **3.1. Cơ sở dữ liệu & Động cơ Lịch sử Giá 30 Phiên (`market_price_history`, `product_price_history` & `user_price_watchlist`):**
+  - [x] Trong `app.py`, khởi tạo bảng `market_price_history` (và `product_price_history`) và tự động tạo dữ liệu lịch sử biến động giá 30 ngày gần nhất tại thị trường Việt Nam (gồm `open_price`, `high_price`, `low_price`, `close_price`, `vn_market_avg_price`, `volume`) cho các sản phẩm công nghệ chủ lực (GPU RTX, CPU Core Ultra/Ryzen, RAM DDR5, SSD NVMe, Laptop, Màn hình OLED).
+  - [x] Tự động ghi nhận phiên giá mới vào biểu đồ mỗi khi Gian hàng cập nhật giá sản phẩm, Admin bật/tắt Sự kiện giảm giá, hoặc kết thúc phiên Đấu giá.
+- [x] **3.2. Giao diện Biểu Đồ Giá Kiểu Chứng Khoán (Candlestick / Line + $MA_7$ / $MA_{30}$):**
+  - [x] Xây dựng khu vực **📈 Sàn Theo Dõi Giá Thị Trường Công Nghệ Việt Nam (VN-TECH INDEX)** (`/services/market_tracker/price-tracker.html` & `price-tracker.js` + Widget trực tiếp trên `product-detail.js`).
+  - [x] Vẽ biểu đồ **Nến Chứng Khoán (Candlestick Chart) & Đường Xu Hướng ($MA_7$, $MA_{30}$)** trên HTML5 Canvas kèm bảng so sánh: *Giá Nivida Store* vs *Giá Trung Bình Thị Trường VN*, *Đáy 30 Ngày*, *Đỉnh 30 Ngày* và *Khuyến nghị AI (Bắt Đáy / Tích Lũy / Chờ Giảm)*.
+- [x] **3.3. Cơ chế Gắn Theo Dõi Giới Hạn Vật Phẩm (Quota 6 Món/Tài khoản) & Báo Động Khi Giảm Giá:**
+  - [x] Cho phép người dùng bấm **`🔔 Gắn Theo Dõi & Đặt Giá Mục Tiêu`** cho sản phẩm (giới hạn tối đa **6 vật phẩm/tài khoản**).
+  - [x] Thêm nút **`📉 Giả Lập Biến Động Thị Trường / Hạ Giá Chạm Mốc Kỳ Vọng (Demo)`**: Khi bấm, giá thị trường giảm xuống chạm mốc `target_price` của người dùng $\rightarrow$ Tự động kích hoạt thông báo Chuông (`🔔`), đổi thẻ theo dõi sang trạng thái **`⚡ ĐÃ CHẠM GIÁ MỤC TIÊU — MUA NGAY`** và hiển thị Toast cảnh báo tức thì.
 
 ---
 
-## GIAI ĐOẠN 5: SÀN ĐẤU THẦU NGƯỢC RFQ & HỘ CHIẾU BẢO HÀNH BLOCKCHAIN SHA-256
+## GIAI ĐOẠN 4: XÂY DỰNG SÀN ĐẤU GIÁ KÉP THỜI GIAN THỰC (KÝ QUỸ ANTI-SNIPING 30S & ĐẤU GIÁ NGƯỢC GIẢM TỪNG GIÂY) + ĐẤU TRƯỜNG PHẢN XẠ ESPORT 30S (ĐÃ HOÀN TẤT)
 
-- [ ] **5.1. Sàn Đấu Thầu Ngược "Khách Đăng Yêu Cầu — Gian Hàng Chào Giá Cạnh Tranh" (Reverse RFQ):**
-  - [ ] Tạo bảng `rfq_requests` và `rfq_quotes` cùng các API `/api/rfq/list`, `/api/rfq/create`, `/api/rfq/submit-quote`, `/api/rfq/accept-quote`.
-  - [ ] Cho phép Khách hàng đăng yêu cầu cấu hình/sản phẩm kèm ngân sách tối đa; cho phép Gian hàng (hoặc nút giả lập 24 Gian hàng chào giá tự động) gửi báo giá cạnh tranh thấp hơn ngân sách; khi khách bấm **`✅ Chấp Nhận Báo Giá Này`**, tự động tạo đơn hàng thanh toán QR ở đúng mức giá ưu đãi đó.
-- [ ] **5.2. Hộ Chiếu Bảo Hành Chuỗi Băm Blockchain SHA-256 Trên Trang Chi Tiết Sản Phẩm:**
-  - [ ] Trong `services/product/product-detail.js`, bổ sung khung tương tác **"🔗 Hộ Chiếu Bảo Hành Chuỗi Băm SHA-256 (Blockchain Device Warranty Passport)"**:
-    - [ ] Hiển thị chuỗi khối `SHA-256 Device Warranty Passport` gồm 3 Block liên kết bất biến (*Block #1: Xuất xưởng Chính hãng* $\rightarrow$ *Block #2: Kiểm định Kho NVX* $\rightarrow$ *Block #3: Cam kết Bảo hành Escrow SOP-01*).
+- [x] **4.1. Backend & Database Sàn Đấu Giá Kép (`auctions`, `auction_bids`) & Đấu Trường Phản Xạ Esport 30s (`reflex_arena_scores`):**
+  - [x] Tạo bảng `auctions` và `auction_bids` (kèm index `idx_auctions_status_type`, `idx_auction_bids_auction_id`) trong `app.py`, tự động khởi tạo 6 phiên đấu giá mẫu (3 phiên Đấu giá Ký quỹ tiêu chuẩn `standard` + 3 phiên Đấu giá Ngược Flash `dutch`).
+  - [x] Xử lý API `POST /api/auctions/bid` (Đấu giá lên): Kiểm tra bước giá `min_step_price`, kiểm tra số dư Ví NVIDIA Pay, tạm khóa cọc 10% (`escrow_deposit_pct`), tự động hoàn trả tiền cọc ngay lập tức (`is_refunded = 1`) cho người đặt giá trước đó trong cùng 1 transaction, và **tự động cộng thêm +30 giây nếu lệnh trả giá diễn ra trong 10 giây cuối cùng (Anti-Sniping)**.
+  - [x] Xử lý API `POST /api/auctions/dutch-claim` (`/api/auctions/dutch-buy`) (Đấu giá ngược): Giá giảm tự động mỗi 2 giây theo công thức thời gian thực; người đầu tiên bấm **`⚡ Chốt Giá Mua Ngay`** sẽ thắng ở đúng mức giá tại giây đó và tự động tạo phiên thanh toán QR (`pay_token`) để tự trả hoặc nhờ người khác chuyển khoản hộ.
+  - [x] Xử lý API `POST /api/minigame/reflex-arena/claim` cho **Đấu Trường Phản Xạ Tâm Ngắm Esport 30s**: Đo tốc độ phản xạ ms và thưởng Xu NVIDIA Pay + Vé Miễn Phí Cọc Đấu Giá.
+- [x] **4.2. Giao diện Sàn Đấu Giá Thời Gian Thực (`services/auction/auction.html` & `auction.js` + Liên kết toàn sàn):**
+  - [x] Hiển thị đồng hồ đếm ngược từng giây, hiệu ứng nhảy giá trực tiếp, huy hiệu `+30s Anti-Sniping`, sổ cái lịch sử người trả giá minh bạch (kèm trạng thái *Đang giữ cọc 10%* / *Đã hoàn cọc 100%*), trò chơi Đấu Trường Phản Xạ Esport 30s trên Canvas và nút chuyển thẳng sang màn hình Xem giá / Chuyển khoản hộ QR khi thắng đấu giá.
 
 ---
 
-## GIAI ĐOẠN 6: RÀ SOÁT, DÒ BUG SÂU TOÀN DIỆN & NGHIỆM THU CUỐI CÙNG (DEEP BUG HUNTING & QA REGRESSION)
+## GIAI ĐOẠN 5: SÀN ĐẤU THẦU NGƯỢC RFQ, HỘ CHIẾU BẢO HÀNH BLOCKCHAIN SHA-256 & CỔNG API ANDROID (ĐÃ HOÀN TẤT)
 
-- [ ] **6.1. Dò Bug Cú Pháp, Biến Trùng & Dấu Cắt Patch Trên Toàn Bộ Dự Án:**
-  - [ ] Quét toàn bộ các tệp `.py`, `.js`, `.html`, `.css` để đảm bảo **0 dòng dấu cắt patch thừa** (`===`, `<<<`, `>>>`), **0 lỗi biên dịch Python** (`py_compile`), và **0 khai báo biến `let`/`const` trùng tên** gây lỗi khi làm rối mã JS.
-- [ ] **6.2. Dò Bug Liên Kết DOM ID, Hàm `onclick` & Đường Dẫn 404:**
-  - [ ] Kiểm tra mọi nút bấm `onclick="tenHam(...)"` trên tất cả các trang HTML đều có hàm `window.tenHam` tương ứng trong `.js`.
-  - [ ] Kiểm tra mọi lệnh `insertBefore` trong `core/main.js`, `admin-center.js`, `product-detail.js`, `tracking.js` đều có bước xác thực `parentNode` an toàn.
-- [ ] **6.3. Kiểm Thử Nghiệm Thu End-to-End 5 Luồng Nghiệp Vụ Trọng Tâm:**
-  - [ ] **Test Case 1 (Icon Studio):** Lưu thử icon ở vị trí 4 (`nav_bank`), 5 (`nav_ai_cat`), 8 (`cat_mainboard`), 11 (`cat_headphones`) trong Admin $\rightarrow$ F5 trang chủ người dùng $\rightarrow$ Xác nhận cả 4 vị trí và toàn bộ 14 vị trí hiển thị ngay icon mới.
-  - [ ] **Test Case 2 (QR Xem Giá & Chuyển Khoản Hộ):** Đặt hàng QR $\rightarrow$ Mở link QR trên `bank.html` $\rightarrow$ Hiện bảng xem giá chi tiết $\rightarrow$ Chọn "Chuyển khoản hộ", nhập tên người chuyển hộ & bấm Xác nhận $\rightarrow$ Đơn hàng chuyển sang `ESCROW_LOCKED` và trang `checkout.html` tự chuyển sang `tracking.html`.
-  - [ ] **Test Case 3 (Vận Đơn & Hoàn Đơn):** Trên `tracking.html`, chuyển trạng thái tới `DELIVERED_INSPECTING` $\rightarrow$ Bấm Yêu cầu Hoàn đơn & Hoàn tiền $\rightarrow$ Xác nhận số dư Ví NVIDIA Pay của khách được cộng hoàn lại 100% số tiền và tồn kho sản phẩm tăng lại.
-  - [ ] **Test Case 4 (Theo Dõi Giá Thị Trường & Báo Động):** Gắn theo dõi 1 sản phẩm với giá mục tiêu $\rightarrow$ Bấm giả lập giảm giá chạm mốc $\rightarrow$ Xác nhận thông báo Chuông `🔔` và huy hiệu báo động kích hoạt chính xác; kiểm tra chặn khi vượt quá giới hạn Quota (5–8 món).
-  - [ ] **Test Case 5 (Đấu Giá Kép, Đấu Thầu RFQ & Đội Bot QA):** Nâng cấp Đội Bot QA (`/api/settings/qa-bot-audit`) quét toàn bộ các trang và API mới, chạy kiểm tra đạt **100% HTTP 200 OK (0 lỗi)**.
+- [x] **5.1. Sàn Đấu Thầu Ngược "Khách Đăng Yêu Cầu — Gian Hàng Chào Giá Cạnh Tranh" (Reverse RFQ):**
+  - [x] Tạo bảng `rfq_requests` và `rfq_quotes` cùng các API `/api/rfq/requests` (`/api/rfq/list`, `/api/rfq/create`), `/api/rfq/submit-offer` (`/api/rfq/submit-quote`), `/api/rfq/accept-offer` (`/api/rfq/accept-quote`).
+  - [x] Cho phép Khách hàng đăng yêu cầu cấu hình/sản phẩm kèm ngân sách tối đa trên `/services/rfq/rfq.html`; cho phép Gian hàng (hoặc nút giả lập 3 Gian hàng Flagship chào giá tự động) gửi báo giá cạnh tranh thấp hơn ngân sách; khi khách bấm **`✅ Chấp Nhận Báo Giá Này`**, tự động tạo đơn hàng thanh toán QR 2 bước ở đúng mức giá ưu đãi đó.
+- [x] **5.2. Hộ Chiếu Bảo Hành Chuỗi Băm Blockchain SHA-256 & Cổng API Android:**
+  - [x] Trong `services/product/product-detail.js` và `services/order_tracking/tracking.js`, tích hợp khung tương tác **"🔗 Hộ Chiếu Bảo Hành Chuỗi Băm SHA-256 (Blockchain Device Warranty Passport)"**:
+    - [x] Hiển thị chuỗi khối `SHA-256 Device Warranty Passport` gồm 4 Block liên kết bất biến (*Block #1: Xuất xưởng Chính hãng* $\rightarrow$ *Block #2: Kiểm định Kho NVX* $\rightarrow$ *Block #3: Hợp đồng Bảo lãnh Escrow SOP-01* $\rightarrow$ *Block #4: Kích hoạt Bảo hành 36 Tháng*) kèm nút kiểm chứng mật mã học.
+  - [x] Triển khai cổng API hợp nhất `/api/mobile/bridge-sync` chuẩn bị sẵn sàng cho ứng dụng di động Android.
+
+---
+
+## GIAI ĐOẠN 6: RÀ SOÁT, DÒ BUG SÂU TOÀN DIỆN & NGHIỆM THU CUỐI CÙNG (DEEP BUG HUNTING & QA REGRESSION - ĐÃ HOÀN TẤT)
+
+- [x] **6.1. Dò Bug Cú Pháp, Biến Trùng & Dấu Cắt Patch Trên Toàn Bộ Dự Án:**
+  - [x] Quét toàn bộ các tệp `.py`, `.js`, `.html`, `.css` để đảm bảo **0 dòng dấu cắt patch thừa** (`===`, `<<<`, `>>>`), **0 lỗi biên dịch Python** (`py_compile`), và **0 khai báo biến `let`/`const` trùng tên** gây lỗi khi làm rối mã JS.
+- [x] **6.2. Dò Bug Liên Kết DOM ID, Hàm `onclick` & Đường Dẫn 404:**
+  - [x] Kiểm tra mọi nút bấm `onclick="tenHam(...)"` trên tất cả các trang HTML đều có hàm `window.tenHam` tương ứng trong `.js`.
+  - [x] Kiểm tra mọi lệnh `insertBefore` trong `core/main.js`, `admin-center.js`, `product-detail.js`, `tracking.js` đều có bước xác thực `parentNode` an toàn.
+- [x] **6.3. Kiểm Thử Nghiệm Thu End-to-End 5 Luồng Nghiệp Vụ Trọng Tâm:**
+  - [x] **Test Case 1 (Icon Studio):** Lưu thử icon ở vị trí 4 (`nav_bank`), 5 (`nav_ai_cat`), 8 (`cat_mainboard`), 11 (`cat_headphones`) trong Admin $\rightarrow$ F5 trang chủ người dùng $\rightarrow$ Xác nhận cả 4 vị trí và toàn bộ 14 vị trí hiển thị ngay icon mới.
+  - [x] **Test Case 2 (QR Xem Giá & Chuyển Khoản Hộ):** Đặt hàng QR $\rightarrow$ Mở link QR trên `bank.html` $\rightarrow$ Hiện bảng xem giá chi tiết $\rightarrow$ Chọn "Chuyển khoản hộ", nhập tên người chuyển hộ & bấm Xác nhận $\rightarrow$ Đơn hàng chuyển sang `ESCROW_LOCKED` và trang `checkout.html` tự chuyển sang `tracking.html`.
+  - [x] **Test Case 3 (Vận Đơn & Hoàn Đơn):** Trên `tracking.html`, chuyển trạng thái tới `DELIVERED_INSPECTING` $\rightarrow$ Bấm Yêu cầu Hoàn đơn & Hoàn tiền $\rightarrow$ Xác nhận số dư Ví NVIDIA Pay của khách được cộng hoàn lại 100% số tiền và tồn kho sản phẩm tăng lại.
+  - [x] **Test Case 4 (Theo Dõi Giá Thị Trường & Báo Động):** Gắn theo dõi 1 sản phẩm với giá mục tiêu $\rightarrow$ Bấm giả lập giảm giá chạm mốc $\rightarrow$ Xác nhận thông báo Chuông `🔔` và huy hiệu báo động kích hoạt chính xác; kiểm tra chặn khi vượt quá giới hạn Quota (5–8 món).
+  - [x] **Test Case 5 (Đấu Giá Kép, Đấu Thầu RFQ & Đội Bot QA):** Nâng cấp Đội Bot QA (`/api/settings/qa-bot-audit`) quét toàn bộ các trang và API mới, chạy kiểm tra đạt **100% HTTP 200 OK (0 lỗi)**.

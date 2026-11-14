@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="nxBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b132b"/>
+      <stop offset="52%" stop-color="#112240"/>
+      <stop offset="100%" stop-color="#1a365d"/>
+    </linearGradient>
+    <linearGradient id="nxGreenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a3e635"/>
+      <stop offset="50%" stop-color="#76b900"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <linearGradient id="nxCyanPinkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="55%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="112" ry="112" fill="url(#nxBgGrad)" stroke="url(#nxGreenGrad)" stroke-width="10"/>
+  <circle cx="256" cy="256" r="168" fill="none" stroke="url(#nxCyanPinkGrad)" stroke-width="4" stroke-dasharray="14 8" opacity="0.55"/>
+  <g transform="translate(0, 0)">
+    <path d="M 132 348 L 132 164 L 236 348 L 236 164" fill="none" stroke="url(#nxGreenGrad)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 284 164 L 380 348 M 380 164 L 284 348" fill="none" stroke="url(#nxCyanPinkGrad)" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

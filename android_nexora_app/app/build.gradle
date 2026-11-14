@@ -1,0 +1,32 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'cloud.castletech.nexora.mobile'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "cloud.castletech.nexora.mobile"
+        minSdk 24
+        targetSdk 34
+        versionCode 80
+        versionName "8.0-NEXORA-SUPERAPP"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+        debug {
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-DEBUG"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+}

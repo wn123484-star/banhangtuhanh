@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cổng Tác Nghiệp Vận Đơn QR &amp; Phiếu Giao Hàng NVIDIA XPRESS (NVX)</title>
+    <title>Cổng Tác Nghiệp Vận Đơn QR &amp; Phiếu Giao Hàng NX EXPRESS</title>
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/core/global.css">
     <link rel="stylesheet" href="/services/seller/seller.css">
@@ -206,7 +206,7 @@
                 </div>
                 <div class="d-flex gap-2">
                     <span class="badge bg-secondary" id="liveEscrowBadge">Escrow: Đang bảo lãnh</span>
-                    <span class="badge bg-info text-dark">ĐVVC: NVIDIA XPRESS (NVX)</span>
+                    <span class="badge bg-info text-dark">ĐVVC: NX EXPRESS</span>
                 </div>
             </div>
 
@@ -233,7 +233,7 @@
             <div class="nvx-header-row">
                 <div>
                     <div class="nvx-brand-main">⚡ NVIDIA STORE</div>
-                    <div class="nvx-brand-sub">NVIDIA XPRESS (NVX)</div>
+                    <div class="nvx-brand-sub">NX EXPRESS</div>
                     <div class="small fw-bold mt-1" id="wbStatusLabel">TRẠNG THÁI: ĐANG VẬN CHUYỂN</div>
                 </div>
                 <div class="text-center">
@@ -247,7 +247,7 @@
                 <div class="nvx-addr-col">
                     <div class="fw-bold text-nvidia mb-1">📍 Từ: (Kho Người Bán)</div>
                     <div class="fw-bold" id="wbSellerName">Nvidia Flagship Official Store</div>
-                    <div id="wbSenderAddress" class="small">Kho Trung Tâm Nvidia Partner, Quận Long Biên, Hà Nội</div>
+                    <div id="wbSenderAddress" class="small">Kho Trung Tâm Nexora Partner, Quận Long Biên, Hà Nội</div>
                     <div class="mt-1 small"><strong>SĐT Kho:</strong> <span id="wbSellerPhone">0848 307 774</span></div>
                 </div>
                 <div class="nvx-addr-col">
@@ -269,7 +269,7 @@
                         <div id="wbItemsListContainer"></div>
                     </div>
                     <div class="small text-muted pt-2 border-top" style="font-size: 11.5px;">
-                        Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn NVX / Mã đơn hàng NVD trên hệ thống Nvidia Store trước khi nhận hàng.
+                        Kiểm tra tên sản phẩm và đối chiếu Mã vận đơn NVX / Mã đơn hàng NVD trên hệ thống Nexora Mall trước khi nhận hàng.
                     </div>
                 </div>
                 <div class="nvx-qr-col">
@@ -304,7 +304,7 @@
                 <strong>Chỉ dẫn giao hàng:</strong> Cho đồng kiểm ngoại quan; Tặng ngay Voucher HOATOC50K nếu giao trễ cam kết SLA.
             </div>
             <div class="nvx-bottom-banner">
-                Hệ Thống Vận Chuyển Thông Minh NVIDIA XPRESS (NVX) — Bảo Vệ Đơn Hàng Escrow 100% — Hotline 1900 6885
+                Hệ Thống Vận Chuyển Thông Minh NX EXPRESS — Bảo Vệ Đơn Hàng Escrow 100% — Hotline 1900 6885
             </div>
         </div>
     </main>
@@ -400,8 +400,8 @@
             document.getElementById('wbOrderCode').textContent = ordCode;
             document.getElementById('wbRouteSortCode').textContent = routeCode;
 
-            document.getElementById('wbSellerName').textContent = data.seller_name || 'Nvidia Partner Official Store';
-            document.getElementById('wbSenderAddress').textContent = data.sender_address || 'Kho Trung Tâm Nvidia Partner, Quận Long Biên, Hà Nội';
+            document.getElementById('wbSellerName').textContent = data.seller_name || 'Nexora Partner Official Store';
+            document.getElementById('wbSenderAddress').textContent = data.sender_address || 'Kho Trung Tâm Nexora Partner, Quận Long Biên, Hà Nội';
             document.getElementById('wbSellerPhone').textContent = data.seller_phone || '0848 307 774';
 
             document.getElementById('wbCustomerName').textContent = data.customer_name || 'Khách nhận hàng';

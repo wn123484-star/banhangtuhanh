@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sàn Đấu Thầu Ngược Reverse RFQ (Khách Đăng Yêu Cầu - 24 Gian Hàng Chào Giá) - Nexora Mall</title>
+    <link rel="icon" type="image/png" href="/assets/icons/icon.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/core/global.css">
+    <style>
+        .rfq-hero-banner {
+            background: linear-gradient(135deg, #07111e 0%, #0f172a 55%, #0e7490 100%);
+            border: 2px solid #38bdf8;
+            border-radius: 18px;
+        }
+        .rfq-request-card {
+            border: 1.5px solid rgba(56, 189, 248, 0.4);
+            border-radius: 16px;
+        }
+        .rfq-offer-item {
+            background: rgba(118, 185, 0, 0.08);
+            border: 1px solid rgba(118, 185, 0, 0.4);
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="container py-4">
+        <div class="rfq-hero-banner p-4 mb-4 shadow-lg text-light">
+            <div class="row g-3 align-items-center">
+                <div class="col-lg-8">
+                    <div class="d-flex flex-wrap gap-2 mb-2">
+                        <span class="badge bg-info text-dark fw-bold px-3 py-1">📋 REVERSE RFQ MARKETPLACE</span>
+                        <span class="badge bg-nvidia fw-bold px-3 py-1">🏪 24 Gian Hàng Flagship Chào Giá Cạnh Tranh</span>
+                        <span class="badge bg-warning text-dark fw-bold px-3 py-1">🛡️ Kết Nối Thẳng Quét QR 2 Bước &amp; Chuyển Khoản Hộ</span>
+                    </div>
+                    <h2 class="fw-bold text-info mb-1">Sàn Đấu Thầu Ngược: Khách Đăng Yêu Cầu — Gian Hàng Chào Giá</h2>
+                    <p class="small text-light opacity-90 mb-0">
+                        Bạn cần mua PC Gaming, Trạm AI Workstation hay Linh kiện số lượng lớn với ngân sách giới hạn? Hãy đăng yêu cầu tại đây để 24 Gian hàng chính hãng chủ động gửi báo giá giảm sâu kèm quà tặng độc quyền!
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="d-inline-flex flex-wrap gap-2 justify-content-lg-end">
+                        <a href="/services/auction/auction.html" class="btn btn-warning text-dark btn-sm fw-bold px-3 py-2">
+                            🔨 Về Sàn Đấu Giá Kép
+                        </a>
+                        <a href="/services/seller/seller-dashboard.html" class="btn btn-outline-light btn-sm fw-bold px-3 py-2">
+                            🏪 Kênh Người Bán Chào Giá
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khối Thông Báo Chốt Thầu RFQ -> Mở Màn Hình Xem Giá QR 2 Bước / Chuyển Khoản Hộ -->
+        <div id="rfqAwardedQrBanner" class="nv-adaptive-card p-4 mb-4 d-none" style="border: 2px solid #22c55e !important; background: rgba(6, 78, 59, 0.28);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <span class="badge bg-success fw-bold mb-1">✅ ĐÃ CHẤP NHẬN BÁO GIÁ &amp; TẠO ĐƠN HÀNG ƯU ĐÃI!</span>
+                    <h5 class="fw-bold text-nvidia mb-1" id="rfqAwardedTitleText">Đơn hàng RFQ #NVD-101</h5>
+                    <div class="small text-light" id="rfqAwardedSubText">
+                        Hóa đơn QR 2 bước đã khởi tạo ở trạng thái Chờ Xác Nhận Thanh Toán (AWAITING_PAYMENT).
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a id="rfqAwardedInspectBtn" href="/services/cart_checkout/bank.html" class="btn btn-nvidia fw-bold px-3 py-2">
+                        📱 Mở Màn Hình Xem Giá &amp; Xác Nhận Quét QR
+                    </a>
+                    <button type="button" class="btn btn-warning text-dark fw-bold px-3 py-2" onclick="copyRfqAwardedBehalfLink()">
+                        🤝 Copy Link Nhờ Bạn Bè / Người Thân Chuyển Khoản Hộ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cột Trái: Form Khách Đăng Yêu Cầu Cấu Hình / Sản Phẩm Cần Mua -->
+            <div class="col-lg-4">
+                <div class="nv-adaptive-card p-4 shadow-sm" style="border: 2px solid #38bdf8 !important;">
+                    <h5 class="fw-bold text-info mb-2">📝 Đăng Yêu Cầu Tìm Mua &amp; Mời Thầu</h5>
+                    <p class="small text-muted mb-3">
+                        Nhập tên cấu hình hoặc linh kiện bạn cần tìm cùng ngân sách tối đa. Các gian hàng sẽ gửi báo giá thấp hơn mức ngân sách của bạn!
+                    </p>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold mb-1">Tiêu đề cấu hình / sản phẩm cần mua:</label>
+                        <input type="text" id="rfqTitleInput" class="form-control form-control-sm fw-bold" value="Cần mua Bộ PC Gaming AI RTX 4080 Super + Ryzen 7 9800X3D">
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-bold mb-1">Ngân sách tối đa (VNĐ):</label>
+                            <input type="number" id="rfqMaxBudgetInput" class="form-control form-control-sm fw-bold" value="48000000" step="500000">
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-bold mb-1">Số lượng:</label>
+                            <input type="number" id="rfqQtyInput" class="form-control form-control-sm fw-bold" value="1" min="1">
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold mb-1">Danh mục ưu tiên:</label>
+                        <select id="rfqCategorySelect" class="form-select form-select-sm">
+                            <option value="gpu">Card đồ họa (GPU) &amp; Trạm AI</option>
+                            <option value="cpu">Combo CPU + Mainboard</option>
+                            <option value="ram">RAM DDR5 &amp; SSD NVMe</option>
+                            <option value="keyboard">Bàn phím, Chuột &amp; Tai nghe Esport</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold mb-1">Ghi chú yêu cầu bảo hành &amp; giao nhận:</label>
+                        <textarea id="rfqSpecsNoteInput" class="form-control form-control-sm" rows="2">Yêu cầu hàng chính hãng Fullbox mới 100%, bảo hành 36 tháng SOP-01, giao nhanh NVX 2H.</textarea>
+                    </div>
+                    <button type="button" class="btn btn-info text-dark w-100 fw-bold py-2 shadow" onclick="createNewReverseRfqRequest()">
+                        🚀 Đăng Yêu Cầu Mời 24 Gian Hàng Chào Giá
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cột Phải: Danh Sách Yêu Cầu Đấu Thầu & Báo Giá Cạnh Tranh Từ Gian Hàng -->
+            <div class="col-lg-8">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                    <h4 class="fw-bold text-nvidia m-0">🏪 Danh Sách Phiên Đấu Thầu Ngược &amp; Báo Giá Từ Gian Hàng</h4>
+                    <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="loadReverseRfqMarketplace()">
+                        🔄 Làm Mới Báo Giá
+                    </button>
+                </div>
+                <div id="rfqRequestsListContainer" class="d-flex flex-column gap-3">
+                    <div class="text-center py-4 text-muted">Đang tải danh sách yêu cầu đấu thầu ngược...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/core/main.js"></script>
+    <script src="/services/rfq/rfq.js"></script>
+</body>
+</html>

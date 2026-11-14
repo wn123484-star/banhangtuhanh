@@ -8,7 +8,7 @@ function getShopPromotionMetaForProduct(p) {
     const discountPct = oldPrice > price && price > 0 ? Math.max(5, Math.round(((oldPrice - price) / oldPrice) * 100)) : 15;
     const promos = [
         '🎁 KM Shop: Giảm 100K • Tặng quà',
-        '🎟️ Mã Shop -80K • Freeship NVX',
+        '🎟️ Mã Shop -80K • Freeship NX',
         '⚡ Flash Deal • Đổi mới 15 ngày',
         '🔥 Trợ giá 50K • Bảo hành tận nơi'
     ];
@@ -27,14 +27,14 @@ function buildProductCardHtml(p) {
     const detailUrl = `/services/product/product-detail.html?id=${p.id}`;
 
     return `
-        <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-            <div class="nv-adaptive-card h-100 overflow-hidden d-flex flex-column justify-content-between nv-product-card position-relative"
+        <div class="col-6 col-sm-4 col-md-3 col-lg-3 nv-product-col">
+            <div class="nv-adaptive-card h-100 overflow-hidden d-flex flex-column justify-content-between nv-product-card product-card position-relative"
                  data-product-id="${p.id}"
                  data-product-name="${(p.name || '').replace(/"/g, '&quot;')}">
-                <div>
-                    <div class="position-relative">
-                        <a href="${detailUrl}">
-                            <img src="${imgUrl}" alt="${(p.name || '').replace(/"/g, '&quot;')}" class="w-100" style="height: 145px; object-fit: cover;">
+                <div class="d-flex flex-column flex-fill">
+                    <div class="position-relative nv-prod-thumb-wrap product-img-wrap product-card-img nvx-card-thumb">
+                        <a href="${detailUrl}" class="d-flex align-items-center justify-content-center w-100 h-100">
+                            <img src="${imgUrl}" alt="${(p.name || '').replace(/"/g, '&quot;')}" class="w-100 h-100 nv-prod-thumb" style="width: 100% !important; height: 100% !important; object-fit: contain !important; object-position: center !important;">
                         </a>
                         <div class="position-absolute top-0 start-0 m-1 d-flex gap-1">
                             ${tierBadge}
@@ -48,7 +48,7 @@ function buildProductCardHtml(p) {
 
                     <div class="p-2 pb-0">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted text-truncate" style="font-size:10px;">🏪 ${p.store_name || 'Nvidia Mall'} ☑️</small>
+                            <small class="text-muted text-truncate" style="font-size:10px;">🏪 ${p.store_name || 'Nexora Mall'} ☑️</small>
                         </div>
                         <a href="${detailUrl}" class="fw-bold text-decoration-none nv-card-6col-title mb-1" title="${(p.name || '').replace(/"/g, '&quot;')}">${p.name}</a>
                         <div class="text-muted mb-1" style="font-size:10.5px;">
@@ -237,6 +237,8 @@ function syncUrlParamsToFilters() {
 
     const searchInput = document.getElementById('globalSearchInput');
     if (searchInput && q) searchInput.value = q;
+    const localSearch = document.getElementById('searchInput');
+    if (localSearch && q) localSearch.value = q;
 }
 
 function resetHomeAllFilters() {
@@ -250,6 +252,8 @@ function resetHomeAllFilters() {
     if (flashEl) flashEl.checked = false;
     const searchInput = document.getElementById('globalSearchInput');
     if (searchInput) searchInput.value = '';
+    const localSearch = document.getElementById('searchInput');
+    if (localSearch) localSearch.value = '';
     window.history.replaceState({}, '', '/services/home/index.html');
     loadProducts();
 }
@@ -261,7 +265,12 @@ async function loadProducts() {
 
     const params = new URLSearchParams(window.location.search);
     const searchInput = document.getElementById('globalSearchInput');
-    const q = (searchInput && searchInput.value.trim()) ? searchInput.value.trim() : (params.get('q') || '');
+    const localSearch = document.getElementById('searchInput');
+    const q = (localSearch && localSearch.value.trim())
+        ? localSearch.value.trim()
+        : ((searchInput && searchInput.value.trim()) ? searchInput.value.trim() : (params.get('q') || ''));
+    if (searchInput && q && !searchInput.value) searchInput.value = q;
+    if (localSearch && q && !localSearch.value) localSearch.value = q;
     const cat = document.getElementById('homeFilterCategory')?.value || '';
     const tier = document.getElementById('homeFilterShopTier')?.value || '';
     const sortBy = document.getElementById('homeFilterSortBy')?.value || 'popular';
@@ -312,6 +321,9 @@ async function loadProducts() {
         }
 
         listEl.innerHTML = products.map(p => buildProductCardHtml(p)).join('');
+        if (typeof window.applyProductGridDensity === 'function') {
+            window.applyProductGridDensity(localStorage.getItem('nvx_grid_density') || '4');
+        }
         if (typeof window.syncActiveIconSetAcrossWebsite === 'function') {
             window.syncActiveIconSetAcrossWebsite();
         }
@@ -328,6 +340,9 @@ window.triggerAiCatCatchVisibleProduct = triggerAiCatCatchVisibleProduct;
 
 document.addEventListener('DOMContentLoaded', () => {
     syncUrlParamsToFilters();
+    if (typeof window.applyProductGridDensity === 'function') {
+        window.applyProductGridDensity(localStorage.getItem('nvx_grid_density') || '4');
+    }
     loadHomeActiveEventBanner();
     renderFeaturedStoresStrip();
     loadHomeVouchersStrip();

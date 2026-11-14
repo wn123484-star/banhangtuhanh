@@ -221,8 +221,10 @@ def send_transactional_email_v2(recipient_email, subject, html_body, plain_text_
     db_cfg = pool["db_cfg"]
 
     resend_key = (env_map.get("RESEND_API_KEY") or db_cfg.get("resend_api_key") or "").strip()
-    from_addr = (env_map.get("RESEND_FROM_EMAIL") or db_cfg.get("resend_from_email") or "NVIDIA Store CSKH <noreply@nvidia.castle-tech.cloud>").strip()
-    reply_to = (env_map.get("RESEND_REPLY_TO") or db_cfg.get("resend_reply_to") or "cskh@nvidia.castle-tech.cloud").strip()
+    from_addr = (env_map.get("RESEND_FROM_EMAIL") or db_cfg.get("resend_from_email") or "Nexora Mall CSKH <noreply@mail.castle-tech.cloud>").strip()
+    from_addr = from_addr.replace("NVIDIA Store", "Nexora Mall").replace("Nivida Store", "Nexora Mall").replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud").replace("@nexora.castle-tech.cloud", "@mail.castle-tech.cloud")
+    reply_to = (env_map.get("RESEND_REPLY_TO") or db_cfg.get("resend_reply_to") or "cskh@mail.castle-tech.cloud").strip()
+    reply_to = reply_to.replace("@nvidia.castle-tech.cloud", "@mail.castle-tech.cloud").replace("@nexora.castle-tech.cloud", "@mail.castle-tech.cloud")
 
     raw_smtp_toggle = env_map.get("ENABLE_SMTP_FALLBACK")
     if raw_smtp_toggle is not None and str(raw_smtp_toggle).strip() != "":

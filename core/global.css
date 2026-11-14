@@ -3485,17 +3485,21 @@ body.mobile-app-sim-active .nv-header-main-row {
     padding: 0 18px !important;
 }
 
-.nv-header-top-row {
+.nv-header-top-row,
+.nvx-topbar {
+    position: relative !important;
+    z-index: 100050 !important;
     display: flex !important;
-    flex-wrap: nowrap !important;
+    flex-wrap: wrap !important;
     justify-content: space-between !important;
     align-items: center !important;
     gap: 10px !important;
-    padding: 3px 0 !important;
+    padding: 4px 0 !important;
     border-bottom: 1px solid rgba(148, 163, 184, 0.18) !important;
     font-size: 11.5px !important;
-    overflow-x: auto !important;
-    scrollbar-width: none !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
 }
 
 .nv-header-top-row::-webkit-scrollbar {
@@ -4624,37 +4628,35 @@ nav a[href*="pc-builder"] .badge,
     display: none !important;
 }
 
-#header-placeholder a[href*="index.html"] img,
-.nvidia-header-bar img.brand-logo-img {
-    width: 40px !important;
-    height: 40px !important;
-    object-fit: contain !important;
-    border-radius: 8px;
-    background: #ffffff;
-    padding: 2px;
-    border: 1.5px solid #76b900;
-}
-
-header a[href*="pc-builder"] .badge,
-nav a[href*="pc-builder"] .badge,
-#header-placeholder a[href*="pc-builder"] .badge {
-    display: none !important;
-}
-
-/* Đảm bảo Logo Nvidia trên Header luôn hiển thị rõ nét, không bao giờ bị ẩn hay vỡ */
-#header-placeholder a[href*="index.html"] img,
-.nvidia-header-bar img,
-.navbar-brand img {
+#header-placeholder a[href*="index.html"] img#headerBrandLogoImg:not(.d-none),
+.nvidia-header-bar img#headerBrandLogoImg:not(.d-none) {
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    width: 38px !important;
-    height: 38px !important;
-    min-width: 38px !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
     object-fit: contain !important;
     border-radius: 8px;
-    background: #76b900;
+    background: transparent !important;
     padding: 2px;
+}
+
+img.nvx-dynamic-slot-icon,
+.nvidia-header-bar img.nvx-dynamic-slot-icon,
+#header-placeholder img.nvx-dynamic-slot-icon {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+    min-width: 18px !important;
+    object-fit: contain !important;
+    display: inline-block !important;
+    vertical-align: -3px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
 }
 
 .nv-fallback-logo-badge {
@@ -5079,3 +5081,785 @@ main .sticky-top.card .text-muted {
 .bg-white {
     color: rgb(15, 23, 42);
 }
+
+/* ==========================================================================
+   NEXORA MALL — HỆ THỐNG 12 GIAO DIỆN ĐA LỨA TUỔI (EXECUTIVE LIGHT DEFAULT)
+   ========================================================================== */
+:root,
+html[data-theme="light"],
+html[data-nv-skin="executive_light"] {
+    --bg-body: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f1f5f9;
+    --text-main: #0f172a;
+    --text-muted: #475569;
+    --border-color: #e2e8f0;
+    --primary-accent: #059669;
+    --secondary-accent: #1e3a8a;
+    --nv-bg-body: #f8fafc;
+    --nv-bg-surface: #ffffff;
+    --nv-bg-elevated: #f1f5f9;
+    --nv-bg-input: #ffffff;
+    --nv-text-main: #0f172a;
+    --nv-text-muted: #475569;
+    --nv-border-col: #e2e8f0;
+    --nv-table-stripe: #f8fafc;
+    --nv-table-hover: #f1f5f9;
+}
+
+html[data-nv-skin="swiss_finance"] {
+    --bg-body: #f1f5f9;
+    --bg-surface: #ffffff;
+    --bg-elevated: #e2e8f0;
+    --text-main: #0f172a;
+    --text-muted: #334155;
+    --border-color: #cbd5e1;
+    --primary-accent: #0f766e;
+    --secondary-accent: #1e3a8a;
+    --nv-bg-body: #f1f5f9;
+    --nv-bg-surface: #ffffff;
+    --nv-bg-elevated: #e2e8f0;
+    --nv-bg-input: #ffffff;
+    --nv-text-main: #0f172a;
+    --nv-text-muted: #334155;
+    --nv-border-col: #cbd5e1;
+}
+
+html[data-nv-skin="apple_cupertino"] {
+    --bg-body: #f5f5f7;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ececf0;
+    --text-main: #1d1d1f;
+    --text-muted: #515154;
+    --border-color: #d2d2d7;
+    --primary-accent: #0071e3;
+    --secondary-accent: #1d1d1f;
+    --nv-bg-body: #f5f5f7;
+    --nv-bg-surface: #ffffff;
+    --nv-bg-elevated: #ececf0;
+    --nv-bg-input: #ffffff;
+    --nv-text-main: #1d1d1f;
+    --nv-text-muted: #515154;
+    --nv-border-col: #d2d2d7;
+}
+
+html[data-nv-skin="muji_warm_paper"] {
+    --bg-body: #faf7f2;
+    --bg-surface: #fffdf9;
+    --bg-elevated: #f3ede2;
+    --text-main: #292524;
+    --text-muted: #57534e;
+    --border-color: #e7e0d3;
+    --primary-accent: #7f1d1d;
+    --secondary-accent: #78350f;
+    --nv-bg-body: #faf7f2;
+    --nv-bg-surface: #fffdf9;
+    --nv-bg-elevated: #f3ede2;
+    --nv-bg-input: #fffdf9;
+    --nv-text-main: #292524;
+    --nv-text-muted: #57534e;
+    --nv-border-col: #e7e0d3;
+}
+
+html[data-nv-skin="nordic_snow"] {
+    --bg-body: #f0f9ff;
+    --bg-surface: #ffffff;
+    --bg-elevated: #e0f2fe;
+    --text-main: #0c4a6e;
+    --text-muted: #334155;
+    --border-color: #bae6fd;
+    --primary-accent: #0284c7;
+    --secondary-accent: #0369a1;
+    --nv-bg-body: #f0f9ff;
+    --nv-bg-surface: #ffffff;
+    --nv-bg-elevated: #e0f2fe;
+    --nv-bg-input: #ffffff;
+    --nv-text-main: #0c4a6e;
+    --nv-text-muted: #334155;
+    --nv-border-col: #bae6fd;
+}
+
+html[data-nv-skin="oxford_academic"] {
+    --bg-body: #f8faf9;
+    --bg-surface: #ffffff;
+    --bg-elevated: #ecfdf5;
+    --text-main: #064e3b;
+    --text-muted: #374151;
+    --border-color: #d1fae5;
+    --primary-accent: #047857;
+    --secondary-accent: #92400e;
+    --nv-bg-body: #f8faf9;
+    --nv-bg-surface: #ffffff;
+    --nv-bg-elevated: #ecfdf5;
+    --nv-bg-input: #ffffff;
+    --nv-text-main: #064e3b;
+    --nv-text-muted: #374151;
+    --nv-border-col: #d1fae5;
+}
+
+html[data-nv-skin="bloomberg_terminal"] {
+    --bg-body: #090d16;
+    --bg-surface: #111827;
+    --bg-elevated: #1f2937;
+    --text-main: #f9fafb;
+    --text-muted: #9ca3af;
+    --border-color: #374151;
+    --primary-accent: #f59e0b;
+    --secondary-accent: #38bdf8;
+    --nv-bg-body: #090d16;
+    --nv-bg-surface: #111827;
+    --nv-bg-elevated: #1f2937;
+    --nv-bg-input: #0f172a;
+    --nv-text-main: #f9fafb;
+    --nv-text-muted: #9ca3af;
+    --nv-border-col: #374151;
+}
+
+html[data-nv-skin="obsidian_luxury"] {
+    --bg-body: #0c0c0e;
+    --bg-surface: #16161a;
+    --bg-elevated: #222228;
+    --text-main: #f4f4f6;
+    --text-muted: #a1a1aa;
+    --border-color: #3f3f46;
+    --primary-accent: #d4af37;
+    --secondary-accent: #fbbf24;
+    --nv-bg-body: #0c0c0e;
+    --nv-bg-surface: #16161a;
+    --nv-bg-elevated: #222228;
+    --nv-bg-input: #121216;
+    --nv-text-main: #f4f4f6;
+    --nv-text-muted: #a1a1aa;
+    --nv-border-col: #3f3f46;
+}
+
+html[data-nv-skin="emerald_tech"] {
+    --bg-body: #071318;
+    --bg-surface: #0f222a;
+    --bg-elevated: #16303b;
+    --text-main: #ecfdf5;
+    --text-muted: #94a3b8;
+    --border-color: #1e3a47;
+    --primary-accent: #10b981;
+    --secondary-accent: #06b6d4;
+    --nv-bg-body: #071318;
+    --nv-bg-surface: #0f222a;
+    --nv-bg-elevated: #16303b;
+    --nv-bg-input: #0a1920;
+    --nv-text-main: #ecfdf5;
+    --nv-text-muted: #94a3b8;
+    --nv-border-col: #1e3a47;
+}
+
+html[data-nv-skin="ocean_breeze"] {
+    --bg-body: #071925;
+    --bg-surface: #0c2638;
+    --bg-elevated: #12354d;
+    --text-main: #f0f9ff;
+    --text-muted: #93c5fd;
+    --border-color: #1e4968;
+    --primary-accent: #0ea5e9;
+    --secondary-accent: #2dd4bf;
+    --nv-bg-body: #071925;
+    --nv-bg-surface: #0c2638;
+    --nv-bg-elevated: #12354d;
+    --nv-bg-input: #081e2c;
+    --nv-text-main: #f0f9ff;
+    --nv-text-muted: #93c5fd;
+    --nv-border-col: #1e4968;
+}
+
+html[data-nv-skin="kyoto_autumn"] {
+    --bg-body: #18100c;
+    --bg-surface: #271a14;
+    --bg-elevated: #36241c;
+    --text-main: #fff7ed;
+    --text-muted: #fdba74;
+    --border-color: #4d3327;
+    --primary-accent: #ea580c;
+    --secondary-accent: #f59e0b;
+    --nv-bg-body: #18100c;
+    --nv-bg-surface: #271a14;
+    --nv-bg-elevated: #36241c;
+    --nv-bg-input: #1f140f;
+    --nv-text-main: #fff7ed;
+    --nv-text-muted: #fdba74;
+    --nv-border-col: #4d3327;
+}
+
+html[data-nv-skin="tet_festival"] {
+    --bg-body: #1c080b;
+    --bg-surface: #2d0d13;
+    --bg-elevated: #3f131b;
+    --text-main: #fef2f2;
+    --text-muted: #fde047;
+    --border-color: #5c1c27;
+    --primary-accent: #eab308;
+    --secondary-accent: #ef4444;
+    --nv-bg-body: #1c080b;
+    --nv-bg-surface: #2d0d13;
+    --nv-bg-elevated: #3f131b;
+    --nv-bg-input: #240a0f;
+    --nv-text-main: #fef2f2;
+    --nv-text-muted: #fde047;
+    --nv-border-col: #5c1c27;
+}
+
+/* ==========================================================================
+   THANH HEADER TOPBAR GỌN GÀNG & DROPDOWN THÔNG MINH (KHÓA Z-INDEX TUYỆT ĐỐI)
+   ========================================================================== */
+header.nvidia-header-bar,
+#header-placeholder,
+.nvidia-header-shell {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100000 !important;
+    overflow: visible !important;
+}
+
+.nv-header-top-row,
+.nvx-topbar {
+    position: relative !important;
+    z-index: 100050 !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    flex-wrap: wrap !important;
+}
+
+.nv-header-main-row,
+.nvx-main-header {
+    position: relative !important;
+    z-index: 100010 !important;
+    overflow: visible !important;
+}
+
+.nv-topbar-dropdown,
+.nvx-dropdown {
+    position: relative !important;
+    display: inline-block !important;
+    z-index: 100060 !important;
+}
+
+.nv-topbar-dropdown-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #e2e8f0;
+    border-radius: 999px;
+    padding: 3px 11px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.18s ease;
+    text-decoration: none;
+    user-select: none;
+}
+
+.nv-topbar-dropdown-btn:hover,
+.nv-topbar-dropdown:hover .nv-topbar-dropdown-btn,
+.nv-topbar-dropdown.open .nv-topbar-dropdown-btn,
+.nvx-dropdown:hover .nv-topbar-dropdown-btn,
+.nvx-dropdown.open .nv-topbar-dropdown-btn {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #ffffff;
+}
+
+.nv-topbar-dropdown-menu,
+.nvx-dropdown-menu {
+    display: none;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    margin-top: 0 !important;
+    min-width: 245px;
+    background: #0f172a !important;
+    border: 1.5px solid #10b981 !important;
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 18px 42px rgba(2, 6, 23, 0.72) !important;
+    z-index: 100099 !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+}
+
+.nv-topbar-dropdown-menu::before,
+.nvx-dropdown-menu::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 0;
+    right: 0;
+    height: 14px;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.nv-topbar-dropdown:hover .nv-topbar-dropdown-menu,
+.nv-topbar-dropdown.open .nv-topbar-dropdown-menu,
+.nvx-dropdown:hover .nvx-dropdown-menu,
+.nvx-dropdown.open .nvx-dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.nv-topbar-dropdown-menu a,
+.nvx-dropdown-menu a,
+.nv-topbar-dropdown-item {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    color: #f8fafc !important;
+    text-decoration: none !important;
+    font-size: 0.81rem;
+    font-weight: 600;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    position: relative;
+    z-index: 100100;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nv-topbar-dropdown-menu a:hover,
+.nvx-dropdown-menu a:hover,
+.nv-topbar-dropdown-item:hover {
+    background: rgba(16, 185, 129, 0.24) !important;
+    color: #34d399 !important;
+}
+
+/* ==========================================================================
+   CHỈNH MẬT ĐỘ HIỂN THỊ LƯỚI SẢN PHẨM (GRID DENSITY: 3, 4, 5, 6, LIST)
+   & KHÓA TỶ LỆ ẢNH SẢN PHẨM 4:3 CHỐNG MÉO/DẸT NGANG
+   ========================================================================== */
+.product-img-wrap,
+.product-card-img,
+.nvx-card-thumb,
+.nv-prod-thumb-wrap {
+    aspect-ratio: 4 / 3 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 185px !important;
+    max-height: 250px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+}
+
+.product-img-wrap > a,
+.product-card-img > a,
+.nvx-card-thumb > a,
+.nv-prod-thumb-wrap > a {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.product-img-wrap img,
+.product-img-wrap svg,
+.product-card-img img,
+.product-card-img svg,
+.nvx-card-thumb img,
+.nvx-card-thumb svg,
+.nv-prod-thumb-wrap img,
+.nv-prod-thumb-wrap svg,
+img.nv-prod-thumb {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    aspect-ratio: auto !important;
+}
+
+#productGrid[data-grid-density="3"],
+#productList[data-grid-density="3"] {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 34px !important;
+}
+#productGrid[data-grid-density="3"] > .nv-product-col,
+#productList[data-grid-density="3"] > .nv-product-col {
+    flex: 0 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+#productGrid[data-grid-density="3"] .nv-product-card,
+#productList[data-grid-density="3"] .nv-product-card,
+#productGrid[data-grid-density="3"] .product-card,
+#productList[data-grid-density="3"] .product-card {
+    max-width: 380px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+}
+#productGrid[data-grid-density="3"] .nv-product-card .nv-card-6col-title,
+#productList[data-grid-density="3"] .nv-product-card .nv-card-6col-title {
+    font-size: 1.05rem !important;
+    line-height: 1.4 !important;
+}
+
+#productGrid[data-grid-density="4"] > .nv-product-col,
+#productList[data-grid-density="4"] > .nv-product-col {
+    flex: 0 0 auto;
+    width: 25% !important;
+}
+
+#productGrid[data-grid-density="5"] > .nv-product-col,
+#productList[data-grid-density="5"] > .nv-product-col {
+    flex: 0 0 auto;
+    width: 20% !important;
+}
+
+#productGrid[data-grid-density="6"] > .nv-product-col,
+#productList[data-grid-density="6"] > .nv-product-col {
+    flex: 0 0 auto;
+    width: 16.666667% !important;
+}
+#productGrid[data-grid-density="6"] .nv-product-card .nv-prod-thumb-wrap,
+#productList[data-grid-density="6"] .nv-product-card .nv-prod-thumb-wrap {
+    min-height: 145px !important;
+    max-height: 190px !important;
+    padding: 8px !important;
+}
+
+#productGrid[data-grid-density="list"] > .nv-product-col,
+#productList[data-grid-density="list"] > .nv-product-col {
+    flex: 0 0 auto;
+    width: 100% !important;
+}
+#productGrid[data-grid-density="list"] .nv-product-card,
+#productList[data-grid-density="list"] .nv-product-card {
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 10px 16px !important;
+    gap: 16px !important;
+}
+#productGrid[data-grid-density="list"] .nv-product-card .nv-prod-thumb-wrap,
+#productList[data-grid-density="list"] .nv-product-card .nv-prod-thumb-wrap {
+    width: 185px !important;
+    min-width: 185px !important;
+    min-height: 138px !important;
+    max-height: 150px !important;
+}
+#productGrid[data-grid-density="list"] .nv-product-card img.nv-prod-thumb,
+#productList[data-grid-density="list"] .nv-product-card img.nv-prod-thumb {
+    border-radius: 10px !important;
+}
+
+@media (max-width: 991.98px) {
+    #productGrid[data-grid-density="3"],
+    #productList[data-grid-density="3"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 20px !important;
+    }
+    #productGrid[data-grid-density="4"] > .nv-product-col,
+    #productGrid[data-grid-density="5"] > .nv-product-col,
+    #productGrid[data-grid-density="6"] > .nv-product-col,
+    #productList[data-grid-density="4"] > .nv-product-col,
+    #productList[data-grid-density="5"] > .nv-product-col,
+    #productList[data-grid-density="6"] > .nv-product-col {
+        width: 50% !important;
+    }
+}
+@media (max-width: 575.98px) {
+    #productGrid[data-grid-density="3"],
+    #productList[data-grid-density="3"] {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+    #productGrid[data-grid-density="4"] > .nv-product-col,
+    #productGrid[data-grid-density="5"] > .nv-product-col,
+    #productGrid[data-grid-density="6"] > .nv-product-col,
+    #productList[data-grid-density="4"] > .nv-product-col,
+    #productList[data-grid-density="5"] > .nv-product-col,
+    #productList[data-grid-density="6"] > .nv-product-col {
+        width: 100% !important;
+    }
+    #productGrid[data-grid-density="list"] .nv-product-card,
+    #productList[data-grid-density="list"] .nv-product-card {
+        flex-direction: column !important;
+    }
+    #productGrid[data-grid-density="list"] .nv-product-card .nv-prod-thumb-wrap,
+    #productList[data-grid-density="list"] .nv-product-card .nv-prod-thumb-wrap {
+        width: 100% !important;
+    }
+}
+
+.nv-density-btn {
+    border: 1px solid var(--nv-border-col, #cbd5e1);
+    background: var(--nv-bg-surface, #ffffff);
+    color: var(--nv-text-main, #0f172a);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.16s ease;
+}
+
+.nv-density-btn.active,
+.nv-density-btn:hover {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   NÚT ĐIỂM DANH "🔥 + SỐ NGÀY" CẠNH CHUÔNG THÔNG BÁO, NÚT "☀️ / 🌙"
+   & MODAL ĐIỂM DANH NỀN ĐẶC 100% (SOLID LIGHT / DARK)
+   ========================================================================== */
+@keyframes nvxFlamePulse {
+    0%, 100% { transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.55)); }
+    50% { transform: scale(1.16) rotate(3deg); filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.9)); }
+}
+
+.nvx-streak-fire-btn {
+    background: #1e293b !important;
+    color: #fde047 !important;
+    border: 1.5px solid #f59e0b !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.22) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+}
+.nvx-streak-fire-btn.is-checked-in {
+    border-color: #10b981 !important;
+    color: #a7f3d0 !important;
+}
+.nvx-streak-fire-btn:hover {
+    transform: translateY(-1px);
+    background: #0f172a !important;
+    color: #fef08a !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4) !important;
+}
+.nvx-streak-fire-btn .nvx-fire-icon {
+    display: inline-block;
+    animation: nvxFlamePulse 1.6s ease-in-out infinite;
+}
+
+#quickThemeToggleBtn,
+.nvx-quick-theme-btn {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1.5px solid #38bdf8 !important;
+    min-width: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.18s ease, background-color 0.18s ease !important;
+}
+#quickThemeToggleBtn:hover,
+.nvx-quick-theme-btn:hover {
+    transform: translateY(-1px);
+    background: #0f172a !important;
+    border-color: #facc15 !important;
+}
+
+#nvxDailyCheckinGlobalModal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483000 !important;
+    background: rgba(15, 23, 42, 0.78) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+}
+#nvxDailyCheckinGlobalModal.d-none {
+    display: none !important;
+}
+
+/* Chế độ Sáng (Light Mode): Nền đặc 100% #ffffff và #f1f5f9 / #fef3c7 */
+.nvx-checkin-modal-dialog,
+.nvx-checkin-solid-surface {
+    max-width: 880px;
+    width: 100%;
+    opacity: 1 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.42) !important;
+}
+.nvx-checkin-modal-header {
+    border-color: #cbd5e1 !important;
+}
+.nvx-checkin-subtext {
+    color: #475569 !important;
+}
+.nvx-checkin-day-card {
+    opacity: 1 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.nvx-checkin-day-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.12) !important;
+}
+.nvx-checkin-day-card.nvx-checkin-day-today {
+    opacity: 1 !important;
+    background: #fef3c7 !important;
+    color: #0f172a !important;
+    border: 2px solid #f59e0b !important;
+}
+.nvx-checkin-day-card.nvx-checkin-day-claimed {
+    opacity: 1 !important;
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 2px solid #059669 !important;
+}
+
+/* Chế độ Tối (Dark Mode): Nền đặc 100% #0f172a và #1e293b */
+html[data-theme="dark"] .nvx-checkin-modal-dialog,
+html[data-theme="dark"] .nvx-checkin-solid-surface {
+    opacity: 1 !important;
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 1.5px solid #059669 !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75) !important;
+}
+html[data-theme="dark"] .nvx-checkin-modal-header {
+    border-color: #334155 !important;
+}
+html[data-theme="dark"] .nvx-checkin-subtext {
+    color: #cbd5e1 !important;
+}
+html[data-theme="dark"] .nvx-checkin-day-card {
+    opacity: 1 !important;
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 1px solid #334155 !important;
+}
+html[data-theme="dark"] .nvx-checkin-day-card.nvx-checkin-day-today {
+    opacity: 1 !important;
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 2px solid #f59e0b !important;
+}
+html[data-theme="dark"] .nvx-checkin-day-card.nvx-checkin-day-claimed {
+    opacity: 1 !important;
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border: 2px solid #10b981 !important;
+}
+
+.nvx-checkin-close-circle-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35) !important;
+    cursor: pointer !important;
+    transition: transform 0.16s ease, background-color 0.16s ease !important;
+}
+.nvx-checkin-close-circle-btn:hover {
+    background: #dc2626 !important;
+    transform: scale(1.08);
+}
+
+/* Hiệu ứng Phép Thuật Mèo AI (Spell-Casting Sparkles) */
+@keyframes nvCatSparkleFloat {
+    0% { transform: scale(0.4) translateY(0); opacity: 1; }
+    100% { transform: scale(1.35) translateY(-28px); opacity: 0; }
+}
+
+.nv-cat-magic-sparkle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100000;
+    font-size: 18px;
+    animation: nvCatSparkleFloat 0.85s ease-out forwards;
+}
+
+@keyframes nvCartBouncePop {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.32) rotate(-6deg); box-shadow: 0 0 22px rgba(16, 185, 129, 0.9); }
+    70% { transform: scale(0.92) rotate(4deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+
+.nv-cart-bounce-active {
+    animation: nvCartBouncePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* Ẩn triệt để khung Mèo phụ góc trái để gom 100% về Trạm Hợp Nhất 3 Tab góc phải */
+#nividaCatControlDock,
+#nividaCatOpenBtn,
+.store-chat-fab,
+.store-chat-drawer {
+    display: none !important;
+}
+
+/* Bong bóng thoại 1 dòng gọn gàng cách đỉnh đầu Mèo 14px, không bao giờ che mặt Mèo */
+#nividaCatSpeechBubble,
+.nivida-cat-bubble {
+    white-space: nowrap !important;
+    max-width: 340px !important;
+    min-width: auto !important;
+    padding: 6px 14px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    border-radius: 999px !important;
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 2px solid #10b981 !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55) !important;
+    pointer-events: none !important;
+}
+
+/* Nhóm 3 Segmented Sub-Tabs trong Tab 🐱 Trợ Lý Mèo */
+.nv-cat-group-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    margin-bottom: 8px;
+}
+
+.nv-cat-group-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 0.71rem;
+    font-weight: 700;
+    padding: 5px 6px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.nv-cat-group-btn.active,
+.nv-cat-group-btn:hover {
+    background: #10b981 !important;
+    color: #052e16 !important;
+}
+
+
+

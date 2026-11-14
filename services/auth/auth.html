@@ -3,34 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập &amp; Đăng Ký Thành Viên Mua Sắm - Nivida</title>
+    <title>Đăng Nhập &amp; Đăng Ký Thành Viên Mua Sắm - Nexora Mall</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/core/global.css">
     <link rel="stylesheet" href="/services/auth/auth.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="auth-panoramic-page">
-    <!-- CANVAS ĐẠI THỤ ANH ĐÀO & VŨ TRỤ TOÀN CẢNH 100% MÀN HÌNH -->
+    <!-- CANVAS KIẾN TRÚC SÁNG RÕ & TOÀN CẢNH 100% MÀN HÌNH -->
     <canvas id="authSceneryCanvas"></canvas>
 
     <div id="header-placeholder"></div>
 
     <main class="container auth-ecommerce-section">
         <div class="row g-4 align-items-center w-100 m-0">
-            <!-- KHU VỰC TRÁI (7 CỘT TRÊN PC): KHÔNG GIAN HIỂN THỊ ĐẠI THỤ ANH ĐÀO SỐNG ĐỘNG -->
+            <!-- KHU VỰC TRÁI (7 CỘT TRÊN PC): BANNER MINH HỌA VECTOR HIỆN ĐẠI NEXORA MALL -->
             <div class="col-lg-7 order-2 order-lg-1 d-flex">
                 <div class="auth-art-showcase w-100">
                     <div class="auth-art-overlay-top">
                         <div class="auth-hero-badge-pill mb-2">
-                            <span>🌸 SÀN THƯƠNG MẠI ĐIỆN TỬ CHÍNH HÃNG NIVIDA</span>
+                            <span>🛡️ NEXORA MALL — SÀN THƯƠNG MẠI CÔNG NGHỆ &amp; ĐỜI SỐNG</span>
                         </div>
-                        <h2 class="fw-bold text-white mb-2" style="text-shadow: 0 4px 18px rgba(0,0,0,0.92);">Không Gian Mua Sắm Minh Bạch</h2>
-                        <p class="small text-light opacity-90 mb-0" style="max-width: 490px; line-height: 1.55; text-shadow: 0 2px 10px rgba(0,0,0,0.92);">
-                            Trải nghiệm mua sắm công nghệ &amp; đời sống bảo lãnh 100% quyền lợi bởi Quỹ Đảm Bảo Escrow, miễn phí giao nhanh và ưu đãi thành viên mỗi ngày.
+                        <h2 class="fw-bold auth-showcase-heading mb-2">Không Gian Mua Sắm Minh Bạch &amp; Bảo Lãnh Escrow</h2>
+                        <p class="small auth-showcase-subtext mb-0" style="max-width: 520px; line-height: 1.55;">
+                            Trải nghiệm mua sắm công nghệ &amp; đời sống chuẩn quốc tế, bảo lãnh 100% dòng tiền bởi Quỹ Đảm Bảo Nexora Escrow, giao hỏa tốc 2H qua NX Express và trợ lý Mèo AI 24/7.
                         </p>
                     </div>
 
-                    <div class="auth-art-overlay-bottom mt-4">
+                    <!-- BANNER VECTOR MINH HỌA HIỆN ĐẠI SÁNG RÕ (ADAPTIVE LIGHT/DARK) -->
+                    <div class="auth-vector-illustration-card">
+                        <svg viewBox="0 0 640 210" width="100%" height="195" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nexora Mall Ecosystem Showcase">
+                            <defs>
+                                <linearGradient id="nxShowBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#ecfdf5" stop-opacity="0.9"/>
+                                    <stop offset="50%" stop-color="#eff6ff" stop-opacity="0.9"/>
+                                    <stop offset="100%" stop-color="#f0fdf4" stop-opacity="0.9"/>
+                                </linearGradient>
+                                <linearGradient id="nxAccentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" stop-color="#059669"/>
+                                    <stop offset="100%" stop-color="#1e3a8a"/>
+                                </linearGradient>
+                            </defs>
+                            <rect x="4" y="4" width="632" height="202" rx="16" fill="url(#nxShowBg)" stroke="#cbd5e1" stroke-width="1.5"/>
+                            <!-- Grid lines -->
+                            <line x1="20" y1="55" x2="620" y2="55" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+                            <line x1="20" y1="105" x2="620" y2="105" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+                            <line x1="20" y1="155" x2="620" y2="155" stroke="#e2e8f0" stroke-dasharray="4 4"/>
+
+                            <!-- Module 1: Hardware & Price Tracker -->
+                            <g transform="translate(26, 26)">
+                                <rect x="0" y="0" width="175" height="156" rx="14" fill="#ffffff" stroke="#10b981" stroke-width="1.8"/>
+                                <rect x="14" y="14" width="147" height="26" rx="6" fill="#ecfdf5"/>
+                                <text x="87" y="31" text-anchor="middle" fill="#047857" font-family="sans-serif" font-size="11" font-weight="700">📈 GIÁ THỊ TRƯỜNG VN</text>
+                                <polyline points="20,115 52,98 85,104 118,74 154,60" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="154" cy="60" r="5" fill="#059669"/>
+                                <text x="20" y="140" fill="#0f172a" font-family="sans-serif" font-size="11" font-weight="700">Chống tăng giá ảo 100%</text>
+                            </g>
+
+                            <!-- Module 2: Nexora Pay Escrow Shield -->
+                            <g transform="translate(222, 18)">
+                                <rect x="0" y="0" width="196" height="172" rx="16" fill="#ffffff" stroke="#1e3a8a" stroke-width="2"/>
+                                <circle cx="98" cy="64" r="34" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+                                <path d="M98 38 L120 48 V66 C120 82 110 92 98 97 C86 92 76 82 76 66 V48 Z" fill="url(#nxAccentGrad)"/>
+                                <polyline points="89,67 96,74 109,59" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                                <text x="98" y="122" text-anchor="middle" fill="#0f172a" font-family="sans-serif" font-size="13" font-weight="800">NEXORA PAY ESCROW</text>
+                                <text x="98" y="141" text-anchor="middle" fill="#059669" font-family="sans-serif" font-size="10.5" font-weight="700">Bảo Lãnh Thanh Toán 2 Bước</text>
+                                <rect x="34" y="149" width="128" height="14" rx="7" fill="#ecfdf5"/>
+                                <text x="98" y="159" text-anchor="middle" fill="#047857" font-family="monospace" font-size="9.5" font-weight="700">SHA-256 VERIFIED</text>
+                            </g>
+
+                            <!-- Module 3: NX Express 2H & AI Cat -->
+                            <g transform="translate(438, 26)">
+                                <rect x="0" y="0" width="175" height="156" rx="14" fill="#ffffff" stroke="#f59e0b" stroke-width="1.8"/>
+                                <rect x="14" y="14" width="147" height="26" rx="6" fill="#fffbeb"/>
+                                <text x="87" y="31" text-anchor="middle" fill="#b45309" font-family="sans-serif" font-size="11" font-weight="700">🚚 NX EXPRESS 2H</text>
+                                <rect x="24" y="54" width="127" height="44" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+                                <text x="87" y="74" text-anchor="middle" fill="#0f172a" font-family="sans-serif" font-size="11.5" font-weight="700">🐾 Trợ Lý Mèo AI 24/7</text>
+                                <text x="87" y="90" text-anchor="middle" fill="#059669" font-family="sans-serif" font-size="10" font-weight="600">Tìm kiếm &amp; Săn Deal Tự Động</text>
+                                <text x="87" y="138" text-anchor="middle" fill="#0f172a" font-family="sans-serif" font-size="11" font-weight="700">Đền 50K nếu giao trễ</text>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <div class="auth-art-overlay-bottom mt-2">
                         <div class="row g-3">
                             <div class="col-md-4 col-sm-6">
                                 <div class="auth-art-glass-pill h-100">
@@ -67,9 +122,12 @@
                                 <span class="badge bg-nvidia mb-1" style="font-size: 10.5px;">DÀNH CHO KHÁCH MUA HÀNG</span>
                                 <h4 class="fw-bold m-0 fs-5" id="authHeaderTitle">Đăng Nhập Tài Khoản</h4>
                             </div>
-                            <div class="auth-segmented-tabs" role="group">
-                                <button type="button" id="authTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchAuthTab('login')">Đăng nhập</button>
-                                <button type="button" id="authTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchAuthTab('register')">Đăng ký</button>
+                            <div class="d-flex align-items-center gap-2">
+                                <button type="button" class="btn btn-sm rounded-pill px-2 py-1 fw-bold nvx-quick-theme-btn" title="Chuyển đổi nhanh Nền Sáng / Nền Tối gốc" onclick="toggleTheme()">🌙</button>
+                                <div class="auth-segmented-tabs" role="group">
+                                    <button type="button" id="authTabBtn_login" class="btn btn-nvidia fw-bold" onclick="switchAuthTab('login')">Đăng nhập</button>
+                                    <button type="button" id="authTabBtn_register" class="btn btn-outline-secondary fw-bold text-light" onclick="switchAuthTab('register')">Đăng ký</button>
+                                </div>
                             </div>
                         </div>
 
@@ -180,14 +238,14 @@
                                             <div class="form-check m-0 d-flex align-items-start gap-2">
                                                 <input class="form-check-input flex-shrink-0" type="checkbox" id="regAgreeTermsCheck" onchange="onToggleRegisterTermsCheckbox(this)" required>
                                                 <label class="form-check-label small text-light" for="regAgreeTermsCheck" style="font-size: 11.5px; line-height: 1.42; cursor: pointer;">
-                                                    Tôi xác nhận đã đọc và đồng ý tuân thủ <a href="javascript:void(0)" class="text-nvidia fw-bold text-decoration-none" onclick="openQuickTermsPreviewModal()">Điều khoản Pháp lý &amp; 10 SOP</a> cùng <a href="/services/legal/terms.html" target="_blank" class="text-info fw-bold text-decoration-none">Chính sách Bảo vệ Người mua ↗</a> của sàn Nivida. *
+                                                    Tôi xác nhận đã đọc và đồng ý tuân thủ <a href="javascript:void(0)" class="text-nvidia fw-bold text-decoration-none" onclick="openQuickTermsPreviewModal()">Điều khoản Pháp lý &amp; 10 SOP</a> cùng <a href="/services/legal/terms.html" target="_blank" class="text-info fw-bold text-decoration-none">Chính sách Bảo vệ Người mua ↗</a> của sàn Nexora Mall. *
                                                 </label>
                                             </div>
 
                                             <!-- Ngăn kéo xem nhanh điều khoản ngay bên trong Form -->
                                             <div id="inlineTermsAccordionBox" class="auth-inline-terms-drawer d-none">
-                                                <div class="mb-1"><strong class="text-nvidia">• Điều 1 (Bảo lãnh Escrow):</strong> Tiền thanh toán được giữ an toàn tại Quỹ Đảm Bảo, chỉ giải ngân cho Shop khi bạn xác nhận đã nhận hàng đúng mô tả.</div>
-                                                <div class="mb-1"><strong class="text-warning">• Điều 2 (Cam kết SLA NVX 2H):</strong> Tự động tặng mã <code>HOATOC50K</code> (Giảm 50.000đ) vào Ví nếu đơn hàng giao trễ cam kết.</div>
+                                                <div class="mb-1"><strong class="text-nvidia">• Điều 1 (Bảo lãnh Escrow):</strong> Tiền thanh toán được giữ an toàn tại Quỹ Đảm Bảo Nexora Pay, chỉ giải ngân cho Shop khi bạn xác nhận đã nhận hàng đúng mô tả.</div>
+                                                <div class="mb-1"><strong class="text-warning">• Điều 2 (Cam kết SLA NX Express 2H):</strong> Tự động tặng mã <code>HOATOC50K</code> (Giảm 50.000đ) vào Ví nếu đơn hàng giao trễ cam kết.</div>
                                                 <div class="mb-1"><strong class="text-info">• Điều 3 (Minh bạch 6 tiêu chí):</strong> Lưu vết lịch sử giá &amp; bảo hành điện tử bất biến, chống tăng giá ảo 100%.</div>
                                                 <div class="text-end mt-1">
                                                     <button type="button" class="btn btn-nvidia btn-sm py-0 px-2 fw-bold" style="font-size:10.5px;" onclick="acceptTermsFromInlineDrawer()">☑️ Tôi Đồng Ý Các Điều Khoản Trên</button>
@@ -267,13 +325,13 @@
             <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-3">
                 <div>
                     <span class="badge bg-nvidia text-dark fw-bold">TÓM TẮT QUYỀN LỢI &amp; ĐIỀU KHOẢN THÀNH VIÊN</span>
-                    <h5 class="fw-bold m-0 mt-1 text-white">📜 Cam Kết Bảo Vệ Người Mua &amp; Quy Chuẩn Sàn Nivida</h5>
+                    <h5 class="fw-bold m-0 mt-1 text-white">📜 Cam Kết Bảo Vệ Người Mua &amp; Quy Chuẩn Sàn Nexora Mall</h5>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-light" onclick="document.getElementById('quickTermsPreviewModal').classList.add('d-none')">✕</button>
             </div>
             <div class="small d-flex flex-column gap-2 mb-3" style="color: #cbd5e1; line-height: 1.55;">
                 <div class="p-2 rounded border border-secondary" style="background: rgba(30,41,59,0.5);">
-                    <strong class="text-nvidia">1. Bảo vệ dòng tiền 100% qua Quỹ Nvidia Escrow (DIEU-01):</strong>
+                    <strong class="text-nvidia">1. Bảo vệ dòng tiền 100% qua Quỹ Nexora Escrow (DIEU-01):</strong>
                     <div>Khoản thanh toán của bạn được phong tỏa an toàn và chỉ giải ngân cho Gian hàng sau khi bạn xác nhận đã nhận hàng nguyên vẹn.</div>
                 </div>
                 <div class="p-2 rounded border border-secondary" style="background: rgba(30,41,59,0.5);">

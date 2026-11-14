@@ -730,6 +730,41 @@ function initLeftArtisticSceneryCanvas() {
         const w = canvas.width;
         const h = canvas.height;
         const horizonY = h * 0.77;
+        const isLightMode = document.documentElement.getAttribute('data-theme') !== 'dark';
+
+        if (isLightMode) {
+            const lightGrad = ctx.createLinearGradient(0, 0, w, horizonY);
+            lightGrad.addColorStop(0, '#f8fafc');
+            lightGrad.addColorStop(0.55, '#ecfdf5');
+            lightGrad.addColorStop(1, '#e0f2fe');
+            ctx.fillStyle = lightGrad;
+            ctx.fillRect(0, 0, w, horizonY);
+
+            const farPeaksLight = [
+                [0.0, 0.82], [0.09, 0.58], [0.18, 0.74], [0.29, 0.50], [0.41, 0.72],
+                [0.54, 0.54], [0.67, 0.75], [0.81, 0.56], [0.92, 0.72], [1.0, 0.62]
+            ];
+            const nearPeaksLight = [
+                [0.0, 0.88], [0.06, 0.74], [0.15, 0.85], [0.24, 0.66], [0.35, 0.84],
+                [0.47, 0.68], [0.59, 0.86], [0.73, 0.69], [0.86, 0.84], [1.0, 0.74]
+            ];
+            draw3DFacetedMountains(w, horizonY, farPeaksLight, '#cbd5e1', '#94a3b8', 'rgba(5, 150, 105, 0.45)', true);
+            draw3DFacetedMountains(w, horizonY, nearPeaksLight, '#a7f3d0', '#6ee7b7', 'rgba(16, 185, 129, 0.55)', false);
+
+            const lightWater = ctx.createLinearGradient(0, horizonY, 0, h);
+            lightWater.addColorStop(0, '#dbeafe');
+            lightWater.addColorStop(1, '#f1f5f9');
+            ctx.fillStyle = lightWater;
+            ctx.fillRect(0, horizonY, w, h - horizonY);
+
+            if (__scenerySceneMode === 'bamboo_zen') {
+                renderSmoothBambooZenScene(w, h, horizonY, tick);
+            } else {
+                renderSmoothAncientSakuraScene(w, h, horizonY, tick);
+            }
+            __sceneryAnimId = requestAnimationFrame(renderFullPanorama);
+            return;
+        }
 
         /* Nhánh 1: Hố Đen Vũ Trụ Thuần Khiết */
         if (__scenerySceneMode === 'galaxy_blackhole') {
@@ -842,24 +877,7 @@ function isCurrentOriginAllowedForGoogleGsi() {
     return false;
 }
 
-function isCurrentOriginAllowedForGoogleGsi() {
-    const host = (window.location.hostname || '').toLowerCase();
-    /* Google OAuth không cho phép IP trần (127.0.0.1 / 180.93.x.x); chỉ bật GSI khi chạy trên tên miền hoặc localhost */
-    if (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud') {
-        return true;
-    }
-    return false;
-}
-
 let __configuredFacebookAppId = '';
-
-function isCurrentOriginAllowedForGoogleGsi() {
-    const host = (window.location.hostname || '').toLowerCase();
-    if (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud') {
-        return true;
-    }
-    return false;
-}
 
 function loadFacebookSdkIfConfigured(fbAppId) {
     if (!fbAppId || window.FB || document.getElementById('facebook-jssdk')) return;
@@ -877,14 +895,6 @@ function loadFacebookSdkIfConfigured(fbAppId) {
     js.async = true;
     js.defer = true;
     document.head.appendChild(js);
-}
-
-function isCurrentOriginAllowedForGoogleGsi() {
-    const host = (window.location.hostname || '').toLowerCase();
-    if (host === 'localhost' || host.endsWith('.castle-tech.cloud') || host === 'castle-tech.cloud') {
-        return true;
-    }
-    return false;
 }
 
 async function initGoogleOAuthClient() {

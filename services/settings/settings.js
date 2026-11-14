@@ -175,4 +175,60 @@ async function submitSettingsPasswordChange(e) {
     } catch (err) {}
 }
 
-document.addEventListener('DOMContentLoaded', loadUserSecurityProfileInSettings);
+function initSettings12ThemesStudio() {
+    const gridBox = document.getElementById('settings12ThemesGridBox');
+    const skinSel = document.getElementById('settingsThemeSkinSelector');
+    const densitySel = document.getElementById('settingsGridDensitySelect');
+    const fxSwitch = document.getElementById('settingsBgFxSwitch');
+
+    const curSkin = document.documentElement.getAttribute('data-nv-skin') || localStorage.getItem('nvx_visual_skin') || 'executive_light';
+    const curDensity = localStorage.getItem('nvx_grid_density') || '4';
+    const fxEnabled = localStorage.getItem('nvx_bg_fx_enabled') !== '0';
+
+    if (skinSel) skinSel.value = curSkin;
+    if (densitySel) densitySel.value = curDensity;
+    if (fxSwitch) fxSwitch.checked = fxEnabled;
+
+    if (!gridBox) return;
+    const themes = Array.isArray(window.NV_SEASONAL_THEMES) ? window.NV_SEASONAL_THEMES : [
+        { key: 'executive_light', label: '⚪ 1. Executive Pearl Light', dark: false },
+        { key: 'swiss_finance', label: '🏛️ 2. Swiss Financial Banking', dark: false },
+        { key: 'apple_cupertino', label: '🍎 3. Minimalist Cupertino Silver', dark: false },
+        { key: 'muji_warm_paper', label: '📜 4. Warm Ivory Paper', dark: false },
+        { key: 'nordic_snow', label: '❄️ 5. Nordic Ice Daylight', dark: false },
+        { key: 'oxford_academic', label: '🎓 6. Oxford Scholarly Classic', dark: false },
+        { key: 'bloomberg_terminal', label: '📈 7. Wall Street Night Terminal', dark: true },
+        { key: 'obsidian_luxury', label: '👑 8. Obsidian Gold VIP', dark: true },
+        { key: 'emerald_tech', label: '🟢 9. Nexora Emerald Matrix', dark: true },
+        { key: 'ocean_breeze', label: '🌊 10. Deep Ocean Breeze', dark: true },
+        { key: 'kyoto_autumn', label: '🍁 11. Kyoto Autumn Leaves', dark: true },
+        { key: 'tet_festival', label: '🧧 12. Lễ Hội Tết Sum Vầy', dark: true }
+    ];
+
+    gridBox.innerHTML = themes.map(t => {
+        const isActive = t.key === curSkin;
+        const modeBadge = t.dark
+            ? '<span class="badge bg-dark border border-secondary" style="font-size:10px;">🌙 Nền Tối</span>'
+            : '<span class="badge bg-light text-dark border" style="font-size:10px;">☀️ Nền Sáng</span>';
+        return `
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="nv-adaptive-card p-2 h-100 d-flex flex-column justify-content-between ${isActive ? 'border-success' : ''}"
+                     data-theme-card-key="${t.key}"
+                     style="cursor:pointer;${isActive ? 'box-shadow:0 0 0 2px #059669;' : ''}"
+                     onclick="applyNvidiaVisualSkin('${t.key}')">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        ${modeBadge}
+                        <small class="text-nvidia fw-bold" style="font-size:10px;">${isActive ? '✓ Đang dùng' : 'Chọn'}</small>
+                    </div>
+                    <div class="fw-bold small">${t.label}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+window.initSettings12ThemesStudio = initSettings12ThemesStudio;
+
+document.addEventListener('DOMContentLoaded', () => {
+    initSettings12ThemesStudio();
+    loadUserSecurityProfileInSettings();
+});

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ngân Hàng Số NVIDIA PAY — Camera Quét QR Thật, Kiểm Tra Hóa Đơn &amp; Chống Trừ Tiền Lặp</title>
+    <title>Ngân Hàng Số NEXORA PAY — Camera Quét QR Thật, Kiểm Tra Hóa Đơn &amp; Chống Trừ Tiền Lặp</title>
     <link href="/assets/vendor/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/core/global.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -52,15 +52,47 @@
             100% { top: 12%; }
         }
     </style>
+    <link rel="stylesheet" href="/services/mobile/mobile-app.css">
 </head>
 <body>
     <div id="header-placeholder"></div>
 
     <main class="container py-4">
+
+        <div class="p-3 rounded-4 mb-4 shadow-sm" style="background: var(--nx-primary-grad, linear-gradient(135deg, #a50064 0%, #d82d8b 55%, #0f172a 100%)); color: #fff; border: 2px solid rgba(255,255,255,0.25);">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <span class="badge bg-dark border border-light px-3 py-1" style="cursor:pointer;" onclick="promptSwitchBankServerIp()">
+                    🟢 Đang kết nối: nexora.castle-tech.cloud (Bấm để đổi IP LAN)
+                </span>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <select id="bankThemeQuickSelect" class="form-select form-select-sm fw-bold" style="width:auto;border-radius:999px;" onchange="if(window.applyNexoraBankThemeDirect)window.applyNexoraBankThemeDirect(this.value)">
+                        <option value="executive_pearl_light">🎨 1. Sáng Thanh Lịch (Mặc định)</option>
+                        <option value="momo_lotus_pink">🎨 2. Hồng Sen MoMo</option>
+                        <option value="swiss_banking_slate">🎨 3. Tài Chính Thụy Sĩ</option>
+                        <option value="emerald_fintech_light">🎨 4. Lục Bảo Nexora</option>
+                        <option value="obsidian_gold_dark">🎨 5. Đen Thượng Lưu</option>
+                        <option value="bloomberg_dark">🎨 6. Chứng Khoán Bloomberg</option>
+                    </select>
+                    <a href="/services/mobile/mobile-app.html" class="btn btn-light btn-sm fw-bold text-dark rounded-pill">📱 Mở Siêu App Mobile</a>
+                    <a href="/services/mobile/mobile-app.html?tab=settings" class="btn btn-warning btn-sm fw-bold text-dark rounded-pill">⚙️ Cài Đặt &amp; Đổi Mật Khẩu OTP</a>
+                </div>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="/assets/icons/nexora_mobile_crest.svg" alt="NX" style="width:48px;height:48px;object-fit:contain !important;padding:4px !important;background:#0f172a;border-radius:14px;">
+                    <div>
+                        <span class="badge bg-warning text-dark fw-bold mb-1">MOMO SUPER-APP WALLET &amp; 6-THEME LIVE SYNC</span>
+                        <h5 class="fw-bold m-0">📱 Cổng Ví Điện Tử Siêu Ứng Dụng Nexora Pay &amp; Quét QR 2 Bước</h5>
+                        <small class="opacity-75">Đồng bộ thời gian thực với App Android Nexora Mobile • Bảo lãnh Escrow &amp; Chuyển khoản hộ 1 chạm</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
             <div>
                 <span class="badge bg-nvidia mb-1">REAL CAMERA QR SCANNER &amp; ATOMIC IDEMPOTENCY GUARD V8.5</span>
-                <h3 class="fw-bold m-0">🏦 Ngân Hàng Số NVIDIA PAY — Quét QR Nhận Diện Hóa Đơn &amp; Bảo Vệ Số Dư</h3>
+                <h3 class="fw-bold m-0">🏦 Ngân Hàng Số NEXORA PAY — Quét QR Nhận Diện Hóa Đơn &amp; Bảo Vệ Số Dư</h3>
                 <small class="text-muted">Chỉ mở phiếu thanh toán khi giải mã đúng mã QR hóa đơn thật • Khóa nguyên tử chống bấm lặp trừ tiền nhiều lần</small>
             </div>
             <div class="d-flex gap-2">
@@ -115,7 +147,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small fw-bold">Ghi chú nguồn nạp</label>
-                            <input type="text" id="bankTopupNoteInput" class="form-control" value="Nạp tiền ngân hàng NVIDIA PAY">
+                            <input type="text" id="bankTopupNoteInput" class="form-control" value="Nạp tiền ngân hàng NEXORA PAY">
                         </div>
                         <div class="col-md-3">
                             <button type="submit" class="btn btn-nvidia w-100 fw-bold py-2">⚡ Nạp Tiền</button>
@@ -594,7 +626,7 @@
                             <div>• Tổng số tiền đã thanh toán: <strong class="text-warning fs-6">${billAmt.toLocaleString('vi-VN')} ₫</strong></div>
                             ${behalfTag}
                             ${itemsHtml}
-                            <div class="mt-2"><a href="${info.next_step_url || '/services/order_tracking/tracking.html'}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Mở Trang Theo Dõi Vận Đơn NVX Express (${info.tracking_code || 'NVX'}) ➔</a></div>
+                            <div class="mt-2"><a href="${info.next_step_url || '/services/order_tracking/tracking.html'}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Mở Trang Theo Dõi Vận Đơn NX Express (${info.tracking_code || 'NVX'}) ➔</a></div>
                         `;
                     }
                     if (submitBtn) {
@@ -732,7 +764,7 @@
                             <div>✅ ĐÃ XÁC NHẬN CHUYỂN KHOẢN &amp; KHÓA QUỸ BẢO LÃNH ESCROW (ĐƠN #NVD-${oid})</div>
                             <div>• Mã giao dịch: <code>${data.tx_code}</code> • Số tiền: <strong>-${Number(data.paid_amount ?? amount).toLocaleString('vi-VN')} ₫</strong></div>
                             ${behalfHtml}
-                            <div class="mt-2"><a href="${trackUrl}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Xem Hành Trình Vận Đơn NVX Express #NVD-${oid} (${tCode}) Ngay ➔</a></div>
+                            <div class="mt-2"><a href="${trackUrl}" class="btn btn-nvidia btn-sm fw-bold w-100">🚚 Xem Hành Trình Vận Đơn NX Express #NVD-${oid} (${tCode}) Ngay ➔</a></div>
                         `;
                     }
 
@@ -806,7 +838,7 @@
             const uid = getActiveUserId();
             if (!uid) return;
             const amount = Number(document.getElementById('bankTopupAmountInput')?.value || 0);
-            const note = document.getElementById('bankTopupNoteInput')?.value || 'Nạp tiền tự do NVIDIA PAY';
+            const note = document.getElementById('bankTopupNoteInput')?.value || 'Nạp tiền tự do NEXORA PAY';
             try {
                 const res = await fetch('/api/settings/bank-wallet/topup', {
                     method: 'POST',
@@ -859,5 +891,39 @@
             }
         });
     </script>
+
+<script>
+(function(){
+    window.promptSwitchBankServerIp = function() {
+        var u = prompt('Nhập địa chỉ Server Cloud hoặc IP LAN:', localStorage.getItem('nexora_api_base') || window.location.origin);
+        if (u) {
+            localStorage.setItem('nexora_api_base', u);
+            location.reload();
+        }
+    };
+    window.applyNexoraBankThemeDirect = async function(themeId) {
+        const chosen = themeId || 'executive_pearl_light';
+        localStorage.setItem('nexora_active_theme', chosen);
+        document.documentElement.setAttribute('data-nx-theme', chosen);
+        document.body.setAttribute('data-nx-theme', chosen);
+        const sel = document.getElementById('bankThemeQuickSelect');
+        if (sel) sel.value = chosen;
+        try {
+            await fetch('/api/mobile/theme-sync', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({theme_id: chosen, source: 'bank_html'})
+            });
+        } catch (e) {}
+        if (typeof notifyToast === 'function') notifyToast('🎨 Đã đồng bộ giao diện: ' + chosen, 'info');
+    };
+    const savedTheme = localStorage.getItem('nexora_active_theme') || 'executive_pearl_light';
+    document.documentElement.setAttribute('data-nx-theme', savedTheme);
+    document.addEventListener('DOMContentLoaded', function() {
+        const sel = document.getElementById('bankThemeQuickSelect');
+        if (sel) sel.value = savedTheme;
+    });
+})();
+</script>
 </body>
 </html>
