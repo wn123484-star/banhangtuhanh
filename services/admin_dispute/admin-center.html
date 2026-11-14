@@ -11,6 +11,7 @@
 <body>
     <div id="header-placeholder"></div>
     <main class="container-fluid px-3 px-lg-4 py-3">
+        <!-- [FEAT-ADM-010] Trung Tâm Admin, Tòa Án Trọng Tài AI, Chấm Điểm Rủi Ro Gian Lận (0-100) & Đội Quân 9 Bot QA | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/admin-dispute/fraud-risk-radar / disputes / admin-center.html | [LOCKED-DESIGN] -->
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
             <div>
                 <h4 class="fw-bold text-nvidia m-0">⚖️ TRUNG TÂM QUẢN TRỊ ADMIN, DỰ BÁO XU HƯỚNG VOUCHER / TRỒNG CÂY &amp; TRỌNG TÀI AI</h4>
@@ -83,6 +84,61 @@
                 </div>
                 <div class="row g-3" id="adminTrendForecastContainer">
                     <div class="col-12 text-muted small">Đang phân tích dữ liệu nhận Voucher và trồng Cây Voucher...</div>
+                </div>
+            </div>
+
+            <!-- [FEAT-ADM-010] THUẬT TOÁN 3: RADAR CHẤM ĐIỂM RỦI RO GIAN LẬN THỜI GIAN THỰC (0-100) & BẢNG ĐIỀU HÀNH TRỰC TIẾP -->
+            <div class="bg-surface border border-2 border-danger p-3 rounded-3 shadow-sm mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 border-bottom pb-2">
+                    <div>
+                        <span class="badge bg-danger me-1">🛡️ REAL-TIME FRAUD RISK RADAR (0-100) &amp; MISSION CONTROL</span>
+                        <strong class="fs-6">🚨 Hệ Thống Chấm Điểm Rủi Ro Gian Lận Thời Gian Thực &amp; Công Cụ Điều Hành Trực Tiếp</strong>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-outline-danger btn-sm fw-bold py-0" onclick="if(typeof loadAdminFraudRiskRadar==='function') loadAdminFraudRiskRadar();">🔄 Quét Rủi Ro Thời Gian Thực</button>
+                        <button type="button" class="btn btn-outline-info btn-sm fw-bold py-0" onclick="if(typeof executeAdminMissionControlAction==='function') executeAdminMissionControlAction('sqlite_integrity');">🔍 Kiểm Tra Toàn Vẹn SQLite</button>
+                    </div>
+                </div>
+                <div class="row g-3 align-items-center mb-3">
+                    <div class="col-lg-5">
+                        <div class="p-3 rounded-3 border" style="background: rgba(239, 68, 68, 0.06);">
+                            <div class="fw-bold small text-warning mb-2">⚡ Công Cụ Điều Hành Trực Tiếp (Admin Mission Control):</div>
+                            <div class="row g-2">
+                                <div class="col-md-5">
+                                    <input type="text" id="mcTargetUsername" class="form-control form-control-sm font-monospace" value="khach_hang_vip" placeholder="Username / ID...">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" id="mcGrantAmount" class="form-control form-control-sm fw-bold" value="5000000" step="500000" placeholder="Số tiền Ví...">
+                                </div>
+                                <div class="col-md-3 d-grid">
+                                    <button type="button" class="btn btn-nvidia btn-sm fw-bold" onclick="if(typeof executeAdminMissionControlAction==='function') executeAdminMissionControlAction('grant_wallet');">+ Cấp Tiền</button>
+                                </div>
+                                <div class="col-12 d-flex gap-2 mt-1">
+                                    <button type="button" class="btn btn-danger btn-sm flex-fill fw-bold py-1" onclick="if(typeof executeAdminMissionControlAction==='function') executeAdminMissionControlAction('lock_user');">🔒 Khóa Tạm Thời User</button>
+                                    <button type="button" class="btn btn-success btn-sm flex-fill fw-bold py-1" onclick="if(typeof executeAdminMissionControlAction==='function') executeAdminMissionControlAction('unlock_user');">🔓 Mở Khóa User</button>
+                                </div>
+                            </div>
+                            <div id="mcActionStatusText" class="small text-info fw-bold mt-2"></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="table-responsive" style="max-height: 195px; overflow-y: auto;">
+                            <table class="table table-sm table-bordered small align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Đối Tượng / Giao Dịch</th>
+                                        <th>Tín Hiệu Bất Thường</th>
+                                        <th>Điểm Rủi Ro (0-100)</th>
+                                        <th>Mức Cảnh Báo</th>
+                                        <th>Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="adminFraudRiskRadarTableBody">
+                                    <tr><td colspan="5" class="text-center text-muted py-3">Đang tính toán điểm rủi ro gian lận thời gian thực (0-100)...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -1,3 +1,4 @@
+/* [FEAT-AUC-007] Sàn Đấu Giá Kép Thời Gian Thực (Ký Quỹ 10% +30s Anti-Sniping & Đấu Giá Ngược Dutch Flash) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auctions/bid / auctions, auction_bids / auction.js | [LOCKED-DESIGN] */
 var __liveAuctionsCache = [];
 var __lastDutchWinBehalfUrl = '';
 var __auctionTickerInterval = null;
@@ -160,6 +161,7 @@ function renderDutchFlashAuctions(list) {
 }
 
 async function submitStandardAuctionBid(auctionId, simulateLast10s) {
+    if (typeof requireAuthOrPrompt === 'function' && !requireAuthOrPrompt('đặt giá ký quỹ 10% trên Sàn Đấu Giá')) return;
     var inp = document.getElementById('bidInput_' + auctionId);
     var bidVal = Number((inp && inp.value) || 0);
     var user = _getAuctionCurrentUsername();
@@ -188,6 +190,7 @@ async function submitStandardAuctionBid(auctionId, simulateLast10s) {
 }
 
 async function claimDutchFlashAuction(auctionId) {
+    if (typeof requireAuthOrPrompt === 'function' && !requireAuthOrPrompt('chốt mua ngay trên Sàn Đấu Giá Ngược')) return;
     var priceEl = document.getElementById('dutchLivePrice_' + auctionId);
     var curP = priceEl ? Number(priceEl.getAttribute('data-cur-price') || 0) : 0;
     var user = _getAuctionCurrentUsername();

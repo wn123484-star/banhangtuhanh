@@ -335,6 +335,19 @@
                     <option value="comfortable" selected>Tiêu chuẩn (Comfortable)</option>
                     <option value="spacious">Thoáng rộng (Spacious)</option>
                 </select>
+
+                <!-- [FEAT-ACC-009] Chế độ Mù màu (5 Chế độ CVD) & Xem Trước Màu Sắc Thực Tế trên Mobile App -->
+                <label class="nx-form-label" style="margin-top:8px;">👁️ Chế độ hỗ trợ người Mù Màu &amp; Khiếm Thị (5 CVD Modes):</label>
+                <select id="nxMobileCvdModeSelect" class="nx-form-input nvx-cvd-mode-selector" onchange="if(typeof applyMobileColorblindMode==='function') applyMobileColorblindMode(this.value);">
+                    <option value="normal">👁️ 1. Chuẩn (Normal Vision)</option>
+                    <option value="deuteranopia">🔵🟠 2. Mù Đỏ-Lục (Deuteranopia — Xanh Dương #0072B2 &amp; Cam #D55E00)</option>
+                    <option value="tritanopia">🟣🟡 3. Mù Xanh-Vàng (Tritanopia — Đỏ Tím #CC79A7 &amp; Xanh Ngọc #009E73)</option>
+                    <option value="pattern_labels">🔣 4. Nhãn Ký Hiệu [▲ TĂNG / ▼ GIẢM]</option>
+                    <option value="high_contrast_aaa">⚡ 5. Tương Phản Siêu Cao WCAG AAA (#000000 / #FFD700)</option>
+                </select>
+                <div id="nxMobileLiveColorPreviewBox" style="margin-top:6px;padding:8px;border-radius:10px;background:var(--nx-surface);border:1px solid var(--nx-border);font-size:0.74rem;">
+                    <div>🎨 <strong>Xem trước màu nút &amp; nến:</strong> <span id="nxMobileCvdSummaryText">Xanh lá (#16A34A) • Đỏ (#DC2626) • Tương phản 7.5:1</span></div>
+                </div>
             </div>
 
             <!-- KHU VỰC 4: KẾT NỐI MÁY CHỦ & TẢI FILE CÀI ĐẶT .APK -->

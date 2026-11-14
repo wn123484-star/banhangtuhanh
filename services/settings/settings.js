@@ -1,3 +1,5 @@
+/* [FEAT-ACC-009] Studio 12 Giao Diện, 5 Chế Độ Mù Màu (CVD) & Hỗ Trợ Đa Khuyết Tật | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility / system_settings / settings.js | [LOCKED-DESIGN] */
+/* [FEAT-AUTH-003] Bảo Mật RBAC 25 Trang, Cổng Đăng Nhập Chuyển Khoản & Phiên Xác Thực OTP | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auth/change-password / users / settings.js | [LOCKED-DESIGN] */
 let __settingsPwMethod = 'otp';
 let __currentSettingsUser = null;
 
@@ -228,7 +230,24 @@ function initSettings12ThemesStudio() {
 }
 window.initSettings12ThemesStudio = initSettings12ThemesStudio;
 
+function initSettingsAccessibilityControls() {
+    const cvdSel = document.getElementById('settingsCvdModeSelector');
+    const motorSw = document.getElementById('settingsMotorLargeBtnSwitch');
+    const flashSw = document.getElementById('settingsDeafVisualFlashSwitch');
+    const rulerSw = document.getElementById('settingsReadingRulerSwitch');
+
+    if (cvdSel) cvdSel.value = localStorage.getItem('nvx_cvd_mode') || 'normal';
+    if (motorSw) motorSw.checked = localStorage.getItem('nvx_motor_large_buttons') === '1';
+    if (flashSw) flashSw.checked = localStorage.getItem('nvx_deaf_visual_flash') === '1';
+    if (rulerSw) rulerSw.checked = localStorage.getItem('nvx_reading_ruler') === '1';
+
+    if (typeof renderLiveUiColorPreviewBox === 'function') {
+        renderLiveUiColorPreviewBox(localStorage.getItem('nvx_cvd_mode') || 'normal');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initSettings12ThemesStudio();
+    initSettingsAccessibilityControls();
     loadUserSecurityProfileInSettings();
 });

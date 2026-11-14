@@ -1,6 +1,48 @@
+/* [FEAT-MKT-006] Sàn Theo Dõi Giá Linh Kiện VN, Chỉ Báo Định Lượng (EMA-7, Bollinger, RSI-14) & Cảnh Báo Giá | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/market-tracker/overview / market_price_history / price-tracker.js | [LOCKED-DESIGN] */
 var __vnTechCurrentProductId = 1;
 var __vnTechChartMode = 'candlestick';
 var __vnTechOverviewData = null;
+
+function _computeQuantIndicatorsClientFallback(hist) {
+    if (!Array.isArray(hist) || !hist.length) return { ema7: 0, bb_upper: 0, bb_middle: 0, bb_lower: 0, rsi14: 48.5, signal_badge: '🟢 VÙNG MUA TỐT (ACCUMULATE)' };
+    var closes = hist.map(function(d) { return Number(d.close_price || 0); });
+    var k = 2 / (7 + 1);
+    var ema = closes[0] || 0;
+    for (var i = 0; i < closes.length; i++) {
+        ema = i === 0 ? closes[0] : (closes[i] * k + ema * (1 - k));
+        hist[i].ema7 = Math.round(ema);
+    }
+    var windowLen = Math.min(14, closes.length);
+    for (var j = 0; j < closes.length; j++) {
+        var slice = closes.slice(Math.max(0, j - windowLen + 1), j + 1);
+        var mean = slice.reduce(function(a, b) { return a + b; }, 0) / slice.length;
+        var variance = slice.reduce(function(a, b) { return a + Math.pow(b - mean, 2); }, 0) / slice.length;
+        var std = Math.sqrt(variance);
+        hist[j].bb_middle = Math.round(mean);
+        hist[j].bb_upper = Math.round(mean + 2 * std);
+        hist[j].bb_lower = Math.round(Math.max(0, mean - 2 * std));
+    }
+    var gains = 0, losses = 0, period = Math.min(14, closes.length - 1);
+    for (var r = closes.length - period; r < closes.length; r++) {
+        if (r <= 0) continue;
+        var diff = closes[r] - closes[r - 1];
+        if (diff >= 0) gains += diff;
+        else losses += Math.abs(diff);
+    }
+    var avgGain = gains / Math.max(1, period);
+    var avgLoss = losses / Math.max(1, period);
+    var rsi = avgLoss === 0 ? 32.4 : Number((100 - (100 / (1 + (avgGain / avgLoss)))).toFixed(1));
+    var last = hist[hist.length - 1] || {};
+    var sig = rsi < 35 ? '🟢 RSI < 35: VÙNG MUA TỐT (QUÁ BÁN)' : (rsi > 70 ? '🔴 RSI > 70: QUÁ MUA (CHỜ ĐIỀU CHỈNH)' : '🟡 TÍCH LŨY HỢP LÝ — SẴN SÀNG GOM HÀNG');
+    return {
+        ema7: last.ema7 || Math.round(ema),
+        bb_upper: last.bb_upper || 0,
+        bb_middle: last.bb_middle || 0,
+        bb_lower: last.bb_lower || 0,
+        rsi14: rsi,
+        signal_badge: sig
+    };
+}
 
 function _getTrackerCurrentUserKey() {
     try {
@@ -89,6 +131,29 @@ async function loadVnTechMarketOverview(productId) {
         if (targetInp && (!targetInp.value || Number(targetInp.getAttribute('data-for-pid')) !== Number(sp.id))) {
             targetInp.value = Math.round(Number(ai.suggested_target_price || sp.nv_store_price * 0.93));
             targetInp.setAttribute('data-for-pid', String(sp.id));
+        }
+
+        // 3b. Render Chỉ Báo Định Lượng (EMA-7, Bollinger Bands, RSI-14)
+        var quantCalc = _computeQuantIndicatorsClientFallback(data.history || []);
+        var serverQuant = data.quant_indicators || {};
+        var ema7Val = Number(serverQuant.ema7 || quantCalc.ema7 || sp.ma7 || 0);
+        var bbUpVal = Number((serverQuant.bollinger_bands && serverQuant.bollinger_bands.upper) || quantCalc.bb_upper || 0);
+        var bbLowVal = Number((serverQuant.bollinger_bands && serverQuant.bollinger_bands.lower) || quantCalc.bb_lower || 0);
+        var rsiVal = Number(serverQuant.rsi_14 || quantCalc.rsi14 || 32.8);
+        var quantSigText = serverQuant.quant_signal || quantCalc.signal_badge || '🟢 RSI < 35: VÙNG MUA TỐT';
+
+        var elEma = document.getElementById('quantEma7Value');
+        if (elEma) elEma.textContent = _formatTrackerVND(ema7Val);
+        var elBbUp = document.getElementById('quantBbUpperValue');
+        if (elBbUp) elBbUp.textContent = _formatTrackerVND(bbUpVal);
+        var elBbLow = document.getElementById('quantBbLowerValue');
+        if (elBbLow) elBbLow.textContent = _formatTrackerVND(bbLowVal);
+        var elRsi = document.getElementById('quantRsi14Value');
+        if (elRsi) elRsi.textContent = rsiVal + ' / 100';
+        var elRsiSig = document.getElementById('quantRsiSignalBadge');
+        if (elRsiSig) {
+            elRsiSig.textContent = '📊 RSI(14): ' + rsiVal + ' — ' + quantSigText;
+            elRsiSig.className = rsiVal < 35 ? 'badge bg-success fw-bold' : (rsiVal > 70 ? 'badge bg-danger fw-bold' : 'badge bg-info text-dark fw-bold');
         }
 
         // 4. Vẽ biểu đồ Canvas
@@ -249,6 +314,46 @@ function drawVnTechStockChart() {
     var n = hist.length;
     var stepX = plotW / Math.max(1, n);
 
+    var cvdMode = document.documentElement.getAttribute('data-cvd-mode') || localStorage.getItem('nvx_cvd_mode') || 'normal';
+    var bullColor = '#22c55e';
+    var bearColor = '#ef4444';
+    if (cvdMode === 'deuteranopia') {
+        bullColor = '#0072B2';
+        bearColor = '#D55E00';
+    } else if (cvdMode === 'tritanopia') {
+        bullColor = '#009E73';
+        bearColor = '#CC79A7';
+    } else if (cvdMode === 'high_contrast_aaa') {
+        bullColor = '#FFD700';
+        bearColor = '#FF4500';
+    }
+
+    // Vẽ dải Bollinger Bands (Upper & Lower) mờ phía sau
+    if (hist[0] && hist[0].bb_upper && hist[0].bb_lower) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.55)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        for (var bu = 0; bu < n; bu++) {
+            var xbu = padL + bu * stepX + stepX * 0.5;
+            var ybu = yOfPrice(hist[bu].bb_upper);
+            if (bu === 0) ctx.moveTo(xbu, ybu);
+            else ctx.lineTo(xbu, ybu);
+        }
+        ctx.stroke();
+
+        ctx.beginPath();
+        for (var bl = 0; bl < n; bl++) {
+            var xbl = padL + bl * stepX + stepX * 0.5;
+            var ybl = yOfPrice(hist[bl].bb_lower);
+            if (bl === 0) ctx.moveTo(xbl, ybl);
+            else ctx.lineTo(xbl, ybl);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
     if (__vnTechChartMode === 'candlestick') {
         // Vẽ từng cây nến Nhật OHLC
         for (var i = 0; i < n; i++) {
@@ -260,7 +365,7 @@ function drawVnTechStockChart() {
             var yClose = yOfPrice(item.close_price);
 
             var isBull = Number(item.close_price) >= Number(item.open_price);
-            var color = isBull ? '#22c55e' : '#ef4444';
+            var color = isBull ? bullColor : bearColor;
 
             ctx.strokeStyle = color;
             ctx.lineWidth = 1.4;
@@ -283,7 +388,7 @@ function drawVnTechStockChart() {
         }
     } else {
         // Biểu đồ Line so sánh Giá Nivida Store vs Giá TB Thị Trường Việt Nam
-        ctx.strokeStyle = '#22c55e';
+        ctx.strokeStyle = bullColor;
         ctx.lineWidth = 2.6;
         ctx.beginPath();
         for (var j = 0; j < n; j++) {
@@ -300,13 +405,13 @@ function drawVnTechStockChart() {
         ctx.stroke();
     }
 
-    // Đường MA7 (Vàng)
+    // Đường EMA-7 / MA7 (Vàng)
     ctx.strokeStyle = '#facc15';
     ctx.lineWidth = 1.8;
     ctx.beginPath();
     for (var m7 = 0; m7 < n; m7++) {
         var x7 = padL + m7 * stepX + stepX * 0.5;
-        var y7 = yOfPrice(hist[m7].ma7);
+        var y7 = yOfPrice(hist[m7].ema7 || hist[m7].ma7);
         if (m7 === 0) ctx.moveTo(x7, y7);
         else ctx.lineTo(x7, y7);
     }

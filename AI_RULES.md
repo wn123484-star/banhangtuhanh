@@ -1,7 +1,37 @@
 # HIẾN PHÁP KỸ THUẬT & QUY TẮC BẮT BUỘC CHO AI (AI ENGINEERING CONSTITUTION)
-**Dự án:** Sàn Thương Mại Điện Tử Công Nghệ & Đời Sống — **Nexora Mall (NEXORA V9.5)**
+**Dự án:** Sàn Thương Mại Điện Tử Công Nghệ & Đời Sống — **Nexora Mall (NEXORA V10.0)**
 
-Mọi tác nhân AI (4 Argon High / Argon Medium / Flash) khi đọc, phân tích và chỉnh sửa mã nguồn trong thư mục dự án này **BẮT BUỘC** phải tuân thủ tuyệt đối 8 nhóm quy tắc hiến pháp dưới đây. Bất kỳ thay đổi nào vi phạm các quy tắc này đều bị coi là lỗi nghiêm trọng.
+---
+
+## HIẾN PHÁP KHÓA THIẾT KẾ & MÃ TÍNH NĂNG (DESIGN & FEATURE FREEZE CONSTITUTION — BẤT KHẢ XÂM PHẠM)
+
+### Điều 1 (Cấm tự ý sửa đổi thiết kế đã khóa — `[LOCKED-DESIGN]`):
+Mọi thành phần đã được gắn nhãn `[LOCKED-DESIGN]` — bao gồm:
+1. **Cấu trúc Header 3 tầng cuộn cố định (`[FEAT-HDR-001]`):** Hàng 1 Topbar Dropdown không điểm mù (`Sàn Giao Dịch ▾`, `Giải Trí & Săn Thưởng ▾`, `Tiện Ích ▾`, `Nexora Pay`), Hàng 2 (`Logo NEXORA`, Thanh tìm kiếm, nút Điểm danh lửa `🔥`, Chuông `🔔`, Đổi Sáng/Tối `☀️/🌙`, Tài khoản, Giỏ hàng), Hàng 3 (Thanh 9 Danh mục + So Sánh & Wishlist) ở chế độ `position: fixed; top: 0; z-index: 2147483000` kèm `#nvxHeaderStickySpacer`.
+2. **Hình ảnh & cách cắt chữ của Logo `#brandLogoImg` (`#headerBrandLogoImg`)** và **Cấu hình miền gửi mail Resend `@mail.castle-tech.cloud`** (`Nexora Mall CSKH <noreply@mail.castle-tech.cloud>`).
+3. **18 tính năng Mèo AI chia 4 nhóm xổ xuống (`[FEAT-CAT-002]`):** Lớp Canvas trên cùng (`z-index: 2147483645`), 5 giống mèo, cằm bo tròn mềm mại không vệt ngang, miệng mèo `(mouthX, mouthY)` khớp 100% với hoạt ảnh Ăn Cá / Uống Trà Sữa, kịch bản săn hàng 4 chặng và 4 thanh Accordion xổ xuống (`▾`).
+4. **Hệ thống 12 giao diện Sáng/Tối & 5 chế độ Trợ năng Mù màu (`[FEAT-ACC-009]`)** cùng **Giao diện Ví MoMo `Nexora Pay` (`[FEAT-PAY-004]`)**.
+
+Tất cả các thành phần trên là **BẤT KHẢ XÂM PHẠM**. Không một AI nào được phép tự ý xóa, ẩn, rút gọn hoặc thay đổi bố cục khi chưa có lệnh rõ ràng từ người dùng.
+
+### Điều 2 (Quy chuẩn ghi chú Mã Tính Năng khi viết code):
+Khi viết hoặc sửa bất kỳ hàm Python/JS/CSS nào, bắt buộc phải đặt khối comment chuẩn ngay trên đầu hàm/khu vực đó theo định dạng:
+`# [FEAT-<PHÂN_HỆ>-<SỐ>] Tên tính năng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: <API / Bảng SQLite / File UI> | [LOCKED-DESIGN]`
+Danh mục 10 Mã Tính Năng Cốt Lõi:
+- `[FEAT-HDR-001]`: Thanh Header 3 tầng cố định cuộn theo người dùng (`Sticky/Fixed 3-Row Header`), nút Điểm danh lửa `🔥`, nút Đổi Sáng/Tối `☀️/🌙` và Dropdown không điểm mù.
+- `[FEAT-CAT-002]`: Trợ lý Mèo AI Lớp Trên Cùng (`Topmost Canvas Layer`), 5 giống mèo, 4 nhóm xổ xuống (18 tính năng), hoạt ảnh ăn cá/uống trà sữa khớp miệng, săn hàng 4 chặng.
+- `[FEAT-AUTH-003]`: Hệ thống Đăng nhập/Đăng ký, Bảo mật OTP 6 số qua Resend (`@mail.castle-tech.cloud`), Đổi mật khẩu, Mã PIN Ví 6 số và Phân quyền 4 cấp (`Guest / Buyer / Seller / Admin`).
+- `[FEAT-PAY-004]`: Ví điện tử `Nexora Pay` chuẩn MoMo, Khóa bắt buộc đăng nhập khi chuyển khoản/nạp rút, Quét QR 2 bước xem giá hóa đơn & Chuyển khoản hộ đồng bộ PC-Mobile.
+- `[FEAT-LOG-005]`: Vận đơn Radar 6 bước (`ESCROW_LOCKED` -> `COMPLETED`), Chốt chặn nhận hàng & Trả hàng hoàn tiền 100% + Phạt trễ SLA.
+- `[FEAT-MKT-006]`: Sàn Theo dõi giá thị trường VN (Biểu đồ nến 30 phiên, EMA-7, Bollinger Bands, RSI 14 & Báo động giảm giá).
+- `[FEAT-AUC-007]`: Sàn Đấu giá kép (Đấu giá ký quỹ 10% chống cướp giây cuối +30s & Đấu giá ngược giảm giá từng giây).
+- `[FEAT-RFQ-008]`: Sàn Đấu thầu ngược B2B/C2B (`Reverse RFQ`) & Hộ chiếu Thiết bị Blockchain SHA-256 (`Device Passport`).
+- `[FEAT-ACC-009]`: Trung tâm Trợ năng Mù màu (5 chế độ CVD), Bảng xem trước màu Tab/Nút/Nến giá, Mô tả màu sắc sản phẩm & Hỗ trợ người khuyết tật.
+- `[FEAT-ADM-010]`: Trung tâm Chỉ huy Admin (`Admin Mission Control`), Chấm điểm rủi ro gian lận (`0-100`) & Đội quân 9 Bot Kiểm thử Tự động (`QA Bot Squad V11.0`).
+
+---
+
+Mọi tác nhân AI (4 Argon High / Argon Medium / Flash) khi đọc, phân tích và chỉnh sửa mã nguồn trong thư mục dự án này **BẮT BUỘC** phải tuân thủ tuyệt đối các quy tắc hiến pháp dưới đây. Bất kỳ thay đổi nào vi phạm các quy tắc này đều bị coi là lỗi nghiêm trọng.
 
 ---
 

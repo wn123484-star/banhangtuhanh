@@ -1,3 +1,4 @@
+/* [FEAT-RFQ-008] Sàn Đấu Thầu Ngược B2B Reverse RFQ & Chốt Báo Giá Tự Sinh Đơn Hàng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/rfq/accept-offer / rfq_requests, rfq_offers, orders / rfq.js | [LOCKED-DESIGN] */
 var __rfqLastBehalfUrl = '';
 
 function _formatRfqVND(val) {
@@ -88,6 +89,7 @@ function renderReverseRfqRequests(list) {
 }
 
 async function createNewReverseRfqRequest() {
+    if (typeof requireAuthOrPrompt === 'function' && !requireAuthOrPrompt('đăng yêu cầu đấu thầu ngược B2B RFQ')) return;
     var title = (document.getElementById('rfqTitleInput')?.value || '').trim();
     var maxB = Number(document.getElementById('rfqMaxBudgetInput')?.value || 35000000);
     var qty = Number(document.getElementById('rfqQtyInput')?.value || 1);
@@ -139,6 +141,7 @@ async function simulateThreeFlagshipStoresOffer(rfqId) {
 }
 
 async function acceptRfqSellerOffer(rfqId, offerId) {
+    if (typeof requireAuthOrPrompt === 'function' && !requireAuthOrPrompt('chấp nhận báo giá và tạo đơn hàng QR trên Sàn RFQ')) return;
     try {
         var res = await fetch('/api/rfq/accept-offer', {
             method: 'POST',

@@ -12,6 +12,7 @@
     <div id="header-placeholder"></div>
 
     <main class="container py-4">
+        <!-- [FEAT-ACC-009] Studio 12 Giao Diện, 5 Chế Độ Mù Màu (CVD) & Hỗ Trợ Đa Khuyết Tật | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility / system_settings / settings.html | [LOCKED-DESIGN] -->
         <!-- STUDIO 12 GIAO DIỆN ĐA LỨA TUỔI, HIỆU ỨNG NỀN & MẬT ĐỘ LƯỚI SẢN PHẨM -->
         <section id="themeStudioSection" class="nv-adaptive-card p-4 mb-4 shadow-sm" style="border-left: 5px solid #059669 !important;">
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom pb-3 mb-3">
@@ -67,7 +68,56 @@
                 </div>
             </div>
 
-            <div id="settings12ThemesGridBox" class="row g-2"></div>
+            <div id="settings12ThemesGridBox" class="row g-2 mb-4"></div>
+
+            <!-- [FEAT-ACC-009] TRUNG TÂM TRỢ NĂNG MÙ MÀU (5 CHẾ ĐỘ CVD), BẢNG XEM TRƯỚC MÀU SẮC & HỖ TRỢ ĐA KHUYẾT TẬT -->
+            <div class="p-3 rounded-4 border" style="background: rgba(37, 99, 235, 0.05); border-color: rgba(37, 99, 235, 0.35) !important;">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div>
+                        <span class="badge bg-primary">👁️ TRUNG TÂM TRỢ NĂNG THỊ GIÁC &amp; ĐA KHUYẾT TẬT CHUẨN WCAG 2.1 AAA</span>
+                        <h5 class="fw-bold m-0 mt-1">Bảng Màu Thích Ứng Mù Màu (5 Chế Độ CVD) &amp; Xem Trước Màu Sắc Thực Tế</h5>
+                        <p class="small text-muted mb-0">
+                            Hỗ trợ người mù màu Đỏ-Lục (Deuteranopia / Protanopia), Xanh-Vàng (Tritanopia), khiếm thị, run tay và khiếm thính phân biệt chính xác màu sắc sản phẩm, nến giá và nút bấm.
+                        </p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="if(typeof describeVisibleProductColorByCat==='function') describeVisibleProductColorByCat();">🐱 Mèo AI Đọc &amp; Tả Màu Sản Phẩm</button>
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="if(typeof openColorblindPreviewModal==='function') openColorblindPreviewModal();">🔬 Mở Bảng Đối Chiếu Màu Đầy Đủ</button>
+                    </div>
+                </div>
+
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold mb-1">👁️ Chọn Chế Độ Bảng Màu Thích Ứng Khiếm Khuyết Sắc Giác (CVD):</label>
+                        <select class="form-select form-select-sm fw-bold nvx-cvd-mode-selector" id="settingsCvdModeSelector" onchange="applyColorblindMode(this.value)">
+                            <option value="normal">👁️ 1. Chế độ Chuẩn (Normal Vision — Xanh lá / Đỏ truyền thống)</option>
+                            <option value="deuteranopia">🔵🟠 2. Mù Đỏ - Xanh Lá (Deuteranopia / Protanopia — Đổi sang Xanh Dương Đậm #0072B2 &amp; Cam Hổ Phách #D55E00)</option>
+                            <option value="tritanopia">🟣🟡 3. Mù Xanh Dương - Vàng (Tritanopia — Đổi sang Đỏ Tím #CC79A7 &amp; Xanh Ngọc #009E73)</option>
+                            <option value="pattern_labels">🔣 4. Chế Độ Nhãn Ký Hiệu &amp; Vân Sọc (Tự động gắn nhãn [▲ TĂNG / ▼ GIẢM / ✔ HỢP LỆ / ✖ CẢNH BÁO])</option>
+                            <option value="high_contrast_aaa">⚡ 5. Tương Phản Siêu Cao WCAG AAA (Nền Đen Tuyền #000000, Chữ Vàng Sáng #FFD700, Viền 2px)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex flex-wrap gap-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="settingsMotorLargeBtnSwitch" onchange="toggleLargeButtonsMode(this.checked)">
+                                <label class="form-check-label small fw-bold" for="settingsMotorLargeBtnSwitch">🖐️ Nút Bấm Lớn Chống Run Tay (48px)</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="settingsDeafVisualFlashSwitch" onchange="toggleVisualFlashAlertMode(this.checked)">
+                                <label class="form-check-label small fw-bold" for="settingsDeafVisualFlashSwitch">🦻 Viền Sáng Nhấp Nháy (Khiếm Thính)</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="settingsReadingRulerSwitch" onchange="toggleReadingFocusRuler(this.checked)">
+                                <label class="form-check-label small fw-bold" for="settingsReadingRulerSwitch">📏 Thước Đọc Tập Trung</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng Xem Trước Màu Sắc Thực Tế (Live UI Color Previewer) -->
+                <div id="settingsLiveColorPreviewBox" class="nvx-live-color-preview-container"></div>
+            </div>
         </section>
 
         <!-- CỐ VẤN HOÀN THIỆN HỒ SƠ BẢO MẬT ĐỂ ĐẢM BẢO KHẢ NĂNG ĐỔI MẬT KHẨU -->

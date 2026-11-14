@@ -1101,19 +1101,19 @@ function mountVisibleAdminCommandHub() {
             '<div id="vendorPreloadStatusBox" class="mt-2 pt-2 border-top small d-none"></div>' +
         '</div>' +
 
-        '<!-- TAB 3: ĐỘI BOT ADMIN -->' +
+        '<!-- TAB 3: ĐỘI QUÂN 9 BOT QA V11.0 & RADAR CHẤM ĐIỂM RỦI RO GIAN LẬN (0-100) -->' +
         '<div id="hubTab_tester_dev" class="admin-hub-pane d-none">' +
             '<div class="p-3 rounded-3 border mb-3" style="background: rgba(118, 185, 0, 0.08);">' +
                 '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">' +
-                    '<div><span class="badge bg-warning text-dark fw-bold">👑 FULL ADMIN PRIVILEGE BOT</span><strong class="ms-2">🤖 Đội Bot Quyền Admin Đi Tự Do 21 Trang &amp; 15 API</strong></div>' +
+                    '<div><span class="badge bg-warning text-dark fw-bold">👑 QA BOT SQUAD V11.0 (9 BOTS)</span><strong class="ms-2">🤖 Đội Quân 9 Bot Kiểm Thử Tự Động Toàn Diện (25 Trang • RBAC • Mù Màu CVD • 3 Thuật Toán)</strong></div>' +
                     '<div class="d-flex flex-wrap gap-2">' +
-                        '<button type="button" id="btnDeployQaBotSquad" class="btn btn-nvidia btn-sm fw-bold px-3" onclick="deployQaBotSquadScan()">🚀 Cho Đội Bot Đi Tuần Tra Ngay</button>' +
+                        '<button type="button" id="btnDeployQaBotSquad" class="btn btn-nvidia btn-sm fw-bold px-3" onclick="deployQaBotSquadScan()">🚀 Triển Khai Đội Quân 9 Bot QA Ngay</button>' +
                         '<a href="/api/settings/server-logs/export-txt" target="_blank" class="btn btn-warning text-dark btn-sm fw-bold">📥 Xuất Log (.TXT)</a>' +
                         '<button type="button" class="btn btn-outline-info btn-sm" onclick="loadTesterTelemetryAndErrorCatalog()">🔄 Làm Mới</button>' +
                     '</div>' +
                 '</div>' +
-                '<div id="qaBotSquadStatusBanner" class="small text-muted">Sẵn sàng tuần tra toàn sàn.</div>' +
-                '<div id="qaBotSquadResultBox" class="table-responsive rounded-3 border p-2 mt-2 d-none" style="max-height: 240px; overflow-y: auto;"><table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11.5px;"><thead><tr><th>Đội Bot</th><th>Trang / API</th><th>Đường Dẫn</th><th>HTTP</th><th>Số Nút</th><th>Chẩn Đoán</th></tr></thead><tbody id="qaBotSquadTableBody"></tbody></table></div>' +
+                '<div id="qaBotSquadStatusBanner" class="small text-muted">Sẵn sàng điều động 9 Bot QA tuần tra toàn sàn.</div>' +
+                '<div id="qaBotSquadResultBox" class="table-responsive rounded-3 border p-2 mt-2 d-none" style="max-height: 260px; overflow-y: auto;"><table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11.5px;"><thead><tr><th>Đội Bot (1-9)</th><th>Nhiệm Vụ Kiểm Toán</th><th>Đường Dẫn</th><th>HTTP</th><th>Số Nút</th><th>Chẩn Đoán</th></tr></thead><tbody id="qaBotSquadTableBody"></tbody></table></div>' +
             '</div>' +
             '<div class="row g-3">' +
                 '<div class="col-lg-6"><div class="table-responsive rounded-3 border p-2" style="max-height: 220px; overflow-y: auto;"><table class="table table-sm table-bordered align-middle mb-0" style="font-size: 11.5px;"><thead><tr><th>Người Thao Tác</th><th>Trang</th><th>Sự Kiện</th><th>Trạng Thái</th></tr></thead><tbody id="hubTesterTelemetryBody"></tbody></table></div></div>' +
@@ -2217,9 +2217,66 @@ async function loadAdminStoreChatSessions() {
     } catch (err) {}
 }
 
+/* [FEAT-ADM-010] Trung Tâm Admin, Tòa Án Trọng Tài AI, Chấm Điểm Rủi Ro Gian Lận (0-100) & Đội Quân 9 Bot QA | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/admin-dispute/fraud-risk-radar / disputes / admin-center.js | [LOCKED-DESIGN] */
+async function loadAdminFraudRiskRadar() {
+    var tbody = $id('adminFraudRiskRadarTableBody');
+    if (!tbody) return;
+    try {
+        var res = await fetch('/api/admin-dispute/fraud-risk-radar');
+        if (!res.ok) return;
+        var data = await res.json();
+        var items = data.risk_events || [];
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-success py-3">✅ Không phát hiện giao dịch vượt ngưỡng rủi ro cao.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = items.map(function(it) {
+            var sc = Number(it.risk_score || 0);
+            var bdg = sc >= 75 ? 'bg-danger' : (sc >= 45 ? 'bg-warning text-dark' : 'bg-success');
+            var lvl = sc >= 75 ? 'NGUY CƠ CAO' : (sc >= 45 ? 'CẦN THEO DÕI' : 'AN TOÀN');
+            return '<tr>' +
+                '<td class="fw-bold font-monospace">' + (it.actor || 'user') + '<br><small class="text-muted">' + (it.tx_ref || '') + '</small></td>' +
+                '<td>' + (it.signal_reason || '') + '</td>' +
+                '<td class="fw-bold text-center"><span class="badge ' + bdg + ' fs-6">' + sc + '/100</span></td>' +
+                '<td class="text-center"><span class="badge ' + bdg + '">' + lvl + '</span></td>' +
+                '<td class="text-center"><button type="button" class="btn btn-outline-warning btn-sm py-0" onclick="document.getElementById(\'mcTargetUsername\').value=\'' + (it.actor || 'khach_hang_vip') + '\'">Chọn</button></td>' +
+            '</tr>';
+        }).join('');
+    } catch (err) {}
+}
+window.loadAdminFraudRiskRadar = loadAdminFraudRiskRadar;
+
+async function executeAdminMissionControlAction(actionType) {
+    var targetUser = ($id('mcTargetUsername') ? $id('mcTargetUsername').value : 'khach_hang_vip').trim();
+    var amountVal = Number(($id('mcGrantAmount') ? $id('mcGrantAmount').value : 5000000) || 0);
+    var statusEl = $id('mcActionStatusText');
+    try {
+        var res = await fetch('/api/admin-dispute/mission-control/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: actionType,
+                username: targetUser,
+                amount: amountVal
+            })
+        });
+        var data = await res.json();
+        if (statusEl) {
+            statusEl.textContent = (data.ok ? '✅ ' : '⚠️ ') + (data.message || data.error || 'Đã thực thi!');
+        }
+        if (typeof notifyToast === 'function') {
+            notifyToast(data.message || data.error || 'Đã thực thi lệnh Admin!', data.ok ? 'success' : 'warning');
+        }
+        loadOverviewAndConfig();
+        loadAdminFraudRiskRadar();
+    } catch (err) {}
+}
+window.executeAdminMissionControlAction = executeAdminMissionControlAction;
+
 document.addEventListener('DOMContentLoaded', function() {
     mountVisibleAdminCommandHub();
     loadOverviewAndConfig();
+    loadAdminFraudRiskRadar();
     loadAdminEventsManager();
     loadAdminDisputesList();
     renderSopScenariosPanel();

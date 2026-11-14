@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- [FEAT-PAY-004] Ví Điện Tử MoMo Nexora Pay, Cổng Bắt Buộc Đăng Nhập Khi Chuyển Tiền, Xem Trước Hóa Đơn QR 2 Bước & Chuyển Khoản Hộ PC-Mobile | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/payment/qr-session/*, /api/mobile/wallet-action, bảng bank_wallets / bank_transactions / payment_qr_sessions | [LOCKED-DESIGN] -->
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -155,6 +156,30 @@
                     </form>
                 </div>
 
+                <div class="nv-adaptive-card p-4 shadow-sm mb-3">
+                    <h5 class="fw-bold text-info border-bottom pb-2 mb-3">💸 Chuyển Tiền &amp; Rút Tiền Tự Do (Bắt Buộc Đăng Nhập)</h5>
+                    <form onsubmit="submitDirectBankTransfer(event)" class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold">Tài khoản / Người nhận *</label>
+                            <input type="text" id="bankTransferRecipientInput" class="form-control form-control-sm" value="ASUS ROG Official Mall" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-bold">Số tiền (VNĐ) *</label>
+                            <input type="number" id="bankTransferAmountInput" class="form-control form-control-sm fw-bold text-warning" value="1500000" min="1000" step="1000" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-bold">Loại GD</label>
+                            <select id="bankTransferTypeSelect" class="form-select form-select-sm">
+                                <option value="transfer">💸 Chuyển tiền</option>
+                                <option value="withdraw">📤 Rút tiền</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-info text-dark w-100 fw-bold btn-sm py-2">🚀 Thực Hiện</button>
+                        </div>
+                    </form>
+                </div>
+
                 <div class="nv-adaptive-card p-4 shadow-sm">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="fw-bold text-nvidia m-0">🔐 Đổi Mã PIN Bảo Mật Giao Dịch</h6>
@@ -273,7 +298,15 @@
         </div>
 
         <div class="nv-adaptive-card p-4 shadow-sm">
-            <h5 class="fw-bold text-nvidia mb-3">📜 Sao Kê Biến Động Số Dư Khả Dụng &amp; Lịch Sử Quét QR</h5>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h5 class="fw-bold text-nvidia m-0">📜 Sao Kê Biến Động Số Dư Khả Dụng &amp; Lịch Sử Quét QR</h5>
+                <div class="d-flex flex-wrap gap-1" id="bankTxFilterBar">
+                    <button type="button" class="btn btn-nvidia btn-sm py-0 px-2 fw-bold" onclick="filterBankTransactions('all', this)">Tất cả</button>
+                    <button type="button" class="btn btn-outline-success btn-sm py-0 px-2 fw-bold" onclick="filterBankTransactions('topup', this)">📥 Nạp tiền</button>
+                    <button type="button" class="btn btn-outline-info btn-sm py-0 px-2 fw-bold" onclick="filterBankTransactions('escrow', this)">🛡️ Escrow / QR</button>
+                    <button type="button" class="btn btn-outline-warning btn-sm py-0 px-2 fw-bold" onclick="filterBankTransactions('refund', this)">💸 Chuyển / Hoàn tiền</button>
+                </div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle mb-0 small">
                     <thead>
@@ -304,12 +337,14 @@
         let __isQrTransferInFlight = false;
         let __isCurrentQrPaidDone = false;
         let __isPayOnBehalfMode = false;
-        let __currentWalletBalance = 50000000;
+        let __currentWalletBalance = 0;
+        let __allBankTransactionsCache = [];
+        let __activeBankTxFilter = 'all';
 
         function getActiveUserId() {
             const u = typeof getAuthUser === 'function' ? getAuthUser() : null;
             if (u && u.id) return Number(u.id);
-            return 13;
+            return 0;
         }
 
         function switchQrPaymentBehalfMode(isBehalf) {
@@ -669,6 +704,12 @@
         }
 
         async function executeRealQrTransferRequest() {
+            if (typeof isUserLoggedIn === 'function' && !isUserLoggedIn()) {
+                if (typeof openQuickAuthModal === 'function') {
+                    openQuickAuthModal('Xác nhận chuyển khoản hóa đơn QR');
+                }
+                return;
+            }
             const alertBox = document.getElementById('bankTransferResultAlert');
             const submitBtn = document.getElementById('btnExecuteQrPay');
 
@@ -795,46 +836,92 @@
             }
         }
 
+        function renderFilteredBankTransactions() {
+            const tbody = document.getElementById('bankTransactionsTableBody');
+            if (!tbody) return;
+            if (typeof isUserLoggedIn === 'function' && !isUserLoggedIn()) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-warning fw-bold">🔒 Vui lòng <a href="javascript:void(0)" class="text-info text-decoration-underline" onclick="openQuickAuthModal('xem lịch sử giao dịch Ví Nexora Pay')">Đăng nhập tài khoản</a> để xem sao kê biến động số dư bảo mật.</td></tr>`;
+                return;
+            }
+            const txs = (__allBankTransactionsCache || []).filter(t => {
+                if (__activeBankTxFilter === 'all') return true;
+                const tp = String(t.tx_type || '').toUpperCase();
+                const nt = String(t.note || '').toUpperCase();
+                if (__activeBankTxFilter === 'topup') return tp.includes('TOPUP') || tp.includes('NAP') || Number(t.amount) > 0;
+                if (__activeBankTxFilter === 'escrow') return tp.includes('ESCROW') || tp.includes('QR') || nt.includes('ESCROW') || nt.includes('QR');
+                if (__activeBankTxFilter === 'refund') return tp.includes('REFUND') || tp.includes('TRANSFER') || tp.includes('WITHDRAW');
+                return true;
+            });
+            if (!txs.length) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Không có giao dịch nào trong bộ lọc này.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = txs.map(t => {
+                const isPlus = Number(t.amount) >= 0;
+                return `
+                    <tr>
+                        <td class="font-monospace fw-bold">${t.tx_code}</td>
+                        <td><span class="badge ${isPlus ? 'bg-success' : 'bg-info text-dark'}">${t.tx_type}</span></td>
+                        <td>${t.note || ''}</td>
+                        <td class="text-end fw-bold ${isPlus ? 'text-nvidia' : 'text-warning'}">${isPlus ? '+' : ''}${Number(t.amount).toLocaleString('vi-VN')} ₫</td>
+                        <td class="text-end fw-bold">${Number(t.balance_after).toLocaleString('vi-VN')} ₫</td>
+                        <td class="text-end text-muted">${t.created_at || ''}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterBankTransactions(filterMode, btnEl) {
+            __activeBankTxFilter = filterMode || 'all';
+            document.querySelectorAll('#bankTxFilterBar button').forEach(b => {
+                b.classList.remove('btn-nvidia');
+                if (!b.className.includes('btn-outline-')) b.classList.add('btn-outline-light');
+            });
+            if (btnEl) {
+                btnEl.classList.add('btn-nvidia');
+            }
+            renderFilteredBankTransactions();
+        }
+        window.filterBankTransactions = filterBankTransactions;
+
         async function loadBankWalletPage() {
+            const loggedIn = typeof isUserLoggedIn === 'function' ? isUserLoggedIn() : false;
             const uid = getActiveUserId();
-            if (!uid) return;
+            if (!loggedIn || !uid) {
+                const balEl = document.getElementById('bankPageBalanceText');
+                if (balEl) {
+                    balEl.innerHTML = `<span style="font-size:1.35rem;cursor:pointer;" class="text-warning" onclick="openQuickAuthModal('xem số dư Ví Nexora Pay')">🔒 Đăng nhập để xem số dư</span>`;
+                }
+                document.getElementById('bankPageAccountNo').textContent = '•••• •••• 2026';
+                document.getElementById('bankPageHolderName').textContent = 'KHÁCH (CHƯA ĐĂNG NHẬP)';
+                document.getElementById('bankPageCoinsText').textContent = '0 Xu';
+                __allBankTransactionsCache = [];
+                renderFilteredBankTransactions();
+                return;
+            }
             try {
                 const res = await fetch(`/api/settings/bank-wallet?user_id=${uid}`);
                 const data = await res.json();
-                document.getElementById('bankPageBalanceText').textContent = Number(data.bank_balance || 0).toLocaleString('vi-VN') + ' ₫';
+                __currentWalletBalance = Number(data.bank_balance || 0);
+                document.getElementById('bankPageBalanceText').textContent = __currentWalletBalance.toLocaleString('vi-VN') + ' ₫';
                 document.getElementById('bankPageAccountNo').textContent = data.account_no || '8888 9999 2026';
-                document.getElementById('bankPageHolderName').textContent = data.account_holder || 'KHACH HANG NVIDIA';
+                document.getElementById('bankPageHolderName').textContent = data.account_holder || 'KHACH HANG NEXORA';
                 document.getElementById('bankPageCoinsText').textContent = Number(data.coins || 0).toLocaleString('vi-VN') + ' Xu';
                 if (typeof window.syncActiveIconSetAcrossWebsite === 'function') {
                     window.syncActiveIconSetAcrossWebsite();
                 }
 
-                const tbody = document.getElementById('bankTransactionsTableBody');
-                const txs = data.transactions || [];
-                if (tbody) {
-                    if (!txs.length) {
-                        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Chưa có biến động số dư nào.</td></tr>`;
-                    } else {
-                        tbody.innerHTML = txs.map(t => {
-                            const isPlus = Number(t.amount) >= 0;
-                            return `
-                                <tr>
-                                    <td class="font-monospace fw-bold">${t.tx_code}</td>
-                                    <td><span class="badge ${isPlus ? 'bg-success' : 'bg-info text-dark'}">${t.tx_type}</span></td>
-                                    <td>${t.note || ''}</td>
-                                    <td class="text-end fw-bold ${isPlus ? 'text-nvidia' : 'text-warning'}">${isPlus ? '+' : ''}${Number(t.amount).toLocaleString('vi-VN')} ₫</td>
-                                    <td class="text-end fw-bold">${Number(t.balance_after).toLocaleString('vi-VN')} ₫</td>
-                                    <td class="text-end text-muted">${t.created_at || ''}</td>
-                                </tr>
-                            `;
-                        }).join('');
-                    }
-                }
+                __allBankTransactionsCache = data.transactions || [];
+                renderFilteredBankTransactions();
             } catch (e) {}
         }
 
         async function submitBankTopup(e) {
             if (e && e.preventDefault) e.preventDefault();
+            if (typeof isUserLoggedIn === 'function' && !isUserLoggedIn()) {
+                if (typeof openQuickAuthModal === 'function') openQuickAuthModal('Nạp tiền vào Ví Nexora Pay');
+                return;
+            }
             const uid = getActiveUserId();
             if (!uid) return;
             const amount = Number(document.getElementById('bankTopupAmountInput')?.value || 0);
@@ -847,6 +934,10 @@
                 });
                 const data = await res.json();
                 if (!res.ok) {
+                    if (data && data.require_login && typeof openQuickAuthModal === 'function') {
+                        openQuickAuthModal('Nạp tiền vào Ví Nexora Pay');
+                        return;
+                    }
                     if (typeof notifyToast === 'function') notifyToast(data.error || 'Lỗi nạp tiền!', 'warning');
                     return;
                 }
@@ -858,8 +949,49 @@
             } catch (err) {}
         }
 
+        async function submitDirectBankTransfer(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            if (typeof isUserLoggedIn === 'function' && !isUserLoggedIn()) {
+                if (typeof openQuickAuthModal === 'function') openQuickAuthModal('Chuyển tiền / Rút tiền Ví Nexora Pay');
+                return;
+            }
+            const uid = getActiveUserId();
+            const recipient = (document.getElementById('bankTransferRecipientInput')?.value || 'Ví Nexora Pay').trim();
+            const amount = Number(document.getElementById('bankTransferAmountInput')?.value || 0);
+            const actionType = document.getElementById('bankTransferTypeSelect')?.value || 'transfer';
+            try {
+                const res = await fetch('/api/mobile/wallet-action', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: uid,
+                        action: actionType,
+                        amount: amount,
+                        recipient: recipient,
+                        note: `${actionType === 'withdraw' ? 'Rút tiền về ngân hàng' : 'Chuyển tiền nhanh'} tới ${recipient}`
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok || !data.ok) {
+                    if (data && data.require_login && typeof openQuickAuthModal === 'function') {
+                        openQuickAuthModal('Chuyển tiền / Rút tiền Ví Nexora Pay');
+                        return;
+                    }
+                    if (typeof notifyToast === 'function') notifyToast(data.error || 'Giao dịch không thành công!', 'warning');
+                    return;
+                }
+                if (typeof notifyToast === 'function') notifyToast(data.message || 'Giao dịch thành công!', 'success');
+                await loadBankWalletPage();
+            } catch (err) {}
+        }
+        window.submitDirectBankTransfer = submitDirectBankTransfer;
+
         async function saveNewPurchasePin(e) {
             if (e && e.preventDefault) e.preventDefault();
+            if (typeof isUserLoggedIn === 'function' && !isUserLoggedIn()) {
+                if (typeof openQuickAuthModal === 'function') openQuickAuthModal('Đổi mã PIN bảo mật 6 số');
+                return;
+            }
             const uid = getActiveUserId();
             if (!uid) return;
             const newPin = document.getElementById('bankNewPinInput')?.value.trim() || '';

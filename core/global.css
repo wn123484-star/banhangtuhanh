@@ -1,3 +1,6 @@
+/* [FEAT-HDR-001] Header 3 Tầng Sticky/Fixed, Nút Điểm Danh Lửa 🔥, Nút Đổi Sáng/Tối ☀️/🌙 & Menu Xổ Xuống Không Điểm Mù | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-streak, core/main.js, core/global.css | [LOCKED-DESIGN] */
+/* [FEAT-CAT-002] Linh vật Mèo Lỏng AI Tầng Cao Nhất (z-index: 2147483645), 5 Giống Mèo, 4 Nhóm Accordion (18 Tính Năng), Hoạt Ảnh Ăn Cá / Trà Sữa Khớp Miệng & Săn Deal 4 Chặng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/cat-assistant/command, core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-ACC-009] Trung Tâm Trợ Năng Mù Màu (5 Chế độ CVD), Bảng Xem Trước Màu Sắc Thực Tế Của Các Tab/Nút, Mô Tả Màu Sản Phẩm & Hỗ Trợ Đa Khuyết Tật | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility, services/settings/settings.html, core/global.css | [LOCKED-DESIGN] */
 @import url('/assets/vendor/bootstrap.min.css');
 
 @view-transition {
@@ -5860,6 +5863,323 @@ html[data-theme="dark"] .nvx-checkin-day-card.nvx-checkin-day-claimed {
     background: #10b981 !important;
     color: #052e16 !important;
 }
+
+/* ==========================================================================
+   [FEAT-HDR-001] & [FEAT-CAT-002] KIẾN TRÚC PHÂN TẦNG Z-INDEX 5 LỚP CHUẨN XÁC
+   & KHÓA HEADER 3 TẦNG TRƯỢT CỐ ĐỊNH MƯỢT MÀ TRÊN MỌI TRANG (VER10)
+   ========================================================================== */
+html,
+body {
+    overflow-x: clip !important;
+}
+
+/* Tầng 4 (Header 3 Tầng Cố Định & Menu Xổ Xuống): z-index: 2147483000 - 2147483100 */
+#header-placeholder {
+    position: relative !important;
+    width: 100% !important;
+    display: block !important;
+    z-index: 2147483000 !important;
+    overflow: visible !important;
+}
+
+header.nvidia-header-bar,
+.nv-global-header,
+header#mainHeader,
+.nvx-header-wrapper {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 2147483000 !important;
+    overflow: visible !important;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28) !important;
+}
+
+#nvxHeaderStickySpacer {
+    display: block !important;
+    width: 100% !important;
+    min-height: 122px;
+    pointer-events: none !important;
+    flex-shrink: 0 !important;
+}
+
+.nv-topbar-dropdown-menu,
+.nvx-dropdown-menu {
+    z-index: 2147483100 !important;
+}
+
+/* Tầng 5 (Nội dung trang chính <main>, bộ lọc, thẻ sản phẩm): z-index <= 20 */
+main,
+.nv-product-card,
+.product-card {
+    position: relative;
+    z-index: 2;
+}
+
+/* Tầng 3 (Khung 🐱 Trạm Mèo Lỏng AI & Chat Sàn & Nút Pill góc dưới phải): z-index: 2147483500 */
+#nvMessengerLauncherBar {
+    position: fixed !important;
+    bottom: 14px !important;
+    right: 18px !important;
+    z-index: 2147483500 !important;
+    opacity: 1 !important;
+}
+
+#nvUnifiedHubDock {
+    position: relative !important;
+    z-index: 2147483500 !important;
+    opacity: 1 !important;
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border: 2px solid #10b981 !important;
+    box-shadow: 0 22px 54px rgba(0, 0, 0, 0.72) !important;
+}
+
+html[data-theme="light"] #nvUnifiedHubDock {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border: 2px solid #059669 !important;
+}
+
+#nvUnifiedHubToggleBtn {
+    position: relative !important;
+    z-index: 2147483500 !important;
+    opacity: 1 !important;
+}
+
+/* Tầng 2 (Modal Điểm Danh, Modal Xác Thực Nhanh Quick Auth & Popup): z-index: 2147483600 */
+#nvxDailyCheckinGlobalModal,
+#nvxQuickAuthModal,
+#nvxColorblindPreviewModal,
+#nvGlobalNotifDrawer {
+    position: fixed !important;
+    z-index: 2147483600 !important;
+}
+
+/* Tầng 1 (Cao nhất tuyệt đối — Linh vật Mèo AI Canvas, Đạo cụ Cá/Trà sữa/Hộp quà & Bong bóng thoại): z-index: 2147483645 */
+#nividaLiquidCatCanvas {
+    position: fixed !important;
+    inset: 0 !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    pointer-events: none !important;
+    z-index: 2147483645 !important;
+}
+
+#nividaCatHitbox,
+.nivida-cat-hitbox {
+    position: fixed !important;
+    z-index: 2147483645 !important;
+}
+
+#nividaCatSpeechBubble,
+.nivida-cat-bubble {
+    position: fixed !important;
+    z-index: 2147483645 !important;
+}
+
+/* ==========================================================================
+   [FEAT-CAT-002] 4 NHÓM ACCORDION THU GỌN / MỞ RỘNG (▾) TRONG TAB MÈO AI
+   ========================================================================== */
+.nv-cat-accordion-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 285px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.nv-cat-acc-item {
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 9px;
+    background: rgba(15, 23, 42, 0.92);
+    overflow: hidden;
+}
+
+html[data-theme="light"] .nv-cat-acc-item {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.nv-cat-acc-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 10px;
+    background: rgba(30, 41, 59, 0.95);
+    color: #f8fafc;
+    border: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s ease;
+}
+
+html[data-theme="light"] .nv-cat-acc-header {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.nv-cat-acc-header:hover,
+.nv-cat-acc-item.open .nv-cat-acc-header {
+    background: rgba(16, 185, 129, 0.22);
+    color: #10b981;
+}
+
+html[data-theme="light"] .nv-cat-acc-item.open .nv-cat-acc-header {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.nv-cat-acc-arrow {
+    display: inline-block;
+    transition: transform 0.18s ease;
+    font-size: 0.75rem;
+}
+
+.nv-cat-acc-item.open .nv-cat-acc-arrow {
+    transform: rotate(180deg);
+}
+
+.nv-cat-acc-body {
+    display: none;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+}
+
+.nv-cat-acc-item.open .nv-cat-acc-body {
+    display: flex;
+}
+
+/* ==========================================================================
+   [FEAT-ACC-009] TRUNG TÂM TRỢ NĂNG MÙ MÀU (5 CHẾ ĐỘ CVD) & ĐA KHUYẾT TẬT
+   (Áp dụng filter lên main, footer để giữ nguyên position: fixed của Header & Mèo)
+   ========================================================================== */
+
+/* Chế độ 2: Mù Đỏ - Lục (Deuteranopia / Protanopia) -> Xanh Dương #0284c7 & Cam Vàng #d97706 */
+html[data-cvd-mode="deuteranopia"] {
+    --primary-accent: #0284c7 !important;
+    --nvidia-green: #0284c7 !important;
+    --nv-accent: #0284c7 !important;
+}
+html[data-cvd-mode="deuteranopia"] .btn-nvidia,
+html[data-cvd-mode="deuteranopia"] .bg-nvidia,
+html[data-cvd-mode="deuteranopia"] .bg-success {
+    background-color: #0284c7 !important;
+    border-color: #0369a1 !important;
+    color: #ffffff !important;
+}
+html[data-cvd-mode="deuteranopia"] .text-nvidia,
+html[data-cvd-mode="deuteranopia"] .text-success {
+    color: #38bdf8 !important;
+}
+html[data-cvd-mode="deuteranopia"] .btn-danger,
+html[data-cvd-mode="deuteranopia"] .bg-danger {
+    background-color: #d97706 !important;
+    border-color: #b45309 !important;
+    color: #ffffff !important;
+}
+html[data-cvd-mode="deuteranopia"] .text-danger {
+    color: #fbbf24 !important;
+}
+
+/* Chế độ 3: Mù Xanh - Vàng (Tritanopia) -> Xanh Ngọc Đậm #0d9488 & Đỏ Hồng #e11d48 */
+html[data-cvd-mode="tritanopia"] {
+    --primary-accent: #0d9488 !important;
+    --nvidia-green: #0d9488 !important;
+    --nv-accent: #0d9488 !important;
+}
+html[data-cvd-mode="tritanopia"] .btn-nvidia,
+html[data-cvd-mode="tritanopia"] .bg-nvidia,
+html[data-cvd-mode="tritanopia"] .bg-success {
+    background-color: #0d9488 !important;
+    border-color: #0f766e !important;
+    color: #ffffff !important;
+}
+html[data-cvd-mode="tritanopia"] .text-nvidia,
+html[data-cvd-mode="tritanopia"] .text-success {
+    color: #2dd4bf !important;
+}
+html[data-cvd-mode="tritanopia"] .btn-warning,
+html[data-cvd-mode="tritanopia"] .bg-warning,
+html[data-cvd-mode="tritanopia"] .btn-danger,
+html[data-cvd-mode="tritanopia"] .bg-danger {
+    background-color: #e11d48 !important;
+    border-color: #be123c !important;
+    color: #ffffff !important;
+}
+
+/* Chế độ 4: Nhãn Ký Hiệu Trực Quan ([▲ TĂNG +] / [▼ GIẢM -] / [✔ HỢP LỆ] / [✖ CẢNH BÁO]) */
+html[data-cvd-mode="symbols"] .text-success::before,
+html[data-cvd-mode="symbols"] .badge.bg-success::before {
+    content: "[▲+] ";
+    font-weight: 800;
+}
+html[data-cvd-mode="symbols"] .text-danger::before,
+html[data-cvd-mode="symbols"] .badge.bg-danger::before {
+    content: "[▼-] ";
+    font-weight: 800;
+}
+
+/* Chế độ 5: Tương Phản Siêu Cao Chuẩn WCAG AAA */
+html[data-cvd-mode="high_contrast_aaa"] body,
+html[data-cvd-mode="high_contrast_aaa"] main,
+html[data-cvd-mode="high_contrast_aaa"] .nv-adaptive-card,
+html[data-cvd-mode="high_contrast_aaa"] .card {
+    background: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #facc15 !important;
+}
+html[data-cvd-mode="high_contrast_aaa"] .btn-nvidia,
+html[data-cvd-mode="high_contrast_aaa"] .btn-primary {
+    background: #facc15 !important;
+    color: #000000 !important;
+    border: 2px solid #ffffff !important;
+    font-weight: 900 !important;
+}
+
+/* Nút Bấm Lớn Chống Run Tay (Motor Impairment Mode) */
+body.nv-acc-large-buttons button,
+body.nv-acc-large-buttons .btn,
+body.nv-acc-large-buttons input,
+body.nv-acc-large-buttons select {
+    min-height: 44px !important;
+    font-size: 0.96rem !important;
+}
+
+/* Viền Sáng Nhấp Nháy Cho Người Khiếm Thính (Deaf Visual Flash Alert) */
+@keyframes nvDeafVisualFlash {
+    0%, 100% { box-shadow: inset 0 0 0 0 rgba(16, 185, 129, 0); }
+    50% { box-shadow: inset 0 0 0 6px #10b981, inset 0 0 36px rgba(250, 204, 21, 0.85); }
+}
+body.nv-acc-visual-flash-now {
+    animation: nvDeafVisualFlash 0.65s ease-in-out 2 !important;
+}
+
+/* Thước Đọc Tập Trung (Reading Focus Ruler) */
+#nvxReadingFocusRuler {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 42px !important;
+    background: rgba(250, 204, 21, 0.16) !important;
+    border-top: 2px solid #facc15 !important;
+    border-bottom: 2px solid #10b981 !important;
+    pointer-events: none !important;
+    z-index: 2147483400 !important;
+    display: none;
+}
+body.nv-acc-reading-ruler #nvxReadingFocusRuler {
+    display: block !important;
+}
+
 
 
 

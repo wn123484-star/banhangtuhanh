@@ -138,3 +138,30 @@ Tài liệu này chia toàn bộ khối lượng công việc thành **Chặng 0
 - [x] **8.2. Nhiệm vụ 5 — Rà soát tích hợp AI toàn sàn, Hoàn thiện chu trình End-to-End & Đẩy nhánh Backup cuối cùng:**
   - [x] Rà soát & xác thực đủ 6 điểm chạm AI trên toàn sàn (Trợ lý Mèo AI điều khiển web, Tìm kiếm giọng nói & gợi ý từ khóa AI, Trạm Build PC AI, Phân tích xu hướng giá & khuyến nghị AI, Tòa án Trọng tài AI, Đánh giá rủi ro bảo mật Admin).
   - [x] Kiểm thử khép kín chu trình End-to-End & chạy Đội Bot QA đạt 100% HTTP 200 OK (0 lỗi), đẩy nhánh `backup-stage-8-cat-ai-final` và đồng bộ thẳng vào nhánh `main`.
+
+---
+
+## GIAI ĐOẠN 9 & 10: HIẾN PHÁP KHÓA THIẾT KẾ `[FEAT-001..010]`, ĐỒNG BỘ 100% SQLITE, HEADER 3 TẦNG CỐ ĐỊNH, MÈO AI CHUẨN MIỆNG, RBAC CHẶN CHUYỂN KHOẢN GUEST, 5 CHẾ ĐỘ MÙ MÀU CVD, 3 THUẬT TOÁN LÕI & ĐỘI QUÂN 9 BOT QA (`ver10`)
+
+- [x] **10.1. Nhiệm vụ 1 — Cập nhật Hiến pháp `AI_RULES.md`, Đánh mã `[FEAT-001..010]` & Kiểm toán Độ thật SQLite (`FEATURE_ARCHITECTURE_AND_AUDIT.md`):**
+  - [x] Bổ sung **"DESIGN & FEATURE FREEZE CONSTITUTION"** vào đầu `AI_RULES.md`, khóa chặt các thiết kế `[LOCKED-DESIGN]`.
+  - [x] Gắn đầy đủ 10 mã tính năng (`[FEAT-HDR-001]` đến `[FEAT-ADM-010]`) vào `app.py`, `core/main.js`, `core/cat_widget.js`, `core/global.css` và các tệp `services/*`.
+  - [x] Thay thế toàn bộ chỗ chỉ lưu `localStorage` bằng API lưu trữ thực vào SQLite (`GET/POST /api/compare/wishlist`, `GET/POST /api/settings/accessibility`, bộ lọc giao dịch Ví trên `bank.html`, tạo đơn hàng thật khi chấp nhận báo giá B2B RFQ) và xuất bản báo cáo `FEATURE_ARCHITECTURE_AND_AUDIT.md`.
+- [x] **10.2. Nhiệm vụ 2 — Khóa Kiến Trúc Header 3 Tầng Cố Định Khi Cuộn & 5 Lớp Z-Index Toàn Sàn (`[FEAT-HDR-001]`):**
+  - [x] Khóa `header#mainHeader.nvx-header-wrapper` ở `position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 2147483000 !important; overflow: visible !important;` kết hợp `#nvxHeaderStickySpacer` và `ResizeObserver` tự động đo chiều cao thực tế trên cả 25 trang.
+  - [x] Khóa 5 tầng `z-index` chuẩn xác: Tầng 1 Mèo AI (`2147483645`), Tầng 2 Modal Khẩn Cấp (`2147483600`), Tầng 3 Messenger/Hub (`2147483500`), Tầng 4 Header & Dropdown (`2147483000` / `2147483100`), Tầng 5 Nội dung `<main>` (`<= 20`).
+- [x] **10.3. Nhiệm vụ 3 — Sửa Căn Chỉnh Miệng Mèo AI (Ăn Cá & Uống Trà Sữa) & Khôi Phục 4 Nhóm Accordion (`[FEAT-CAT-002]`):**
+  - [x] Xóa vạch ngang cắt qua cằm Mèo AI, vẽ đường cằm bo tròn mượt và vòng cổ cong mềm dưới cổ (`quadraticCurveTo`).
+  - [x] Tính toán chính xác tọa độ miệng `(mouthX = headCenterX, mouthY = headCenterY + headRadius * 0.38)` để đầu con cá (`performEatFishAnimation`) và đầu ống hút trà sữa (`performDrinkBobaAnimation`) khớp 100% vào miệng Mèo.
+  - [x] Khôi phục đầy đủ 18 nút tính năng chia thành **4 Nhóm Accordion Đóng/Mở (`▾`)** trong `#msgHubPane_cat`.
+- [x] **10.4. Nhiệm vụ 4 — Kiểm Toán Phân Quyền RBAC 25 Trang & Bắt Buộc Đăng Nhập Trước Khi Chuyển Khoản (`[FEAT-AUTH-003]` & `[FEAT-PAY-004]`):**
+  - [x] Khi chưa đăng nhập (`!isUserLoggedIn()`): Ẩn số dư nhạy cảm (`🔒 Đăng nhập để xem số dư`), bật hộp thoại `openQuickAuthModal()` khi bấm Chuyển tiền / Nạp / Rút / Xác nhận QR / Đấu giá / RFQ, và chặn ở Backend `/api/mobile/wallet-action` với mã `HTTP 401 (require_login: True)`.
+- [x] **10.5. Nhiệm vụ 5 — Hệ Thống Hỗ Trợ Người Mù Màu (5 Chế Độ CVD), Bảng Xem Trước Màu Thực Tế & Mô Tả Màu Sản Phẩm (`[FEAT-ACC-009]`):**
+  - [x] Xây dựng **5 Chế độ Bảng màu CVD** (*Chuẩn*, *Mù Đỏ-Lục Deuteranopia/Protanopia*, *Mù Xanh-Vàng Tritanopia*, *Nhãn Ký Hiệu `[▲ TĂNG / ▼ GIẢM]`*, *Tương Phản Siêu Cao WCAG AAA*) trên cả `settings.html`, `mobile-app.html` và bảng điều khiển Mèo AI.
+  - [x] Tích hợp **Bảng Xem Trước Màu Sắc Thực Tế (Live UI Color Previewer)** hiển thị rõ tên màu tiếng Việt, mã Hex, tỷ lệ tương phản WCAG và **Mèo AI đọc & mô tả màu sắc ngoại hình sản phẩm**, kèm Nút bấm lớn 48px chống run tay, Viền sáng nhấp nháy cho người khiếm thính & Thước đọc tập trung.
+- [x] **10.6. Nhiệm vụ 6 — Nâng Cấp 3 Thuật Toán Cốt Lõi & Bảng Điều Hành Admin Mission Control (`[FEAT-MKT-006]` & `[FEAT-ADM-010]`):**
+  - [x] **Thuật toán 1 (Hybrid Bayesian Recommendation):** `GET /api/algorithms/bayesian-recommendations` chấm điểm sản phẩm kết hợp Bayesian Weighted Rating, tốc độ bán và mức giảm giá kèm huy hiệu giải thích.
+  - [x] **Thuật toán 2 (Market Quant Indicators):** Tích hợp **EMA-7**, **Dải Bollinger Bands (Upper/Middle/Lower 2σ)** và **Chỉ số RSI(14)** kèm tín hiệu `RSI < 35: VÙNG MUA TỐT` trên `price-tracker.html` & `price-tracker.js`.
+  - [x] **Thuật toán 3 (Real-Time Fraud Risk Scoring 0-100) & Admin Mission Control:** `GET /api/admin-dispute/fraud-risk-radar` và `POST /api/admin-dispute/mission-control/action` (Khóa/Mở khóa User, Cấp tiền Ví, Kiểm tra toàn vẹn SQLite) trên `admin-center.html`.
+- [x] **10.7. Nhiệm vụ 7 & 8 — Nâng Cấp Đội Quân 9 Bot Kiểm Thử Tự Động (`QA Bot Squad V11.0`) Đạt 100% PASS & Đẩy Lên GitHub (`ver10`):**
+  - [x] Nâng cấp `_deep_synchronized_qa_bot_audit()` thành **Đội Quân 9 Bot QA (`V11.0-9-BOTS`)** kiểm tra toàn diện 25 trang, RBAC, 5 chế độ Mù màu CVD, 3 Thuật toán và 10 mã `[FEAT-xxx]` đạt 100% PASS (0 lỗi) và đồng bộ lên GitHub.

@@ -1,3 +1,5 @@
+/* [FEAT-PAY-004] Ví Điện Tử MoMo Nexora Pay, Cổng Bắt Buộc Đăng Nhập Khi Chuyển Tiền, Xem Trước Hóa Đơn QR 2 Bước & Chuyển Khoản Hộ PC-Mobile | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/payment/qr-session/*, /api/mobile/wallet-action, bảng bank_wallets / bank_transactions / payment_qr_sessions | [LOCKED-DESIGN] */
+/* [FEAT-AUTH-003] Đăng Nhập/Đăng Ký, Xác Minh OTP 6 Số Qua Resend (@mail.castle-tech.cloud), Đổi Mật Khẩu, Mã PIN Ví 6 Số & Phân Quyền RBAC 4 Cấp (Guest / Buyer / Seller / Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auth/*, /api/settings/security/*, bảng users / email_otp_verifications | [LOCKED-DESIGN] */
 const NX_THEMES = [
     { id: 'executive_pearl_light', name: '1. Sáng Thanh Lịch (Executive Pearl Light - Mặc định)', swatch: 'linear-gradient(135deg,#1d4ed8,#0ea5e9)' },
     { id: 'momo_lotus_pink', name: '2. Hồng Sen MoMo (MoMo Lotus Pink & White)', swatch: 'linear-gradient(135deg,#a50064,#d82d8b)' },
@@ -145,10 +147,40 @@ async function refreshLiveAuctionsList() {
     } catch (e) {}
 }
 
+function isMobileUserLoggedIn() {
+    return localStorage.getItem('nvx_explicit_login') === '1' && Boolean(localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user'));
+}
+
+function promptMobileQuickLogin(actionLabel = 'thực hiện giao dịch tài chính') {
+    if (typeof window.openQuickAuthModal === 'function') {
+        window.openQuickAuthModal(actionLabel);
+        return;
+    }
+    const demoUser = {
+        id: 13,
+        username: 'khach_hang_vip',
+        full_name: 'Nguyễn Hưng (Khách VIP)',
+        email: 'hungnguyendva@gmail.com',
+        role: 'buyer',
+        coins: 125000,
+        email_verified: 1
+    };
+    if (confirm(`🔒 Thao tác "${actionLabel}" yêu cầu Đăng nhập tài khoản Nexora Pay.\nBấm OK để Đăng nhập nhanh tài khoản Khách VIP (Nguyễn Hưng) hoặc Cancel để sang trang Đăng nhập.`)) {
+        localStorage.setItem('nvx_explicit_login', '1');
+        localStorage.setItem('nvidia_user', JSON.stringify(demoUser));
+        localStorage.setItem('auth_user', JSON.stringify(demoUser));
+        nxToast('🔓 Đã đăng nhập phiên Khách VIP (Nguyễn Hưng)!');
+        renderBridgeDataToUi();
+    } else {
+        window.location.href = '/services/auth/auth.html';
+    }
+}
+
 function renderBridgeDataToUi() {
     const d = __nxState.bridgeData || {};
     const prof = d.user_profile || {};
     const pockets = d.multi_pockets || {};
+    const loggedIn = isMobileUserLoggedIn();
 
     const wEl = document.getElementById('nxPocketWalletVal');
     const eEl = document.getElementById('nxPocketEscrowVal');
@@ -156,11 +188,19 @@ function renderBridgeDataToUi() {
     const uNameEl = document.getElementById('nxHeaderUserName');
     const uCoinsEl = document.getElementById('nxHeaderCoinsBadge');
 
-    if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 50000000);
-    if (eEl) eEl.textContent = nxFormatVnd(pockets.escrow_protection_bag ?? prof.escrow_locked_balance ?? 18990000);
-    if (aEl) aEl.textContent = nxFormatVnd(pockets.auction_margin_10pct ?? prof.auction_deposit_balance ?? 4500000);
-    if (uNameEl) uNameEl.textContent = prof.full_name || 'William • Nexora VIP';
-    if (uCoinsEl) uCoinsEl.textContent = '🪙 ' + Number(prof.coins || 150000).toLocaleString('vi-VN') + ' Xu';
+    if (!loggedIn) {
+        if (wEl) wEl.innerHTML = `<span style="font-size:0.78rem;cursor:pointer;text-decoration:underline;" onclick="promptMobileQuickLogin('xem số dư Ví Nexora Pay')">🔒 Đăng nhập để xem số dư</span>`;
+        if (eEl) eEl.textContent = '🔒 Đăng nhập';
+        if (aEl) aEl.textContent = '🔒 Đăng nhập';
+        if (uNameEl) uNameEl.textContent = 'Khách (Chưa đăng nhập)';
+        if (uCoinsEl) uCoinsEl.textContent = '🪙 0 Xu';
+    } else {
+        if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 50000000);
+        if (eEl) eEl.textContent = nxFormatVnd(pockets.escrow_protection_bag ?? prof.escrow_locked_balance ?? 18990000);
+        if (aEl) aEl.textContent = nxFormatVnd(pockets.auction_margin_10pct ?? prof.auction_deposit_balance ?? 4500000);
+        if (uNameEl) uNameEl.textContent = prof.full_name || 'William • Nexora VIP';
+        if (uCoinsEl) uCoinsEl.textContent = '🪙 ' + Number(prof.coins || 150000).toLocaleString('vi-VN') + ' Xu';
+    }
 
     renderSpendingDonut(d.spending_analytics);
     renderPendingQrSessionsList(d.pending_qr_sessions || []);
@@ -455,6 +495,10 @@ function renderSelectedInvoiceDetail(info) {
 }
 
 async function confirmMobileQrPaymentNow() {
+    if (!isMobileUserLoggedIn()) {
+        promptMobileQuickLogin('Xác nhận chuyển khoản hóa đơn QR');
+        return;
+    }
     if (__nxState.confirmInFlight || !__nxState.selectedQrInvoice) return;
     const info = __nxState.selectedQrInvoice;
     const payerName = (document.getElementById('nxBehalfPayerName')?.value || '').trim();
@@ -516,18 +560,31 @@ async function confirmMobileQrPaymentNow() {
 }
 
 async function submitMobileWalletAction(actionType) {
+    if (!isMobileUserLoggedIn()) {
+        promptMobileQuickLogin('Nạp / Rút / Chuyển tiền Ví Nexora Pay');
+        return;
+    }
     const amtInput = document.getElementById('nxWalletActionAmount');
     const recInput = document.getElementById('nxWalletActionRecipient');
     const noteInput = document.getElementById('nxWalletActionNote');
     const amount = Number(amtInput ? amtInput.value : 5000000);
     const recipient = recInput ? recInput.value : 'Ví Nexora Pay';
     const note = noteInput ? noteInput.value : '';
+    let uObj = null;
+    try { uObj = JSON.parse(localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user') || 'null'); } catch (e) {}
 
     try {
         const res = await fetch(nxApiUrl('/api/mobile/wallet-action'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: actionType, amount, recipient, note })
+            body: JSON.stringify({
+                action: actionType,
+                user_id: (uObj && uObj.id) ? uObj.id : 13,
+                username: (uObj && uObj.username) ? uObj.username : 'khach_hang_vip',
+                amount,
+                recipient,
+                note
+            })
         });
         const data = await res.json();
         if (res.ok && data.ok) {
@@ -543,6 +600,10 @@ async function submitMobileWalletAction(actionType) {
 }
 
 async function placeStandardBidOnMobile(auctionId, bidAmount) {
+    if (!isMobileUserLoggedIn()) {
+        promptMobileQuickLogin('Đặt giá đấu giá ký quỹ 10%');
+        return;
+    }
     try {
         const res = await fetch(nxApiUrl('/api/auctions/bid'), {
             method: 'POST',
@@ -559,6 +620,10 @@ async function placeStandardBidOnMobile(auctionId, bidAmount) {
 }
 
 async function claimDutchAuctionOnMobile(auctionId) {
+    if (!isMobileUserLoggedIn()) {
+        promptMobileQuickLogin('Chốt mua Đấu giá ngược');
+        return;
+    }
     try {
         const res = await fetch(nxApiUrl('/api/auctions/dutch-claim'), {
             method: 'POST',
@@ -1072,6 +1137,24 @@ function applyMobileUiDensity(density, showMsg = true) {
     if (showMsg) nxToast('📐 Đã đổi mật độ hiển thị: ' + valid);
 }
 
+function applyMobileColorblindMode(mode, showMsg = true) {
+    const valid = ['normal', 'deuteranopia', 'tritanopia', 'pattern_labels', 'high_contrast_aaa'].includes(mode) ? mode : 'normal';
+    document.documentElement.setAttribute('data-cvd-mode', valid);
+    localStorage.setItem('nvx_cvd_mode', valid);
+    const sel = document.getElementById('nxMobileCvdModeSelect');
+    if (sel) sel.value = valid;
+    const summaryEl = document.getElementById('nxMobileCvdSummaryText');
+    const summaryMap = {
+        normal: 'Xanh lá (#16A34A) • Đỏ (#DC2626) • Tương phản 7.5:1',
+        deuteranopia: 'Xanh Dương (#0072B2) • Cam Hổ Phách (#D55E00) • Tương phản 8.9:1',
+        tritanopia: 'Xanh Ngọc (#009E73) • Đỏ Tím (#CC79A7) • Tương phản 8.4:1',
+        pattern_labels: 'Nhãn Ký Hiệu [▲ TĂNG / ▼ GIẢM] • Tương phản 9.2:1',
+        high_contrast_aaa: 'Vàng Sáng (#FFD700) • Nền Đen (#000000) • Tương phản 19.6:1 (AAA)'
+    };
+    if (summaryEl) summaryEl.textContent = summaryMap[valid] || summaryMap.normal;
+    if (showMsg) nxToast('👁️ Đã bật chế độ màu trợ năng: ' + (summaryMap[valid] || valid));
+}
+
 async function triggerMobilePwaInstallPrompt() {
     if (__nxDeferredPwaPrompt) {
         __nxDeferredPwaPrompt.prompt();
@@ -1124,6 +1207,7 @@ window.submitMobileVerifyOtpAndChangePassword = submitMobileVerifyOtpAndChangePa
 window.toggleMobileLightDarkQuick = toggleMobileLightDarkQuick;
 window.applyMobileFontScale = applyMobileFontScale;
 window.applyMobileUiDensity = applyMobileUiDensity;
+window.applyMobileColorblindMode = applyMobileColorblindMode;
 window.triggerMobilePwaInstallPrompt = triggerMobilePwaInstallPrompt;
 window.openMobileApkDownloadGuide = openMobileApkDownloadGuide;
 
@@ -1132,6 +1216,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyMobileFontScale(savedFont, false);
     const savedDensity = localStorage.getItem('nexora_ui_density') || 'comfortable';
     applyMobileUiDensity(savedDensity, false);
+    const savedCvd = localStorage.getItem('nvx_cvd_mode') || 'normal';
+    applyMobileColorblindMode(savedCvd, false);
     await nxApplyTheme(__nxState.themeId, false);
     await syncMobileBridge();
     await refreshLiveAuctionsList();

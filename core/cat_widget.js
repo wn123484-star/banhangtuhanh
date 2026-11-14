@@ -1,3 +1,4 @@
+/* [FEAT-CAT-002] Linh vật Mèo Lỏng AI Tầng Cao Nhất (z-index: 2147483645), 5 Giống Mèo, 4 Nhóm Accordion (18 Tính Năng), Hoạt Ảnh Ăn Cá / Trà Sữa Khớp Miệng & Săn Deal 4 Chặng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/cat-assistant/command, core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
 (function () {
     if (window.__nividaLiquidCatV25) return;
     window.__nividaLiquidCatV25 = true;
@@ -260,14 +261,14 @@
                     width: 100vw !important;
                     height: 100vh !important;
                     pointer-events: none !important;
-                    z-index: 10040 !important;
+                    z-index: 2147483645 !important;
                 }
                 .nivida-cat-hitbox {
-                    position: fixed;
+                    position: fixed !important;
                     width: 104px;
                     height: 84px;
                     cursor: grab;
-                    z-index: 10045;
+                    z-index: 2147483645 !important;
                     border-radius: 50%;
                     user-select: none;
                 }
@@ -275,7 +276,7 @@
                     cursor: grabbing;
                 }
                 .nivida-cat-bubble {
-                    position: fixed;
+                    position: fixed !important;
                     white-space: nowrap;
                     max-width: 340px;
                     background: rgb(15, 23, 42);
@@ -287,7 +288,7 @@
                     font-weight: 700;
                     line-height: 1.3;
                     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-                    z-index: 10048;
+                    z-index: 2147483645 !important;
                     pointer-events: none;
                     transition: opacity 0.16s ease;
                 }
@@ -320,18 +321,25 @@
             `;
             document.head.appendChild(styleEl);
 
-            const wrap = document.createElement('div');
-            wrap.innerHTML = `
-                <canvas id="nividaLiquidCatCanvas"></canvas>
-                <div id="nividaCatHitbox" class="nivida-cat-hitbox" title="Bấm vào Mèo hoặc Kéo thả Mèo lên tận thanh Header / bất kỳ đâu!"></div>
-                <div id="nividaCatSpeechBubble" class="nivida-cat-bubble d-none"></div>
-            `;
-            document.body.appendChild(wrap);
+            const canvasEl = document.createElement('canvas');
+            canvasEl.id = 'nividaLiquidCatCanvas';
+            document.body.appendChild(canvasEl);
 
-            this.canvas = document.getElementById('nividaLiquidCatCanvas');
+            const hitboxEl = document.createElement('div');
+            hitboxEl.id = 'nividaCatHitbox';
+            hitboxEl.className = 'nivida-cat-hitbox';
+            hitboxEl.title = 'Bấm vào Mèo hoặc Kéo thả Mèo lên tận thanh Header / bất kỳ đâu!';
+            document.body.appendChild(hitboxEl);
+
+            const bubbleEl = document.createElement('div');
+            bubbleEl.id = 'nividaCatSpeechBubble';
+            bubbleEl.className = 'nivida-cat-bubble d-none';
+            document.body.appendChild(bubbleEl);
+
+            this.canvas = canvasEl;
             this.ctx = this.canvas.getContext('2d');
-            this.hitbox = document.getElementById('nividaCatHitbox');
-            this.bubbleEl = document.getElementById('nividaCatSpeechBubble');
+            this.hitbox = hitboxEl;
+            this.bubbleEl = bubbleEl;
         }
 
         resizeCanvas() {
@@ -440,26 +448,32 @@
             this.showBubble('✨ Hô biến! Đã đổi giao diện!', 2500, true);
         }
 
-        /* 4.4A: HOẠT ẢNH ĂN CÁ THẬT TRÊN CANVAS (CÁ -> NHAI 3 NHÁT -> XƯƠNG CÁ 🦴 + TIM 💕) */
+        /* 4.4A: HOẠT ẢNH ĂN CÁ THẬT TRÊN CANVAS (CÁ CHẠM ĐÚNG MIỆNG (mouthX, mouthY) -> NHAI 3 NHÁT NGẮN DẦN 1/3 -> XƯƠNG CÁ 🦴 + TIM 💕) */
         async performEatFishAnimation() {
             if (this.choreographyBusy) return;
             this.choreographyBusy = true;
             this.hideBubbleImmediate();
 
-            this.setCatState('eat_fish_feast', 3.0, 'starry_hyped_grin', false);
-            const scales = [1.0, 0.70, 0.42];
+            this.setCatState('eat_fish_feast', 3.2, 'starry_hyped_grin', false);
+            const scales = [1.0, 0.67, 0.34];
             for (let bite = 0; bite < 3; bite++) {
-                this.foodAnim = { type: 'fish', stage: bite, scale: scales[bite] };
+                this.foodAnim = {
+                    type: 'fish',
+                    stage: bite,
+                    scale: scales[bite],
+                    lenRatio: scales[bite],
+                    blushBoost: 1.4
+                };
                 this.softBody.triggerSquish(1.22, 0.80);
-                this.spawnParticle('crumb');
+                this.spawnMouthParticle('crumb');
                 await sleepMs(480);
             }
 
-            this.foodAnim = { type: 'fish', stage: 3, scale: 1.0 };
+            this.foodAnim = { type: 'fish', stage: 3, scale: 1.0, lenRatio: 1.0, blushBoost: 1.5 };
             this.softBody.triggerSquish(1.28, 0.75);
-            this.spawnParticle('heart');
+            this.spawnMouthParticle('heart');
             this.spawnParticle('sparkle');
-            await sleepMs(650);
+            await sleepMs(680);
 
             this.foodAnim = null;
             this.setCatState('sitting', 4.0, 'content_purr', true);
@@ -467,26 +481,28 @@
             this.showBubble('🐟 Cá nướng thơm ngon quá!', 2500, true);
         }
 
-        /* 4.4B: HOẠT ẢNH UỐNG TRÀ SỮA TRÂN CHÂU THẬT TRÊN CANVAS (HÚT CẠN LY + ĐỎ MÁ HỒNG) */
+        /* 4.4B: HOẠT ẢNH UỐNG TRÀ SỮA TRÂN CHÂU THẬT TRÊN CANVAS (ĐẦU ỐNG HÚT CẮM THẲNG VÀO (mouthX, mouthY), TRÂN CHÂU CHẠY LÊN MIỆNG, NƯỚC VƠI DẦN) */
         async performDrinkBobaAnimation() {
             if (this.choreographyBusy) return;
             this.choreographyBusy = true;
             this.hideBubbleImmediate();
 
-            this.setCatState('drink_boba_tea', 3.2, 'lovestruck_sparkle', false);
+            this.setCatState('drink_boba_tea', 3.4, 'lovestruck_sparkle', false);
             const totalSteps = 18;
             for (let s = 0; s <= totalSteps; s++) {
-                const ratio = 1.0 - (s / totalSteps) * 0.86;
-                const pearlsLeft = Math.max(1, Math.ceil((1.0 - s / totalSteps) * 6));
+                const progress = s / totalSteps;
+                const ratio = 1.0 - progress * 0.86;
+                const pearlsLeft = Math.max(1, Math.ceil((1.0 - progress) * 6));
                 this.foodAnim = {
                     type: 'boba',
                     level: ratio,
                     pearls: pearlsLeft,
+                    sipProgress: progress,
                     blushBoost: 1.6
                 };
                 if (s % 5 === 0) {
                     this.softBody.triggerSquish(1.18, 0.84);
-                    this.spawnParticle('heart');
+                    this.spawnMouthParticle('heart');
                 }
                 await sleepMs(115);
             }
@@ -495,6 +511,29 @@
             this.setCatState('sitting', 4.0, 'content_purr', true);
             this.choreographyBusy = false;
             this.showBubble('🧋 Trà sữa full topping đã quá!', 2500, true);
+        }
+
+        spawnMouthParticle(type) {
+            const symMap = {
+                heart: '💕', crumb: '✨', star: '⭐', sparkle: '✨'
+            };
+            const dir = this.direction || -1;
+            const scX = this.softBody.smoothScaleX || 1;
+            const scY = this.softBody.smoothScaleY || 1;
+            const hx = 21 * dir * scX;
+            const hy = -17 * scY;
+            const mX = this.softBody.x + hx;
+            const mY = this.softBody.y + hy + 19 * 0.38;
+            for (let i = 0; i < 3; i++) {
+                this.particles.push({
+                    sym: symMap[type] || '✨',
+                    x: mX + (Math.random() * 14 - 7),
+                    y: mY + (Math.random() * 8 - 4),
+                    vx: (Math.random() * 44 - 22),
+                    vy: -36 - Math.random() * 26,
+                    life: 0.95
+                });
+            }
         }
 
         async performLoafBreadAnimation() {
@@ -593,6 +632,49 @@
             this.spawnParticle('dust');
             await this.moveToPointAsync(pt.x, pt.y, 'jump_starfish_soar', 'pure_joy_beam', 480);
             this.showBubble('🏃 Đã phóng tới vị trí mới!', 2500, true);
+        }
+
+        async goToRestingSpot() {
+            this.hideBubbleImmediate();
+            this.surfaceMode = 'floor';
+            const rx = Math.round(window.innerWidth * 0.68);
+            const ry = this.floorY;
+            this.softBody.triggerSquish(0.92, 1.15);
+            await this.moveToPointAsync(rx, ry, 'walking', 'content_purr', 460);
+            this.setCatState('sitting', 5.0, 'content_purr', true);
+            this.showBubble('🏠 Mèo đã về chỗ nghỉ ngơi!', 2500, true);
+        }
+
+        async huntSuperSaleDeal() {
+            return this.runSearchAndCartChoreography('RTX 4070 Super', null, '🎁 Đã gắp Siêu Sale vào giỏ!');
+        }
+
+        async openColorblindPreviewFromCat() {
+            this.hideBubbleImmediate();
+            this.softBody.triggerSquish(1.28, 0.74);
+            this.spawnDomMagicSparklesAt(this.softBody.x, this.softBody.y);
+            if (typeof window.openColorblindPreviewModal === 'function') {
+                window.openColorblindPreviewModal();
+            }
+            this.showBubble('♿ Đã mở Bảng Xem Trước Màu Trợ Năng!', 2500, true);
+        }
+
+        async inspectProductColorsForAccessibility() {
+            this.hideBubbleImmediate();
+            const firstCard = document.querySelector('#productGrid .nv-product-card, #productGrid .product-card, .product-card, main .card');
+            if (firstCard) {
+                await this.climbToElementAndCastSpell(firstCard, '🎨 Đã phân tích màu sắc & độ tương phản sản phẩm!', () => {
+                    if (typeof window.describeVisibleProductColorByCat === 'function') {
+                        window.describeVisibleProductColorByCat(firstCard);
+                    }
+                });
+            } else {
+                this.spawnDomMagicSparklesAt(this.softBody.x, this.softBody.y);
+                if (typeof window.describeVisibleProductColorByCat === 'function') {
+                    window.describeVisibleProductColorByCat(null);
+                }
+                this.showBubble('🎨 Đã đọc mô tả màu sắc sản phẩm!', 2500, true);
+            }
         }
 
         moveToPointAsync(tx, ty, stateName = 'climb_spider_scramble', expr = 'matrix_code_eyes', speed = 440) {
@@ -1376,18 +1458,59 @@
                 ctx.restore();
             });
 
-            /* Khuôn mặt */
+            /* Khuôn mặt & Cằm Mèo tròn mượt (TUYỆT ĐỐI KHÔNG vẽ thanh ngang cắt qua cằm) */
             const isChewing = Boolean(this.foodAnim || st.includes('eat') || st.includes('boba'));
-            const chewPuff = isChewing ? Math.abs(Math.sin(t * 16)) * 3.8 : 0;
+            const chewPuff = isChewing ? Math.abs(Math.sin(t * 14)) * 3.6 : 0;
+            const headCenterX = 0;
+            const headCenterY = 0;
+            const headRadius = 19;
+            const mouthX = headCenterX;
+            const mouthY = headCenterY + headRadius * 0.38;
+
+            /* Vòng cổ / nơ mềm mại nằm thấp hẳn dưới cổ (y = 20..23), không bao giờ cắt ngang cằm hay miệng */
+            if (b.accessory === 'bowtie') {
+                ctx.save();
+                ctx.translate(0, 21);
+                ctx.fillStyle = '#ef4444';
+                ctx.strokeStyle = '#7f1d1d';
+                ctx.lineWidth = 1.3;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-7, -3.8);
+                ctx.lineTo(-7, 3.8);
+                ctx.closePath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(7, -3.8);
+                ctx.lineTo(7, 3.8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            } else if (b.accessory === 'bell' || b.accessory === 'cyber_collar') {
+                ctx.save();
+                ctx.strokeStyle = b.accessory === 'cyber_collar' ? '#10b981' : '#f59e0b';
+                ctx.lineWidth = 2.6;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(-11, 18.5);
+                ctx.quadraticCurveTo(0, 22.5, 11, 18.5);
+                ctx.stroke();
+                ctx.fillStyle = b.accessory === 'cyber_collar' ? '#34d399' : '#facc15';
+                ctx.beginPath();
+                ctx.arc(0, 21.5, 3.2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
             const headPath = new Path2D();
-            headPath.ellipse(0, 0, 23 + chewPuff, 19, 0, 0, Math.PI * 2);
+            headPath.ellipse(headCenterX, headCenterY, 23 + chewPuff, headRadius, 0, 0, Math.PI * 2);
             ctx.fillStyle = b.body;
             ctx.fill(headPath);
             ctx.lineWidth = 4.0;
             ctx.strokeStyle = b.stroke;
             ctx.stroke(headPath);
 
-            /* Phụ kiện đặc trưng theo từng giống Mèo */
+            /* Vương miện trên đỉnh đầu cho Mèo Cam Hoàng Thượng */
             if (b.accessory === 'crown') {
                 ctx.save();
                 ctx.translate(0, -20);
@@ -1405,43 +1528,6 @@
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
-                ctx.restore();
-            } else if (b.accessory === 'bowtie') {
-                ctx.save();
-                ctx.translate(0, 17);
-                ctx.fillStyle = '#ef4444';
-                ctx.strokeStyle = '#7f1d1d';
-                ctx.lineWidth = 1.4;
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(-8, -5);
-                ctx.lineTo(-8, 5);
-                ctx.closePath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(8, -5);
-                ctx.lineTo(8, 5);
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
-                ctx.restore();
-            } else if (b.accessory === 'bell') {
-                ctx.save();
-                ctx.translate(0, 17);
-                ctx.fillStyle = '#facc15';
-                ctx.strokeStyle = '#92400e';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.arc(0, 0, 4.2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                ctx.restore();
-            } else if (b.accessory === 'cyber_collar') {
-                ctx.save();
-                ctx.translate(0, 16);
-                ctx.fillStyle = '#10b981';
-                ctx.beginPath();
-                ctx.roundRect(-10, -2, 20, 4.5, 2);
-                ctx.fill();
                 ctx.restore();
             }
 
@@ -1494,31 +1580,57 @@
                 });
             }
 
-            /* Má hồng (Đỏ hồng rực rỡ hơn khi uống trà sữa / ăn cá) */
+            /* Má hồng (Phồng nhịp nhàng & đỏ hồng rực rỡ khi ăn cá / uống trà sữa) */
             const blushAlpha = (this.foodAnim && this.foodAnim.blushBoost) ? 0.96 : 0.82;
-            const blushRx = (this.foodAnim && this.foodAnim.blushBoost) ? 6.0 : 4.4;
+            const blushRx = (this.foodAnim && this.foodAnim.blushBoost) ? (5.8 + chewPuff * 0.35) : 4.4;
             ctx.fillStyle = `rgba(244, 114, 182, ${blushAlpha})`;
             ctx.beginPath();
-            ctx.ellipse(-14, 5, blushRx, 3.3, 0, 0, Math.PI * 2);
-            ctx.ellipse(14, 5, blushRx, 3.3, 0, 0, Math.PI * 2);
+            ctx.ellipse(-14, 4.6, blushRx, 3.3, 0, 0, Math.PI * 2);
+            ctx.ellipse(14, 4.6, blushRx, 3.3, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            /* Mũi & Miệng */
+            /* Mũi Hồng */
             ctx.fillStyle = 'rgb(255, 107, 129)';
             ctx.beginPath();
-            ctx.moveTo(-3.0, 3.8);
-            ctx.lineTo(3.0, 3.8);
-            ctx.lineTo(0, 7.2);
+            ctx.moveTo(-2.8, 2.2);
+            ctx.lineTo(2.8, 2.2);
+            ctx.lineTo(0, 5.2);
             ctx.closePath();
             ctx.fill();
 
-            ctx.strokeStyle = 'rgb(255, 107, 129)';
-            ctx.lineWidth = 2.4;
-            ctx.beginPath();
-            ctx.moveTo(-4.8, 8.0);
-            ctx.quadraticCurveTo(-2.4, 11.8 + chewPuff * 0.6, 0, 8.0);
-            ctx.quadraticCurveTo(2.4, 11.8 + chewPuff * 0.6, 4.8, 8.0);
-            ctx.stroke();
+            /* Miệng Mèo tại đúng tọa độ (mouthX, mouthY) */
+            const isEatingFish = (this.foodAnim && this.foodAnim.type === 'fish') || st.includes('eat');
+            const isDrinkingBoba = (this.foodAnim && this.foodAnim.type === 'boba') || st === 'drink_boba_tea';
+
+            if (isDrinkingBoba) {
+                /* Miệng Mèo chúm lại hình chữ O tại (mouthX, mouthY) ngậm khít đầu ống hút */
+                ctx.fillStyle = '#be123c';
+                ctx.strokeStyle = b.stroke;
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.arc(mouthX, mouthY, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            } else if (isEatingFish) {
+                /* Miệng Mèo há ra — ngậm lại nhịp nhàng theo hàm Math.sin(t * 14) tại (mouthX, mouthY) */
+                const mouthOpenH = 2.2 + Math.abs(Math.sin(t * 14)) * 4.2;
+                ctx.fillStyle = '#e11d48';
+                ctx.strokeStyle = b.stroke;
+                ctx.lineWidth = 1.8;
+                ctx.beginPath();
+                ctx.ellipse(mouthX, mouthY, 5.2, mouthOpenH, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            } else {
+                /* Miệng chữ w tự nhiên khi bình thường */
+                ctx.strokeStyle = 'rgb(255, 107, 129)';
+                ctx.lineWidth = 2.3;
+                ctx.beginPath();
+                ctx.moveTo(mouthX - 4.8, mouthY);
+                ctx.quadraticCurveTo(mouthX - 2.4, mouthY + 3.4, mouthX, mouthY);
+                ctx.quadraticCurveTo(mouthX + 2.4, mouthY + 3.4, mouthX + 4.8, mouthY);
+                ctx.stroke();
+            }
 
             /* ĐŨA PHÉP MA THUẬT KHI HÔ BIẾN ĐỔI SÁNG/TỐI */
             if (this.magicCastState && this.magicCastState.active) {
@@ -1536,112 +1648,119 @@
                 ctx.restore();
             }
 
-            /* VẼ CON CÁ CHI TIẾT & XƯƠNG CÁ 🦴 KHI BẤM "🐟 ĂN CÁ" */
-            if ((this.foodAnim && this.foodAnim.type === 'fish') || st.includes('eat')) {
+            /* 3.2A: VẼ CON CÁ NƯỚNG CHẠM ĐÚNG MIỆNG (mouthX, mouthY), NGẮN DẦN 1/3 SAU MỖI NHÁT CẮN -> XƯƠNG CÁ 🦴 */
+            if (isEatingFish) {
                 const fStage = this.foodAnim ? this.foodAnim.stage : 0;
-                const fScale = this.foodAnim ? (this.foodAnim.scale || 1.0) : 0.9;
+                const lenRatio = this.foodAnim && this.foodAnim.lenRatio ? this.foodAnim.lenRatio : 1.0;
                 ctx.save();
-                ctx.translate(16 * dir, 13);
-                ctx.scale(dir * fScale, fScale);
+                /* Đặt gốc tọa độ đạo cụ ngay tại (mouthX, mouthY) để đầu cá chạm khít 100% vào miệng Mèo */
+                ctx.translate(mouthX, mouthY);
+                ctx.scale(dir, 1);
+                ctx.rotate(Math.sin(t * 14) * 0.08);
 
                 if (fStage >= 3) {
-                    /* Vẽ bộ xương cá 🦴 trắng tinh sau khi nhai hết 3 miếng */
+                    /* Bộ xương cá 🦴 trắng tinh nằm ngay tại miệng Mèo (mouthX, mouthY) */
                     ctx.strokeStyle = '#f8fafc';
                     ctx.lineWidth = 2.4;
                     ctx.beginPath();
-                    ctx.moveTo(-12, 0);
-                    ctx.lineTo(12, 0);
-                    [-6, 0, 6].forEach(rx => {
-                        ctx.moveTo(rx, -6);
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(22, 2);
+                    [5, 11, 17].forEach(rx => {
+                        ctx.moveTo(rx, -5);
                         ctx.lineTo(rx, 6);
                     });
-                    ctx.moveTo(12, 0);
-                    ctx.lineTo(17, -5);
-                    ctx.moveTo(12, 0);
-                    ctx.lineTo(17, 5);
+                    ctx.moveTo(22, 2);
+                    ctx.lineTo(27, -4);
+                    ctx.moveTo(22, 2);
+                    ctx.lineTo(27, 7);
                     ctx.stroke();
                 } else {
-                    /* Vẽ con cá nướng vàng cam / xanh bạc có đầu, vây lưng, đuôi chẻ */
+                    /* Con cá nướng có đầu cá tại (0, 0) = (mouthX, mouthY), thân cá ngắn dần 1/3 sau mỗi miếng nhai */
+                    const bodyLen = 22 * lenRatio;
                     ctx.fillStyle = '#fb923c';
                     ctx.strokeStyle = '#7c2d12';
                     ctx.lineWidth = 1.8;
 
-                    /* Đuôi cá */
+                    /* Đuôi cá ở phía ngoài */
                     ctx.beginPath();
-                    ctx.moveTo(10, 0);
-                    ctx.lineTo(19, -7);
-                    ctx.lineTo(16, 0);
-                    ctx.lineTo(19, 7);
+                    ctx.moveTo(bodyLen, 1);
+                    ctx.lineTo(bodyLen + 8, -6);
+                    ctx.lineTo(bodyLen + 5, 1);
+                    ctx.lineTo(bodyLen + 8, 8);
                     ctx.closePath();
                     ctx.fill();
                     ctx.stroke();
 
-                    /* Vây lưng */
+                    /* Thân cá nối từ miệng (0, 0) ra tới bodyLen */
                     ctx.beginPath();
-                    ctx.moveTo(-3, -6);
-                    ctx.quadraticCurveTo(2, -12, 6, -5);
-                    ctx.closePath();
+                    ctx.ellipse(bodyLen * 0.5, 1, Math.max(4, bodyLen * 0.55), 6.2, 0, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.stroke();
 
-                    /* Thân cá */
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, 13, 6.8, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-
-                    /* Mắt cá & Vạch nướng */
-                    ctx.fillStyle = '#0f172a';
-                    ctx.beginPath();
-                    ctx.arc(-7, -1.5, 1.6, 0, Math.PI * 2);
-                    ctx.fill();
-
+                    /* Vạch nướng thơm phức */
                     ctx.strokeStyle = '#9a3412';
                     ctx.lineWidth = 1.3;
-                    [-1, 4].forEach(gx => {
+                    if (bodyLen > 10) {
                         ctx.beginPath();
-                        ctx.moveTo(gx, -4);
-                        ctx.lineTo(gx - 2, 4);
+                        ctx.moveTo(bodyLen * 0.4, -3);
+                        ctx.lineTo(bodyLen * 0.35, 5);
+                        ctx.moveTo(bodyLen * 0.7, -3);
+                        ctx.lineTo(bodyLen * 0.65, 5);
                         ctx.stroke();
-                    });
+                    }
                 }
                 ctx.restore();
             }
 
-            /* VẼ LY TRÀ SỮA TRÂN CHÂU BOBA ĐẦY ĐỦ NẮP VÒM, ỐNG HÚT & TRÂN CHÂU CẠN DẦN */
-            if ((this.foodAnim && this.foodAnim.type === 'boba') || st === 'drink_boba_tea') {
+            /* 3.2B: VẼ LY TRÀ SỮA BOBA TRƯỚC NGỰC & ĐẦU ỐNG HÚT CẮM THẲNG VÀO ĐÚNG (mouthX, mouthY) */
+            if (isDrinkingBoba) {
                 const lvl = (this.foodAnim && this.foodAnim.level !== undefined) ? this.foodAnim.level : 0.78;
                 const pearlsCnt = (this.foodAnim && this.foodAnim.pearls !== undefined) ? this.foodAnim.pearls : 5;
-                ctx.save();
-                ctx.translate(15 * dir, 14);
+                const cupX = 13 * dir;
+                const cupY = 22;
 
-                /* Ống hút cắm nghiêng vào miệng Mèo */
+                ctx.save();
+                /* Ống hút cắm từ trong ly (cupX, cupY + 10) chạy thẳng lên đúng tọa độ miệng (mouthX, mouthY) */
                 ctx.strokeStyle = '#10b981';
-                ctx.lineWidth = 3.2;
+                ctx.lineWidth = 3.4;
+                ctx.lineCap = 'round';
                 ctx.beginPath();
-                ctx.moveTo(0, 6);
-                ctx.lineTo(-10 * dir, -7);
+                ctx.moveTo(cupX, cupY + 8);
+                ctx.lineTo(mouthX, mouthY);
                 ctx.stroke();
 
+                /* Hạt trân châu đen chạy dọc theo ống hút lên thẳng (mouthX, mouthY) */
+                const pearlSlide = (t * 2.6) % 1;
+                const slideX = cupX + (mouthX - cupX) * pearlSlide;
+                const slideY = (cupY + 8) + (mouthY - (cupY + 8)) * pearlSlide;
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(slideX, slideY, 2.1, 0, Math.PI * 2);
+                ctx.fill();
+
+                /* Vẽ thân ly trà sữa ở vị trí trước ngực (cupX, cupY) */
+                ctx.translate(cupX, cupY);
+
                 /* Nắp vòm trong suốt */
-                ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
+                ctx.fillStyle = 'rgba(248, 250, 252, 0.58)';
                 ctx.strokeStyle = '#334155';
                 ctx.lineWidth = 1.6;
                 ctx.beginPath();
                 ctx.arc(0, -1, 8.5, Math.PI, 0, false);
+                ctx.fill();
                 ctx.stroke();
 
                 /* Thân ly nhựa trong */
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.80)';
                 ctx.beginPath();
-                ctx.roundRect(-8.5, -1, 17, 20, 3.5);
+                ctx.roundRect(-8.5, -1, 17, 19, 3.5);
                 ctx.fill();
                 ctx.stroke();
 
                 /* Mực nước trà sữa kem nâu vơi dần khi Mèo hút */
-                const maxLiquidH = 16;
+                const maxLiquidH = 15;
                 const curLiquidH = Math.max(2, maxLiquidH * lvl);
-                const liquidTopY = 18 - curLiquidH;
+                const liquidTopY = 17 - curLiquidH;
                 ctx.fillStyle = '#fde68a';
                 ctx.beginPath();
                 ctx.roundRect(-7.2, liquidTopY, 14.4, curLiquidH, 2.5);
@@ -1649,12 +1768,12 @@
 
                 /* Hạt trân châu đen dưới đáy ly */
                 const pearlCoords = [
-                    { x: -4.2, y: 15.5 },
-                    { x: 0, y: 15.8 },
-                    { x: 4.2, y: 15.5 },
-                    { x: -2.2, y: 12.6 },
-                    { x: 2.2, y: 12.6 },
-                    { x: 0, y: 10.2 }
+                    { x: -4.2, y: 14.8 },
+                    { x: 0, y: 15.0 },
+                    { x: 4.2, y: 14.8 },
+                    { x: -2.2, y: 12.0 },
+                    { x: 2.2, y: 12.0 },
+                    { x: 0, y: 9.8 }
                 ];
                 ctx.fillStyle = '#0f172a';
                 for (let pi = 0; pi < Math.min(pearlsCnt, pearlCoords.length); pi++) {

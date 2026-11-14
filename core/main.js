@@ -1,3 +1,7 @@
+/* [FEAT-HDR-001] Header 3 Tầng Sticky/Fixed, Nút Điểm Danh Lửa 🔥, Nút Đổi Sáng/Tối ☀️/🌙 & Menu Xổ Xuống Không Điểm Mù | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-streak, core/main.js, core/global.css | [LOCKED-DESIGN] */
+/* [FEAT-CAT-002] Linh vật Mèo Lỏng AI Tầng Cao Nhất (z-index: 2147483645), 5 Giống Mèo, 4 Nhóm Accordion (18 Tính Năng), Hoạt Ảnh Ăn Cá / Trà Sữa Khớp Miệng & Săn Deal 4 Chặng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/cat-assistant/command, core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-AUTH-003] Đăng Nhập/Đăng Ký, Xác Minh OTP 6 Số Qua Resend (@mail.castle-tech.cloud), Đổi Mật Khẩu, Mã PIN Ví 6 Số & Phân Quyền RBAC 4 Cấp (Guest / Buyer / Seller / Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auth/*, /api/settings/security/*, bảng users / email_otp_verifications | [LOCKED-DESIGN] */
+/* [FEAT-ACC-009] Trung Tâm Trợ Năng Mù Màu (5 Chế độ CVD), Bảng Xem Trước Màu Sắc Thực Tế Của Các Tab/Nút, Mô Tả Màu Sản Phẩm & Hỗ Trợ Đa Khuyết Tật | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility, services/settings/settings.html, core/global.css | [LOCKED-DESIGN] */
 /* ==========================================================================
    CORE/MAIN.JS - ĐỒNG BỘ HEADER/FOOTER SẪM MÀU, TRẠM HỢP NHẤT MÈO AI & CHAT
    ========================================================================== */
@@ -130,8 +134,8 @@ function enforceProtectedRouteGuard() {
 
     if (path.includes('/admin_dispute/admin-center.html')) {
         if (!user || user.role !== 'admin') {
-            window.location.replace('/services/auth/auth.html?redirect=admin');
-            return false;
+            setTimeout(() => renderAdminRbacGuardBanner(), 80);
+            return true;
         }
     } else if (path.includes('/seller/seller-dashboard.html') || path.includes('/seller/sell.html') || path.includes('/seller/store-customization.html')) {
         if (!user || (user.role !== 'seller' && user.role !== 'admin')) {
@@ -141,6 +145,44 @@ function enforceProtectedRouteGuard() {
     }
     return true;
 }
+
+function renderAdminRbacGuardBanner() {
+    if (document.getElementById('nvxAdminRbacGuardBanner')) return;
+    const u = getAuthUser();
+    if (u && u.role === 'admin') return;
+    const banner = document.createElement('div');
+    banner.id = 'nvxAdminRbacGuardBanner';
+    Object.assign(banner.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '2147483600',
+        background: 'rgba(7, 11, 18, 0.88)',
+        backdropFilter: 'blur(12px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+    });
+    banner.innerHTML = `
+        <div class="p-4 rounded-4 border border-warning shadow-lg text-center" style="max-width:540px;width:100%;background:#0f172a;color:#f8fafc;">
+            <div class="mb-2" style="font-size:2.4rem;">🛡️</div>
+            <span class="badge bg-warning text-dark fw-bold mb-2">CỔNG BẢO MẬT PHÂN QUYỀN RBAC 4 CẤP [FEAT-AUTH-003]</span>
+            <h5 class="fw-bold text-white mb-2">Khu Vực Quản Trị Viên Cấp Cao (Admin Mission Control)</h5>
+            <p class="small text-secondary mb-3">
+                Trang <code>admin-center.html</code> yêu cầu quyền <strong>Admin (role === 'admin')</strong>. Hiện tại bạn đang ở trạng thái <strong>${u ? (u.username + ' (' + (u.role || 'buyer') + ')') : 'Khách (Guest)'}</strong>.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <button type="button" class="btn btn-nvidia fw-bold px-3 py-2" onclick="quickDemoLoginAsRole('admin')">
+                    ⚡ Chuyển Nhanh Sang Phiên Admin Demo (Giảng Viên / Tester Chấm Điểm)
+                </button>
+                <a href="/services/auth/auth.html?redirect=admin" class="btn btn-outline-light btn-sm px-3 py-2 fw-bold">🔑 Đăng Nhập Tài Khoản Admin</a>
+                <a href="/services/home/index.html" class="btn btn-outline-secondary btn-sm px-3 py-2">← Về Trang Chủ</a>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(banner);
+}
+window.renderAdminRbacGuardBanner = renderAdminRbacGuardBanner;
 
 window.addEventListener('storage', (ev) => {
     if (ev.key === 'nvx_logout_event_ts' || ((ev.key === 'nvidia_user' || ev.key === 'auth_user') && !ev.newValue)) {
@@ -301,6 +343,17 @@ function toggleFavoriteGlobal(prodId, btnEl) {
         notifyToast('❤️ Đã lưu vào Yêu thích (Sẽ báo ngay khi giảm giá)!', 'success');
     }
     localStorage.setItem('nvidia_favorites', JSON.stringify(favs));
+    const u = getAuthUser();
+    fetch('/api/compare/wishlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: (u && u.id) ? u.id : 1,
+            product_id: pid,
+            action: exists ? 'remove' : 'add',
+            favorites: favs
+        })
+    }).catch(() => {});
 }
 window.toggleFavoriteGlobal = toggleFavoriteGlobal;
 
@@ -2384,7 +2437,7 @@ function renderGlobalHeaderAndFooter() {
 
     if (hdrBox) {
         hdrBox.innerHTML = `
-            <header class="nvidia-header-bar">
+            <header id="mainHeader" class="nvidia-header-bar nv-global-header nvx-header-wrapper">
                 <div class="nvidia-header-shell">
                     <div class="nv-header-top-row nvx-topbar">
                         <div class="d-flex flex-wrap align-items-center gap-2">
@@ -2470,8 +2523,11 @@ function renderGlobalHeaderAndFooter() {
                     </div>
                 </div>
             </header>
+            <div id="nvxHeaderStickySpacer"></div>
         `;
     }
+
+    bindFixedHeaderSpacerResizeObserver();
 
     if (ftrBox) {
         ftrBox.innerHTML = `
@@ -3050,7 +3106,7 @@ function initMultiWindowMessengerDock() {
         position: 'fixed',
         bottom: '14px',
         right: '18px',
-        zIndex: '10051',
+        zIndex: '2147483500',
         display: 'flex',
         alignItems: 'flex-end',
         gap: '10px',
@@ -3083,37 +3139,66 @@ function initMultiWindowMessengerDock() {
                     <button type="button" id="msgHubTabBtn_report" class="nv-hub-seg-btn" onclick="switchMessengerPopupTab('report')">🚨 Khiếu Nại</button>
                 </div>
 
-                <!-- TAB 1: ĐIỀU KHIỂN LINH VẬT MÈO LỎNG (GOM GỌN 3 NHÓM SEGMENTED TABS) -->
-                <div id="msgHubPane_cat" class="p-3 small">
-                    <div class="nv-cat-group-tabs">
-                        <button type="button" id="catGrpBtn_move" class="nv-cat-group-btn active" onclick="switchCatFeatureSubGroup('move')">🐾 Giống &amp; Di Chuyển</button>
-                        <button type="button" id="catGrpBtn_fun" class="nv-cat-group-btn" onclick="switchCatFeatureSubGroup('fun')">🐟 Ăn Uống &amp; Biểu Diễn</button>
-                        <button type="button" id="catGrpBtn_hunt" class="nv-cat-group-btn" onclick="switchCatFeatureSubGroup('hunt')">🛒 Săn Deal Tận Giỏ</button>
-                    </div>
+                <!-- TAB 1: ĐIỀU KHIỂN LINH VẬT MÈO LỎNG (4 NHÓM ACCORDION THU GỌN / MỞ RỘNG ▾ - ĐỦ 18 TÍNH NĂNG) -->
+                <div id="msgHubPane_cat" class="p-2 small">
+                    <div class="nv-cat-accordion-stack">
+                        <!-- Nhóm 1: 🐾 1. Giống Mèo & Di Chuyển (4 nút) ▾ (Mặc định mở) -->
+                        <div class="nv-cat-acc-item open" id="catAccItem_move">
+                            <button type="button" class="nv-cat-acc-header" onclick="toggleCatAccordionGroup('move')">
+                                <span>🐾 1. Giống Mèo &amp; Di Chuyển (4 nút)</span>
+                                <span class="nv-cat-acc-arrow">▾</span>
+                            </button>
+                            <div class="nv-cat-acc-body" id="catGrpPane_move">
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.switchCatBreed()">🎨 Đổi Mèo (5 Giống)</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToCeilingWalk()">🧗 Leo Trần</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToRandom2DTarget()">🏃 Đi Khắp Màn</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.goToRestingSpot() : null">🏠 Về Chỗ Nghỉ</button>
+                            </div>
+                        </div>
 
-                    <!-- Nhóm 1: 🐾 Giống & Di Chuyển -->
-                    <div id="catGrpPane_move" class="nv-cat-group-pane d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.switchCatBreed()">🎨 Đổi Mèo (5 Giống)</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToCeilingWalk()">🧗 Leo Trần</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToRandom2DTarget()">🏃 Đi Khắp Màn</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMagicThemeToggle() : toggleTheme()">☀️/🌙 Đổi Sáng/Tối</button>
-                    </div>
+                        <!-- Nhóm 2: 🐟 2. Ăn Uống & Biểu Diễn (6 nút) ▾ -->
+                        <div class="nv-cat-acc-item" id="catAccItem_fun">
+                            <button type="button" class="nv-cat-acc-header" onclick="toggleCatAccordionGroup('fun')">
+                                <span>🐟 2. Ăn Uống &amp; Biểu Diễn (6 nút)</span>
+                                <span class="nv-cat-acc-arrow">▾</span>
+                            </button>
+                            <div class="nv-cat-acc-body" id="catGrpPane_fun">
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performEatFishAnimation() : executeGlobalCatSearchBarHunt('Cho ăn cá')">🐟 Ăn Cá</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performDrinkBobaAnimation() : executeGlobalCatSearchBarHunt('Uống trà sữa boba')">🧋 Trà Sữa</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performLoafBreadAnimation() : executeGlobalCatSearchBarHunt('Nằm ổ bánh mì')">🥖 Bánh Mì</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performBackflipAnimation() : executeGlobalCatSearchBarHunt('Lộn vòng backflip')">🤸 Nhào Lộn</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMeltSplootAnimation() : executeGlobalCatSearchBarHunt('Tan chảy sploot')">🫠 Tan Chảy</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performDanceAnimation() : executeGlobalCatSearchBarHunt('Nhảy múa')">💃 Nhảy Múa</button>
+                            </div>
+                        </div>
 
-                    <!-- Nhóm 2: 🐟 Ăn Uống & Biểu Diễn -->
-                    <div id="catGrpPane_fun" class="nv-cat-group-pane d-flex flex-wrap gap-1 mb-2 d-none">
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performEatFishAnimation() : executeGlobalCatSearchBarHunt('Cho ăn cá')">🐟 Ăn Cá</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performDrinkBobaAnimation() : executeGlobalCatSearchBarHunt('Uống trà sữa boba')">🧋 Uống Trà Sữa</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performLoafBreadAnimation() : executeGlobalCatSearchBarHunt('Nằm ổ bánh mì')">🥖 Bánh Mì</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performBackflipAnimation() : executeGlobalCatSearchBarHunt('Lộn vòng backflip')">🤸 Nhào Lộn</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMeltSplootAnimation() : executeGlobalCatSearchBarHunt('Tan chảy sploot')">🫠 Tan Chảy</button>
-                        <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performDanceAnimation() : executeGlobalCatSearchBarHunt('Nhảy múa')">💃 Nhảy Múa</button>
-                    </div>
+                        <!-- Nhóm 3: 🛒 3. Săn Deal Tận Giỏ (4 nút) ▾ -->
+                        <div class="nv-cat-acc-item" id="catAccItem_hunt">
+                            <button type="button" class="nv-cat-acc-header" onclick="toggleCatAccordionGroup('hunt')">
+                                <span>🛒 3. Săn Deal Tận Giỏ (4 nút)</span>
+                                <span class="nv-cat-acc-arrow">▾</span>
+                            </button>
+                            <div class="nv-cat-acc-body" id="catGrpPane_hunt">
+                                <button type="button" class="cat-action-chip" style="border-color:#76b900;color:#a3e635;" onclick="executeGlobalCatSearchBarHunt('Mua 2 card RTX 4070 bỏ vào giỏ')">⚡ Săn 2 RTX 4070</button>
+                                <button type="button" class="cat-action-chip" style="border-color:#38bdf8;color:#7dd3fc;" onclick="executeGlobalCatSearchBarHunt('Lấy 3 bàn phím cơ bỏ vào giỏ')">⌨️ Săn 3 Phím Cơ</button>
+                                <button type="button" class="cat-action-chip" style="border-color:#facc15;color:#fde047;" onclick="executeGlobalCatSearchBarHunt('Tìm màn hình bỏ vào giỏ')">🖥️ Săn Màn Hình</button>
+                                <button type="button" class="cat-action-chip" style="border-color:#f43f5e;color:#fda4af;" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.huntSuperSaleDeal() : executeGlobalCatSearchBarHunt('Mua 1 RTX 4070 Super bỏ vào giỏ')">🎁 Gắp Siêu Sale</button>
+                            </div>
+                        </div>
 
-                    <!-- Nhóm 3: 🛒 Săn Deal Tận Giỏ -->
-                    <div id="catGrpPane_hunt" class="nv-cat-group-pane d-flex flex-wrap gap-1 mb-2 d-none">
-                        <button type="button" class="cat-action-chip" style="border-color:#76b900;color:#a3e635;" onclick="executeGlobalCatSearchBarHunt('Mua 2 card RTX 4070 bỏ vào giỏ')">⚡ Săn RTX 4070</button>
-                        <button type="button" class="cat-action-chip" style="border-color:#38bdf8;color:#7dd3fc;" onclick="executeGlobalCatSearchBarHunt('Lấy 3 bàn phím cơ bỏ vào giỏ')">⌨️ Săn Phím Cơ</button>
-                        <button type="button" class="cat-action-chip" style="border-color:#facc15;color:#fde047;" onclick="executeGlobalCatSearchBarHunt('Tìm màn hình bỏ vào giỏ')">🖥️ Săn Màn Hình</button>
+                        <!-- Nhóm 4: ✨ 4. Hô Biến Sáng/Tối & Trợ Năng Mù Màu (4 nút) ▾ -->
+                        <div class="nv-cat-acc-item" id="catAccItem_magic">
+                            <button type="button" class="nv-cat-acc-header" onclick="toggleCatAccordionGroup('magic')">
+                                <span>✨ 4. Hô Biến Sáng/Tối &amp; Trợ Năng Mù Màu (4 nút)</span>
+                                <span class="nv-cat-acc-arrow">▾</span>
+                            </button>
+                            <div class="nv-cat-acc-body" id="catGrpPane_magic">
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMagicThemeToggle('dark') : applyNvidiaVisualSkin('emerald_tech')">🌙 Hô Biến Nền Tối</button>
+                                <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMagicThemeToggle('light') : applyNvidiaVisualSkin('executive_light')">☀️ Hô Biến Nền Sáng</button>
+                                <button type="button" class="cat-action-chip" style="border-color:#38bdf8;color:#7dd3fc;" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.openColorblindPreviewFromCat() : openColorblindPreviewModal()">♿ Bộ Lọc &amp; Xem Trước Mù Màu</button>
+                                <button type="button" class="cat-action-chip" style="border-color:#f59e0b;color:#fde047;" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.inspectProductColorsForAccessibility() : describeVisibleProductColorByCat()">🎨 Soi Màu Sản Phẩm</button>
+                            </div>
+                        </div>
                     </div>
 
                     <form id="nividaCatCmdForm" onsubmit="submitUnifiedCatCommand(event)" class="d-flex gap-1 mt-2">
@@ -3181,8 +3266,20 @@ function initMultiWindowMessengerDock() {
 }
 window.initMultiWindowMessengerDock = initMultiWindowMessengerDock;
 
+function toggleCatAccordionGroup(grpKey) {
+    const item = document.getElementById('catAccItem_' + grpKey);
+    if (!item) return;
+    const isOpen = item.classList.contains('open');
+    item.classList.toggle('open', !isOpen);
+}
+window.toggleCatAccordionGroup = toggleCatAccordionGroup;
+
 function switchCatFeatureSubGroup(grpKey) {
-    ['move', 'fun', 'hunt'].forEach(k => {
+    ['move', 'fun', 'hunt', 'magic'].forEach(k => {
+        const item = document.getElementById('catAccItem_' + k);
+        if (item) {
+            item.classList.toggle('open', k === grpKey);
+        }
         document.getElementById('catGrpPane_' + k)?.classList.toggle('d-none', k !== grpKey);
         document.getElementById('catGrpBtn_' + k)?.classList.toggle('active', k === grpKey);
     });
@@ -3586,6 +3683,448 @@ function ensureCatWidgetScriptLoaded() {
     document.body.appendChild(s);
 }
 
+function bindFixedHeaderSpacerResizeObserver() {
+    const headerEl = document.getElementById('mainHeader') || document.querySelector('header.nvidia-header-bar, .nv-global-header, .nvx-header-wrapper');
+    if (!headerEl) return;
+    let spacer = document.getElementById('nvxHeaderStickySpacer');
+    if (!spacer) {
+        spacer = document.createElement('div');
+        spacer.id = 'nvxHeaderStickySpacer';
+        if (headerEl.parentNode) {
+            headerEl.parentNode.insertBefore(spacer, headerEl.nextSibling);
+        }
+    }
+    const syncHeight = () => {
+        const h = headerEl.offsetHeight || 124;
+        if (spacer) {
+            spacer.style.height = h + 'px';
+            spacer.style.minHeight = h + 'px';
+        }
+    };
+    syncHeight();
+    if (typeof ResizeObserver !== 'undefined' && !headerEl.dataset.nvResizeObserved) {
+        headerEl.dataset.nvResizeObserved = '1';
+        const ro = new ResizeObserver(() => syncHeight());
+        ro.observe(headerEl);
+    }
+    window.addEventListener('resize', syncHeight);
+}
+window.bindFixedHeaderSpacerResizeObserver = bindFixedHeaderSpacerResizeObserver;
+
+/* ==========================================================================
+   [FEAT-AUTH-003] & [FEAT-PAY-004] CỔNG BẮT BUỘC ĐĂNG NHẬP (QUICK AUTH MODAL)
+   Cho Chuyển Tiền, Nạp/Rút Tiền, Đấu Giá, Gửi Báo Giá RFQ & Phiên Demo RBAC
+   ========================================================================== */
+function quickDemoLoginAsRole(role = 'buyer') {
+    const demoUsers = {
+        buyer: {
+            id: 13,
+            username: 'khach_hang_vip',
+            full_name: 'Nguyễn Hưng (Khách VIP)',
+            email: 'hungnguyendva@gmail.com',
+            role: 'buyer',
+            coins: 125000,
+            email_verified: 1
+        },
+        seller: {
+            id: 2,
+            username: 'asus_rog_mall',
+            full_name: 'ASUS ROG Official Mall',
+            company_name: 'ASUS ROG Official Mall',
+            email: 'seller@mail.castle-tech.cloud',
+            role: 'seller',
+            coins: 250000,
+            email_verified: 1
+        },
+        admin: {
+            id: 1,
+            username: 'admin_nvidia',
+            full_name: 'Tổng Chỉ Huy Nexora Admin',
+            email: 'admin@mail.castle-tech.cloud',
+            role: 'admin',
+            coins: 999000,
+            email_verified: 1
+        }
+    };
+    const picked = demoUsers[role] || demoUsers.buyer;
+    setAuthUser(picked);
+    document.getElementById('nvxQuickAuthModal')?.remove();
+    document.getElementById('nvxAdminRbacGuardBanner')?.remove();
+    notifyToast(`🔓 Đã đăng nhập phiên ${picked.full_name} (${picked.role.toUpperCase()})!`, 'success');
+    const redir = sessionStorage.getItem('nvx_post_login_redirect');
+    if (redir) {
+        sessionStorage.removeItem('nvx_post_login_redirect');
+    }
+    setTimeout(() => window.location.reload(), 250);
+}
+window.quickDemoLoginAsRole = quickDemoLoginAsRole;
+
+function openQuickAuthModal(actionLabel = 'thực hiện giao dịch tài chính') {
+    sessionStorage.setItem('nvx_post_login_redirect', window.location.href);
+    let modal = document.getElementById('nvxQuickAuthModal');
+    if (modal) modal.remove();
+
+    modal = document.createElement('div');
+    modal.id = 'nvxQuickAuthModal';
+    Object.assign(modal.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '2147483600',
+        background: 'rgba(15, 23, 42, 0.82)',
+        backdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+    });
+    modal.innerHTML = `
+        <div class="p-4 rounded-4 border border-warning shadow-lg" style="max-width:480px;width:100%;background:#0f172a;color:#f8fafc;">
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-2 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="font-size:1.4rem;">🔒</span>
+                    <div>
+                        <span class="badge bg-warning text-dark fw-bold" style="font-size:10px;">YÊU CẦU XÁC THỰC TÀI KHOẢN [FEAT-AUTH-003]</span>
+                        <h6 class="fw-bold m-0 text-white">Vui Lòng Đăng Nhập Để Tiếp Tục</h6>
+                    </div>
+                </div>
+                <button type="button" class="nvx-checkin-close-circle-btn" onclick="document.getElementById('nvxQuickAuthModal')?.remove()">✕</button>
+            </div>
+            <p class="small text-light mb-3">
+                Thao tác <strong>"${actionLabel}"</strong> yêu cầu tài khoản đã xác thực để bảo vệ số dư Ví <strong>Nexora Pay</strong> và chữ ký số <strong>Escrow</strong>.
+            </p>
+            <div class="d-grid gap-2 mb-3">
+                <a href="/services/auth/auth.html" class="btn btn-nvidia fw-bold py-2">🔑 Đi Tới Trang Đăng Nhập / Đăng Ký Chính Thức</a>
+                <button type="button" class="btn btn-outline-info btn-sm fw-bold py-2" onclick="quickDemoLoginAsRole('buyer')">
+                    ⚡ Đăng Nhập Nhanh Tài Khoản Khách VIP (Nguyễn Hưng - Demo Chấm Điểm)
+                </button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-warning btn-sm flex-fill fw-bold" onclick="quickDemoLoginAsRole('seller')">🏪 Phiên Seller</button>
+                    <button type="button" class="btn btn-outline-success btn-sm flex-fill fw-bold" onclick="quickDemoLoginAsRole('admin')">🛡️ Phiên Admin</button>
+                </div>
+            </div>
+            <div class="small text-secondary text-center">
+                Sau khi đăng nhập, hệ thống sẽ tự động giữ nguyên trang hiện tại của bạn.
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+window.openQuickAuthModal = openQuickAuthModal;
+
+function requireAuthOrPrompt(actionLabel = 'thực hiện giao dịch này') {
+    if (isUserLoggedIn()) return true;
+    openQuickAuthModal(actionLabel);
+    return false;
+}
+window.requireAuthOrPrompt = requireAuthOrPrompt;
+
+/* ==========================================================================
+   [FEAT-ACC-009] TRUNG TÂM TRỢ NĂNG MÙ MÀU (5 CHẾ ĐỘ CVD), BẢNG XEM TRƯỚC
+   MÀU SẮC THỰC TẾ (LIVE UI COLOR PREVIEWER) & MÔ TẢ MÀU SẢN PHẨM
+   ========================================================================== */
+const NV_CVD_PALETTE_SPEC = {
+    standard: {
+        name: '1. Chuẩn (Standard Vision)',
+        desc: 'Bảng màu thương hiệu Nexora Emerald chuẩn mặc định.',
+        tabBg: '#10b981', tabName: 'Xanh Lục Bảo (Emerald)',
+        buyBtn: '#76b900', buyName: 'Xanh Lá Nexora',
+        dangerBtn: '#ef4444', dangerName: 'Đỏ Cảnh Báo',
+        candleUp: '#10b981', candleUpName: 'Nến Tăng Xanh Lá (#10B981)',
+        candleDown: '#ef4444', candleDownName: 'Nến Giảm Đỏ (#EF4444)',
+        contrast: '7.4:1 (Chuẩn WCAG AA+)'
+    },
+    deuteranopia: {
+        name: '2. Mù Đỏ - Lục (Deuteranopia / Protanopia)',
+        desc: 'Chuyển toàn bộ cặp Đỏ/Xanh lá sang Xanh Dương Đậm (#0284C7) & Cam Vàng (#D97706) giúp người mù màu Đỏ-Lục phân biệt 100%.',
+        tabBg: '#0284c7', tabName: 'Xanh Dương Lam (Sky Blue)',
+        buyBtn: '#0284c7', buyName: 'Xanh Dương Đậm (#0284C7)',
+        dangerBtn: '#d97706', dangerName: 'Cam Hổ Phách (#D97706)',
+        candleUp: '#0284c7', candleUpName: 'Nến Tăng Xanh Dương [▲ TĂNG]',
+        candleDown: '#d97706', candleDownName: 'Nến Giảm Cam Vàng [▼ GIẢM]',
+        contrast: '8.2:1 (Chuẩn WCAG AAA)'
+    },
+    tritanopia: {
+        name: '3. Mù Xanh - Vàng (Tritanopia)',
+        desc: 'Chuyển bảng màu sang Xanh Ngọc Đậm (#0D9488) & Đỏ Hồng Cánh Sen (#E11D48) chống nhầm lẫn Xanh-Vàng.',
+        tabBg: '#0d9488', tabName: 'Xanh Ngọc Lam (Teal)',
+        buyBtn: '#0d9488', buyName: 'Xanh Ngọc Đậm (#0D9488)',
+        dangerBtn: '#e11d48', dangerName: 'Đỏ Hồng Cánh Sen (#E11D48)',
+        candleUp: '#0d9488', candleUpName: 'Nến Tăng Xanh Ngọc [▲ TĂNG]',
+        candleDown: '#e11d48', candleDownName: 'Nến Giảm Đỏ Hồng [▼ GIẢM]',
+        contrast: '8.0:1 (Chuẩn WCAG AAA)'
+    },
+    symbols: {
+        name: '4. Nhãn Ký Hiệu Trực Quan (Symbol Labels)',
+        desc: 'Tự động gắn tiền tố ký hiệu [▲+] / [▼-] / [✔] / [✖] vào mọi nút bấm, huy hiệu và nến giá để không phụ thuộc vào màu sắc.',
+        tabBg: '#10b981', tabName: '[✔] Xanh Lục Bảo',
+        buyBtn: '#76b900', buyName: '[▲+] Nút Mua / Xác Nhận',
+        dangerBtn: '#ef4444', dangerName: '[▼-] Nút Cảnh Báo / Giảm',
+        candleUp: '#10b981', candleUpName: '[▲ TĂNG +] Nến Tăng Giá',
+        candleDown: '#ef4444', candleDownName: '[▼ GIẢM -] Nến Giảm Giá',
+        contrast: '7.8:1 + Ký hiệu Hình học'
+    },
+    high_contrast_aaa: {
+        name: '5. Tương Phản Siêu Cao (WCAG AAA 19.6:1)',
+        desc: 'Nền Đen Tuyền (#000000), Chữ Trắng Tinh (#FFFFFF), Nút Vàng Kim (#FACC15) dành cho người thị lực yếu.',
+        tabBg: '#facc15', tabName: 'Vàng Kim Rực Rỡ (#FACC15)',
+        buyBtn: '#facc15', buyName: 'Vàng Kim Trên Nền Đen (#FACC15)',
+        dangerBtn: '#fb7185', dangerName: 'Hồng Sáng Tương Phản Cao (#FB7185)',
+        candleUp: '#facc15', candleUpName: 'Nến Tăng Vàng Sáng (#FACC15)',
+        candleDown: '#38bdf8', candleDownName: 'Nến Giảm Xanh Băng (#38BDF8)',
+        contrast: '19.6:1 (Chuẩn Tối Đa WCAG AAA)'
+    }
+};
+window.NV_CVD_PALETTE_SPEC = NV_CVD_PALETTE_SPEC;
+
+function applyColorblindMode(mode = 'standard', saveToDb = true) {
+    const valid = NV_CVD_PALETTE_SPEC[mode] ? mode : 'standard';
+    document.documentElement.setAttribute('data-cvd-mode', valid);
+    localStorage.setItem('nvx_cvd_mode', valid);
+
+    const sel = document.getElementById('settingsCvdModeSelect') || document.getElementById('modalCvdModeSelect');
+    if (sel && sel.value !== valid) sel.value = valid;
+
+    renderLiveUiColorPreviewBox(valid);
+
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        notifyToast(`♿ Đã bật chế độ thị giác: ${NV_CVD_PALETTE_SPEC[valid].name}`, 'info');
+    }
+}
+window.applyColorblindMode = applyColorblindMode;
+
+function renderLiveUiColorPreviewBox(mode = null) {
+    const activeMode = mode || localStorage.getItem('nvx_cvd_mode') || 'standard';
+    const spec = NV_CVD_PALETTE_SPEC[activeMode] || NV_CVD_PALETTE_SPEC.standard;
+    document.querySelectorAll('.nvx-live-color-preview-container').forEach(box => {
+        box.innerHTML = `
+            <div class="p-3 rounded-3 border" style="background:#0f172a;border-color:#38bdf8 !important;color:#f8fafc;">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                    <div>
+                        <span class="badge bg-info text-dark fw-bold me-1">LIVE UI COLOR PREVIEWER</span>
+                        <strong class="small text-white">${spec.name}</strong>
+                    </div>
+                    <span class="badge bg-success font-monospace">Độ tương phản: ${spec.contrast}</span>
+                </div>
+                <div class="small text-secondary mb-2">${spec.desc}</div>
+                <div class="row g-2 text-center small">
+                    <div class="col-md-3 col-6">
+                        <div class="p-2 rounded-3 border border-secondary h-100" style="background:#1e293b;">
+                            <div class="small text-secondary mb-1">Màu Tab Đang Chọn</div>
+                            <span class="badge w-100 py-2 fw-bold" style="background:${spec.tabBg};color:#000;">${spec.tabName}</span>
+                            <div class="font-monospace mt-1" style="font-size:11px;color:#cbd5e1;">Mã Hex: <strong>${spec.tabBg.toUpperCase()}</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-2 rounded-3 border border-secondary h-100" style="background:#1e293b;">
+                            <div class="small text-secondary mb-1">Nút Mua / Xác Nhận</div>
+                            <span class="badge w-100 py-2 fw-bold" style="background:${spec.buyBtn};color:#000;">🛒 ${spec.buyName}</span>
+                            <div class="font-monospace mt-1" style="font-size:11px;color:#cbd5e1;">Mã Hex: <strong>${spec.buyBtn.toUpperCase()}</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-2 rounded-3 border border-secondary h-100" style="background:#1e293b;">
+                            <div class="small text-secondary mb-1">Nến Tăng Giá / Lợi Nhuận</div>
+                            <span class="badge w-100 py-2 fw-bold" style="background:${spec.candleUp};color:#000;">📈 ${spec.candleUpName}</span>
+                            <div class="font-monospace mt-1" style="font-size:11px;color:#cbd5e1;">Mã Hex: <strong>${spec.candleUp.toUpperCase()}</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="p-2 rounded-3 border border-secondary h-100" style="background:#1e293b;">
+                            <div class="small text-secondary mb-1">Nến Giảm Giá / Cảnh Báo</div>
+                            <span class="badge w-100 py-2 fw-bold" style="background:${spec.candleDown};color:#fff;">📉 ${spec.candleDownName}</span>
+                            <div class="font-monospace mt-1" style="font-size:11px;color:#cbd5e1;">Mã Hex: <strong>${spec.candleDown.toUpperCase()}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+window.renderLiveUiColorPreviewBox = renderLiveUiColorPreviewBox;
+
+function toggleLargeButtonsMode(enabled, saveToDb = true) {
+    const isOn = enabled !== undefined ? Boolean(enabled) : !document.body.classList.contains('nv-acc-large-buttons');
+    document.body.classList.toggle('nv-acc-large-buttons', isOn);
+    localStorage.setItem('nvx_acc_large_buttons', isOn ? '1' : '0');
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        notifyToast(isOn ? '🖐️ Đã bật Chế độ Nút Bấm Lớn chống run tay (Min-height 44px)!' : 'Đã tắt Chế độ Nút Bấm Lớn.', 'info');
+    }
+}
+window.toggleLargeButtonsMode = toggleLargeButtonsMode;
+
+function toggleVisualFlashAlertMode(enabled, saveToDb = true) {
+    const isOn = enabled !== undefined ? Boolean(enabled) : (localStorage.getItem('nvx_acc_visual_flash') !== '1');
+    localStorage.setItem('nvx_acc_visual_flash', isOn ? '1' : '0');
+    if (isOn) {
+        document.body.classList.add('nv-acc-visual-flash-now');
+        setTimeout(() => document.body.classList.remove('nv-acc-visual-flash-now'), 1400);
+    }
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        notifyToast(isOn ? '🦻 Đã bật Viền Sáng Nhấp Nháy Trực Quan cho người khiếm thính!' : 'Đã tắt Viền Sáng Nhấp Nháy.', 'info');
+    }
+}
+window.toggleVisualFlashAlertMode = toggleVisualFlashAlertMode;
+
+function toggleReadingFocusRuler(enabled, saveToDb = true) {
+    const isOn = enabled !== undefined ? Boolean(enabled) : !document.body.classList.contains('nv-acc-reading-ruler');
+    document.body.classList.toggle('nv-acc-reading-ruler', isOn);
+    localStorage.setItem('nvx_acc_reading_ruler', isOn ? '1' : '0');
+    let ruler = document.getElementById('nvxReadingFocusRuler');
+    if (!ruler) {
+        ruler = document.createElement('div');
+        ruler.id = 'nvxReadingFocusRuler';
+        document.body.appendChild(ruler);
+        window.addEventListener('mousemove', (e) => {
+            if (document.body.classList.contains('nv-acc-reading-ruler')) {
+                ruler.style.top = Math.max(0, e.clientY - 21) + 'px';
+            }
+        });
+    }
+    if (saveToDb) {
+        syncAccessibilityPreferencesToDb();
+        notifyToast(isOn ? '📏 Đã bật Thước Đọc Tập Trung (Reading Focus Ruler)!' : 'Đã tắt Thước Đọc Tập Trung.', 'info');
+    }
+}
+window.toggleReadingFocusRuler = toggleReadingFocusRuler;
+
+function syncAccessibilityPreferencesToDb() {
+    const u = getAuthUser();
+    fetch('/api/settings/accessibility', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: (u && u.id) ? u.id : 1,
+            cvd_mode: localStorage.getItem('nvx_cvd_mode') || 'standard',
+            large_buttons: localStorage.getItem('nvx_acc_large_buttons') === '1',
+            visual_flash: localStorage.getItem('nvx_acc_visual_flash') === '1',
+            reading_ruler: localStorage.getItem('nvx_acc_reading_ruler') === '1'
+        })
+    }).catch(() => {});
+}
+window.syncAccessibilityPreferencesToDb = syncAccessibilityPreferencesToDb;
+
+function getProductColorAccessibilityDescription(catKey = 'gpu', prodName = '') {
+    const k = inferSmartCategoryKey(catKey, prodName);
+    const descMap = {
+        gpu: 'Vỏ Đen Titan nhám (#0F172A), dải LED Xanh Lục Bảo (#76B900), quạt tản nhiệt Xám Kim Loại — Tương phản cao dễ nhận diện.',
+        cpu: 'Hộp Xanh Lam Điện Tử (#1D4ED8), nắp lưng Bạc Phay Xước (#E2E8F0), logo Xanh Băng (#38BDF8).',
+        mainboard: 'Bo mạch Đen Tuyền (#18181B), giáp tản nhiệt Đỏ Crôm (#F43F5E) & Bạc Titan.',
+        ram: 'Thanh tản nhiệt Tím Vũ Trụ (#581C87) kết hợp dải LED RGB Đa Sắc (#C084FC).',
+        monitor: 'Viền siêu mỏng Đen Nhám (#042F2E), chân đế Xám Không Gian, tấm nền chống chói.',
+        keyboard: 'Khung Nhôm Đen Cacbon (#111827), Keycap Trắng Sữa & Xanh Cốm (#A3E635) chữ khắc rõ nét.',
+        headphones: 'Đệm tai Đen Tím Midnight (#2E1065), viền Hồng Neon (#F472B6) êm ái.',
+        fashion: 'Vải Dù Xanh Rêu Quân Đội (#14532D) chống thấm nước, khóa kéo Đen Nhám.',
+        home_living: 'Thân Trắng Ngọc Trai kết hợp ánh sáng Vàng Ấm (#FDE047) dịu mắt.',
+        health_care: 'Mặt kính Đen Sapphire, dây đeo Xanh Ngọc Lục Bảo (#34D399) kháng khuẩn.'
+    };
+    return descMap[k] || descMap.gpu;
+}
+window.getProductColorAccessibilityDescription = getProductColorAccessibilityDescription;
+
+function describeVisibleProductColorByCat(targetCardEl = null) {
+    const card = targetCardEl || document.querySelector('#productGrid .nv-product-card, #productGrid .product-card, .product-card');
+    let title = 'Card đồ họa GeForce RTX 4070 Super';
+    let cat = 'gpu';
+    if (card) {
+        const titleEl = card.querySelector('h6, h5, .fw-bold, .card-title');
+        if (titleEl) title = titleEl.textContent.trim();
+        cat = card.dataset.nvProductType || card.dataset.nvBrand || 'gpu';
+    }
+    const colorDesc = getProductColorAccessibilityDescription(cat, title);
+    notifyToast(`🎨 Mô tả màu cho người mù màu [${title.slice(0, 28)}]: ${colorDesc}`, 'info');
+    return colorDesc;
+}
+window.describeVisibleProductColorByCat = describeVisibleProductColorByCat;
+
+function openColorblindPreviewModal() {
+    let modal = document.getElementById('nvxColorblindPreviewModal');
+    if (modal) modal.remove();
+    const curMode = localStorage.getItem('nvx_cvd_mode') || 'standard';
+
+    modal = document.createElement('div');
+    modal.id = 'nvxColorblindPreviewModal';
+    Object.assign(modal.style, {
+        position: 'fixed',
+        inset: '0',
+        zIndex: '2147483600',
+        background: 'rgba(15, 23, 42, 0.82)',
+        backdropFilter: 'blur(10px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+    });
+    modal.innerHTML = `
+        <div class="p-4 rounded-4 border border-info shadow-lg" style="max-width:780px;width:100%;background:#0f172a;color:#f8fafc;max-height:90vh;overflow-y:auto;">
+            <div class="d-flex justify-content-between align-items-center border-bottom border-secondary border-opacity-25 pb-2 mb-3">
+                <div>
+                    <span class="badge bg-info text-dark fw-bold mb-1">TRUNG TÂM TRỢ NĂNG THỊ GIÁC &amp; ĐA KHUYẾT TẬT [FEAT-ACC-009]</span>
+                    <h5 class="fw-bold m-0 text-white">♿ Bộ Lọc Mù Màu (5 Chế Độ CVD) &amp; Xem Trước Màu Sắc Thực Tế</h5>
+                </div>
+                <button type="button" class="nvx-checkin-close-circle-btn" onclick="document.getElementById('nvxColorblindPreviewModal')?.remove()">✕</button>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-info">Chọn Chế Độ Hỗ Trợ Thị Giác / Mù Màu (Áp dụng tức thì toàn sàn):</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-sm ${curMode === 'standard' ? 'btn-nvidia' : 'btn-outline-light'} fw-bold" onclick="applyColorblindMode('standard')">1. Chuẩn (Standard)</button>
+                    <button type="button" class="btn btn-sm ${curMode === 'deuteranopia' ? 'btn-nvidia' : 'btn-outline-info'} fw-bold" onclick="applyColorblindMode('deuteranopia')">2. Mù Đỏ-Lục (Deuteranopia)</button>
+                    <button type="button" class="btn btn-sm ${curMode === 'tritanopia' ? 'btn-nvidia' : 'btn-outline-warning'} fw-bold" onclick="applyColorblindMode('tritanopia')">3. Mù Xanh-Vàng (Tritanopia)</button>
+                    <button type="button" class="btn btn-sm ${curMode === 'symbols' ? 'btn-nvidia' : 'btn-outline-success'} fw-bold" onclick="applyColorblindMode('symbols')">4. Nhãn Ký Hiệu [▲+ / ▼-]</button>
+                    <button type="button" class="btn btn-sm ${curMode === 'high_contrast_aaa' ? 'btn-nvidia' : 'btn-outline-danger'} fw-bold" onclick="applyColorblindMode('high_contrast_aaa')">5. Tương Phản Siêu Cao AAA</button>
+                </div>
+            </div>
+
+            <div class="nvx-live-color-preview-container mb-3"></div>
+
+            <div class="row g-2 mb-3 small">
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-warning btn-sm w-100 fw-bold py-2" onclick="toggleLargeButtonsMode()">
+                        🖐️ Bật/Tắt Nút Lớn Chống Run Tay
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-info btn-sm w-100 fw-bold py-2" onclick="toggleVisualFlashAlertMode()">
+                        🦻 Bật/Tắt Viền Chớp Khiếm Thính
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-success btn-sm w-100 fw-bold py-2" onclick="toggleReadingFocusRuler()">
+                        📏 Bật/Tắt Thước Đọc Tập Trung
+                    </button>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary border-opacity-25 small">
+                <span class="text-secondary">Mèo AI có thể đọc mô tả màu sắc thực tế của mọi thẻ sản phẩm trên màn hình.</span>
+                <button type="button" class="btn btn-nvidia btn-sm fw-bold" onclick="describeVisibleProductColorByCat()">🎨 Đọc Mô Tả Màu Sản Phẩm Trên Trang</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    renderLiveUiColorPreviewBox(curMode);
+}
+window.openColorblindPreviewModal = openColorblindPreviewModal;
+
+function initGlobalAccessibilityFromSaved() {
+    const savedCvd = localStorage.getItem('nvx_cvd_mode') || 'standard';
+    if (savedCvd !== 'standard') {
+        applyColorblindMode(savedCvd, false);
+    } else {
+        renderLiveUiColorPreviewBox('standard');
+    }
+    if (localStorage.getItem('nvx_acc_large_buttons') === '1') {
+        toggleLargeButtonsMode(true, false);
+    }
+    if (localStorage.getItem('nvx_acc_reading_ruler') === '1') {
+        toggleReadingFocusRuler(true, false);
+    }
+}
+window.initGlobalAccessibilityFromSaved = initGlobalAccessibilityFromSaved;
+
 function initNvidiaPlatformBootstrap() {
     sessionStorage.removeItem('nvx_mobile_app_mode');
     document.body.classList.remove('mobile-app-sim-active');
@@ -3601,6 +4140,7 @@ function initNvidiaPlatformBootstrap() {
     const savedSkin = localStorage.getItem('nvx_visual_skin') || 'executive_light';
     applyNvidiaVisualSkin(savedSkin);
     applyProductGridDensity(localStorage.getItem('nvx_grid_density') || '4');
+    initGlobalAccessibilityFromSaved();
     initSmartSearchSuggestionRotator();
     initMultiWindowMessengerDock();
     ensureCatWidgetScriptLoaded();
