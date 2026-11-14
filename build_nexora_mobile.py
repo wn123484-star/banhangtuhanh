@@ -3725,7 +3725,7 @@ def generate_android_native_project(png_cache=None):
 
     manifest_xml = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cloud.castletech.nexora.mobile">
+    >
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -4270,7 +4270,7 @@ on:
 
 jobs:
   build-android-apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -4284,7 +4284,7 @@ jobs:
         run: python build_nexora_mobile.py
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'

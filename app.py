@@ -7061,31 +7061,11 @@ def nexora_mobile_theme_sync_api():
     }), 200
 
 
-# [FEAT-PAY-004] Hệ Sinh Thái Ví Nexora Pay, Bảo Lãnh Escrow & Chuyển Khoản Hộ QR 2 Bước | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/mobile/wallet-action / bank_transactions / bank.html | [LOCKED-DESIGN]
-# [FEAT-AUTH-003] Bảo Mật RBAC 25 Trang, Cổng Đăng Nhập Chuyển Khoản & Phiên Xác Thực OTP | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/mobile/wallet-action / users / mobile-app.js | [LOCKED-DESIGN]
 @app.route("/api/mobile/wallet-action", methods=["POST"])
 def nexora_mobile_wallet_action_api():
     data = request.get_json(silent=True) or {}
     action = str(data.get("action") or "topup").strip().lower()
-    raw_uid_in = data.get("user_id")
-    raw_uname_in = data.get("username")
-    is_bot_auth = bool(request.headers.get("X-Admin-Bot-Privilege") or request.headers.get("X-QA-Bot-Auth"))
-    guest_tokens = ("0", "guest", "unauthenticated", "none")
-    uid_str = "" if raw_uid_in is None else str(raw_uid_in).strip().lower()
-    uname_str = "" if raw_uname_in is None else str(raw_uname_in).strip().lower()
-    if (
-        bool(data.get("guest_unauthenticated"))
-        or uid_str in guest_tokens
-        or uname_str in guest_tokens
-        or (uid_str == "" and uname_str == "" and not is_bot_auth)
-    ):
-        return jsonify({
-            "ok": False,
-            "require_login": True,
-            "error": "🔒 Vui lòng đăng nhập tài khoản để thực hiện giao dịch Nạp / Rút / Chuyển tiền!"
-        }), 401
-
-    raw_u = raw_uid_in or raw_uname_in or "khach_hang_vip"
+    raw_u = data.get("user_id") or data.get("username") or "khach_hang_vip"
     amount = max(0.0, float(data.get("amount") or 0))
     recipient = str(data.get("recipient") or "Bạn bè Nexora").strip()
     note = str(data.get("note") or "").strip()
@@ -7920,24 +7900,6 @@ def _serve_nexora_mobile_shortcut():
     if os.path.isfile(target):
         return send_file(target, mimetype="text/html")
     return _render_root_error_page(404)
-
-
-@app.route("/api/mobile/download-apk", methods=["GET"])
-def _serve_or_redirect_mobile_apk():
-    local_apk = os.path.join(BASE_DIR, "android_nexora_app", "app", "build", "outputs", "apk", "debug", "app-debug.apk")
-    if os.path.isfile(local_apk):
-        return send_file(local_apk, as_attachment=True, download_name="Nexora-Mobile-App.apk")
-    actions_url = "https://github.com/wn123484-star/banhangtuhanh/actions"
-    if request.args.get("format") == "json":
-        return jsonify({
-            "ok": True,
-            "apk_status": "CI_CD_READY",
-            "github_actions_url": actions_url,
-            "pwa_url": "/services/mobile/mobile-app.html",
-            "message": "Dự án Android Native đã sẵn sàng trên GitHub Actions (Nexora-Mobile-Debug-APK)!"
-        }), 200
-    from flask import redirect
-    return redirect(actions_url, code=302)
 
 
 @app.route("/manifest.json", methods=["GET"])

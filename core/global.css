@@ -5309,14 +5309,29 @@ html[data-nv-skin="tet_festival"] {
 }
 
 /* ==========================================================================
-   THANH HEADER TOPBAR GỌN GÀNG & DROPDOWN THÔNG MINH (KHÓA Z-INDEX TUYỆT ĐỐI)
+   [FEAT-HDR-001.1] THANH HEADER TOPBAR GỌN GÀNG & DROPDOWN THÔNG MINH (KHÓA Z-INDEX TUYỆT ĐỐI)
    ========================================================================== */
+header,
+#mainHeader,
 header.nvidia-header-bar,
+.nv-global-header,
+.nvx-header-wrapper,
+header.sticky-top {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    z-index: 2147483000 !important;
+    margin: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+}
+
 #header-placeholder,
 .nvidia-header-shell {
-    position: sticky !important;
-    top: 0 !important;
-    z-index: 100000 !important;
+    position: relative !important;
+    z-index: 2147483000 !important;
     overflow: visible !important;
 }
 
@@ -5870,10 +5885,14 @@ html[data-theme="dark"] .nvx-checkin-day-card.nvx-checkin-day-claimed {
    ========================================================================== */
 html,
 body {
+    filter: none !important;
+    transform: none !important;
+    perspective: none !important;
+    backdrop-filter: none !important;
     overflow-x: clip !important;
 }
 
-/* Tầng 4 (Header 3 Tầng Cố Định & Menu Xổ Xuống): z-index: 2147483000 - 2147483100 */
+/* [FEAT-HDR-001.1] Tầng 4 (Header 3 Tầng Cố Định & Menu Xổ Xuống): z-index: 2147483000 - 2147483100 */
 #header-placeholder {
     position: relative !important;
     width: 100% !important;
@@ -5882,16 +5901,21 @@ body {
     overflow: visible !important;
 }
 
+header,
+#mainHeader,
 header.nvidia-header-bar,
 .nv-global-header,
 header#mainHeader,
-.nvx-header-wrapper {
+.nvx-header-wrapper,
+header.sticky-top {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    width: 100% !important;
+    width: 100vw !important;
     z-index: 2147483000 !important;
+    margin: 0 !important;
+    transform: none !important;
     overflow: visible !important;
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28) !important;
 }
@@ -5909,7 +5933,7 @@ header#mainHeader,
     z-index: 2147483100 !important;
 }
 
-/* Tầng 5 (Nội dung trang chính <main>, bộ lọc, thẻ sản phẩm): z-index <= 20 */
+/* [FEAT-HDR-001.2] Tầng 5 (Nội dung trang chính <main>, bộ lọc, thẻ sản phẩm Glassmorphism & Kệ 3 Cột Trong Suốt): z-index <= 20 */
 main,
 .nv-product-card,
 .product-card {
@@ -5917,18 +5941,77 @@ main,
     z-index: 2;
 }
 
-/* Tầng 3 (Khung 🐱 Trạm Mèo Lỏng AI & Chat Sàn & Nút Pill góc dưới phải): z-index: 2147483500 */
+#productGrid,
+#productList,
+.product-grid-container,
+main .container,
+.nv-catalog-wrapper {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+html[data-grid-density="3"] #productGrid,
+#productGrid.nv-grid-density-3,
+#productList.nv-grid-density-3 {
+    gap: 32px !important;
+    row-gap: 32px !important;
+    --bs-gutter-x: 32px !important;
+    --bs-gutter-y: 32px !important;
+    padding: 16px 8px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+html[data-grid-density="3"] #productGrid > [class*="col-"],
+#productGrid.nv-grid-density-3 > [class*="col-"] {
+    padding: 0 12px !important;
+    margin-bottom: 16px !important;
+}
+
+.product-card,
+.nv-product-card {
+    background: rgba(255, 255, 255, 0.86) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(226, 232, 240, 0.9) !important;
+}
+
+html[data-theme="dark"] .product-card,
+html[data-theme="dark"] .nv-product-card,
+body[data-theme="dark"] .product-card,
+body[data-theme="dark"] .nv-product-card {
+    background: rgba(15, 23, 42, 0.78) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(56, 189, 248, 0.22) !important;
+}
+
+/* [FEAT-HDR-001.1] Tầng 3 (Khung 🐱 Trạm Mèo Lỏng AI & Chat Sàn & Nút Pill góc dưới phải): z-index: 2147483500 */
 #nvMessengerLauncherBar {
     position: fixed !important;
     bottom: 14px !important;
     right: 18px !important;
+    left: auto !important;
+    top: auto !important;
     z-index: 2147483500 !important;
     opacity: 1 !important;
+    margin: 0 !important;
+    transform: none !important;
 }
 
-#nvUnifiedHubDock {
-    position: relative !important;
+#nvUnifiedHubDock,
+#nvUnifiedHubPanel {
+    position: fixed !important;
+    right: 18px !important;
+    bottom: 68px !important;
+    left: auto !important;
+    top: auto !important;
+    width: 390px !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 150px) !important;
     z-index: 2147483500 !important;
+    margin: 0 !important;
+    transform: none !important;
     opacity: 1 !important;
     background: #0f172a !important;
     color: #f8fafc !important;
@@ -5936,7 +6019,8 @@ main,
     box-shadow: 0 22px 54px rgba(0, 0, 0, 0.72) !important;
 }
 
-html[data-theme="light"] #nvUnifiedHubDock {
+html[data-theme="light"] #nvUnifiedHubDock,
+html[data-theme="light"] #nvUnifiedHubPanel {
     background: #ffffff !important;
     color: #0f172a !important;
     border: 2px solid #059669 !important;
@@ -5946,6 +6030,8 @@ html[data-theme="light"] #nvUnifiedHubDock {
     position: relative !important;
     z-index: 2147483500 !important;
     opacity: 1 !important;
+    margin: 0 !important;
+    transform: none !important;
 }
 
 /* Tầng 2 (Modal Điểm Danh, Modal Xác Thực Nhanh Quick Auth & Popup): z-index: 2147483600 */

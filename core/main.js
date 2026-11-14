@@ -1,7 +1,16 @@
-/* [FEAT-HDR-001] Header 3 Tầng Sticky/Fixed, Nút Điểm Danh Lửa 🔥, Nút Đổi Sáng/Tối ☀️/🌙 & Menu Xổ Xuống Không Điểm Mù | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-streak, core/main.js, core/global.css | [LOCKED-DESIGN] */
-/* [FEAT-CAT-002] Linh vật Mèo Lỏng AI Tầng Cao Nhất (z-index: 2147483645), 5 Giống Mèo, 4 Nhóm Accordion (18 Tính Năng), Hoạt Ảnh Ăn Cá / Trà Sữa Khớp Miệng & Săn Deal 4 Chặng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/cat-assistant/command, core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
-/* [FEAT-AUTH-003] Đăng Nhập/Đăng Ký, Xác Minh OTP 6 Số Qua Resend (@mail.castle-tech.cloud), Đổi Mật Khẩu, Mã PIN Ví 6 Số & Phân Quyền RBAC 4 Cấp (Guest / Buyer / Seller / Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auth/*, /api/settings/security/*, bảng users / email_otp_verifications | [LOCKED-DESIGN] */
-/* [FEAT-ACC-009] Trung Tâm Trợ Năng Mù Màu (5 Chế độ CVD), Bảng Xem Trước Màu Sắc Thực Tế Của Các Tab/Nút, Mô Tả Màu Sản Phẩm & Hỗ Trợ Đa Khuyết Tật | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility, services/settings/settings.html, core/global.css | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001] Header 3 Tầng Sticky/Fixed, Nút Điểm Danh Lửa 🔥, Nút Đổi Sáng/Tối ☀️/🌙 & Menu Xổ Xuống Không Điểm Mù | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-checkin, core/main.js, core/global.css | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.1] Khóa Tầng Hiển Thị Header (position: fixed, z-index: 2147483000), Chống Lỗi Filter/Transform Trên Body & Đồng Bộ #nvxHeaderStickySpacer | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/global.css, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.2] Kệ Hàng 3 Cột Khoảng Trống Trong Suốt (Transparent Shelf Gap 32px) & Thẻ Sản Phẩm Kính Mờ Glassmorphism | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/global.css, core/main.js, services/home/home.js | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.3] Chuỗi Điểm Danh 7 Ngày Liên Tiếp Nhận Xu, Lượt Quay & Voucher VIP Mốc Ngày 7 (STREAK7VIP) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/daily-checkin, bảng user_daily_checkins / users | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.4] Phân Quyền Ẩn Nút Test Điểm Danh (+1 Ngày / Reset) Đối Với Khách Thường (Chỉ Hiện Cho Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js (build7DayStreakStripHtml) | [LOCKED-DESIGN] */
+/* [FEAT-HDR-001.5] Đồng Bộ Đa Bộ Icon 14 Vị Trí Thời Gian Thực Không Cache (No-Store Manifest Sync) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/icon-sets, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-CAT-002] Linh vật Mèo Lỏng AI Tầng Cao Nhất (z-index: 2147483645), 5 Giống Mèo, 4 Nhóm Accordion, Hoạt Ảnh Ăn Cá / Trà Sữa Khớp Miệng & Săn Deal 4 Chặng | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/cat-assistant/command, core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-CAT-002.6] Tính Năng "Cất Mèo Đi / Gọi Mèo Ra" (tuckCatBehindChat & summonCatBackOut) Nấp Sau Khung Chat Thò Tai/Đuôi/Mặt Tinh Nghịch | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/cat_widget.js, core/main.js | [LOCKED-DESIGN] */
+/* [FEAT-AUTH-003] Đăng Nhập/Đăng Ký, Xác Minh OTP 6 Số Qua Resend (@mail.castle-tech.cloud), Đổi Mật Khẩu, Mã PIN Ví 6 Số & Phân Quyền RBAC 4 Cấp (Guest / Buyer / Seller / Admin) | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/auth/*, /api/settings/email-otp/*, bảng users | [LOCKED-DESIGN] */
+/* [FEAT-AUTH-003.2] Thưởng Nóng +20.000 Xu Vào Ví Nexora Pay Ngay Khi Xác Thực Bảo Mật OTP Email Thành Công | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/email-otp/verify, /api/account/verify-otp-and-change-password | [LOCKED-DESIGN] */
+/* [FEAT-AUTH-003.3] Tự Động Làm Mờ & Khóa Nút Gửi OTP Sau Khi Đã Xác Thực Kèm Nút Mở Khóa Xác Minh Lại Khi Đổi Mật Khẩu/PIN | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js, services/settings/settings.js, services/mobile/mobile-app.js | [LOCKED-DESIGN] */
+/* [FEAT-ACC-009] Trung Tâm Trợ Năng Mù Màu (5 Chế độ CVD), Bảng Xem Trước Màu Sắc Thực Tế, Mèo Báo Màu Khi Di Chuột 2 Giây & NLP Tự Bật Hỗ Trợ Mù Màu | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: /api/settings/accessibility, core/main.js, core/cat_widget.js | [LOCKED-DESIGN] */
+/* [FEAT-ACC-009.4] Chế Độ Mèo Báo Màu Khi Di Chuột 2 Giây (2000ms Hover Color Inspector) & Nhận Diện Câu Chat Mù Màu Tự Động Bật Hỗ Trợ | Trạng thái: PRODUCTION_DB_LINKED | Liên kết: core/main.js, core/cat_widget.js, services/product/product-detail.js | [LOCKED-DESIGN] */
 /* ==========================================================================
    CORE/MAIN.JS - ĐỒNG BỘ HEADER/FOOTER SẪM MÀU, TRẠM HỢP NHẤT MÈO AI & CHAT
    ========================================================================== */
@@ -466,9 +475,15 @@ function applyProductGridDensity(mode) {
     const validModes = ['3', '4', '5', '6', 'list'];
     const resolved = validModes.includes(String(mode)) ? String(mode) : (localStorage.getItem('nvx_grid_density') || '4');
     localStorage.setItem('nvx_grid_density', resolved);
+    document.documentElement.setAttribute('data-grid-density', resolved);
     ['productGrid', 'productList'].forEach(function(gid) {
         const gEl = document.getElementById(gid);
-        if (gEl) gEl.setAttribute('data-grid-density', resolved);
+        if (gEl) {
+            gEl.setAttribute('data-grid-density', resolved);
+            gEl.classList.toggle('nv-grid-density-3', resolved === '3');
+            gEl.style.background = 'transparent';
+            gEl.style.boxShadow = 'none';
+        }
     });
     document.querySelectorAll('.nv-density-btn, [data-density-mode]').forEach(function(btn) {
         const bMode = btn.getAttribute('data-density-mode');
@@ -682,6 +697,19 @@ function updateHeaderCoinsAndStreakDisplay(streakData) {
     }
 }
 
+/* [FEAT-HDR-001.3] & [FEAT-HDR-001.4] Chuỗi Điểm Danh 7 Ngày Liên Tiếp & Ẩn Nút Test Với User Thường */
+function isCurrentUserAdminOrDebugForStreak() {
+    try {
+        if (localStorage.getItem('nvx_admin_debug') === '1') return true;
+        var uRaw = localStorage.getItem('nvidia_user') || localStorage.getItem('auth_user');
+        var u = uRaw ? JSON.parse(uRaw) : null;
+        return Boolean(u && String(u.role || '').toLowerCase() === 'admin');
+    } catch (e) {
+        return false;
+    }
+}
+window.isCurrentUserAdminOrDebugForStreak = isCurrentUserAdminOrDebugForStreak;
+
 function build7DayStreakStripHtml(data, isCompact) {
     var schedule = (data && Array.isArray(data.schedule)) ? data.schedule : [
         { day: 1, coins: 5000, spins: 0, label: '+5.000 Xu' },
@@ -692,11 +720,12 @@ function build7DayStreakStripHtml(data, isCompact) {
         { day: 6, coins: 25000, spins: 0, label: '+25.000 Xu' },
         { day: 7, coins: 50000, spins: 3, label: '+50K Xu + 3 Quay + VIP' }
     ];
-    var streak = Number((data && data.login_streak) || 0);
+    var streak = Number((data && (data.current_streak !== undefined ? data.current_streak : data.login_streak)) || 0);
     var checkedToday = Boolean(data && data.checked_in_today);
     var nextDay = Number((data && data.next_day_to_claim) || ((streak % 7) + 1));
-    var totalCheckins = Number((data && data.total_checkins) || 0);
+    var totalCheckins = Number((data && (data.total_days !== undefined ? data.total_days : data.total_checkins)) || 0);
     var isDarkTheme = document.documentElement.getAttribute('data-theme') === 'dark';
+    var showAdminTestBtns = isCurrentUserAdminOrDebugForStreak();
 
     var daysGridHtml = '<div class="row g-2 my-1">' + schedule.map(function(item) {
         var d = Number(item.day);
@@ -706,35 +735,48 @@ function build7DayStreakStripHtml(data, isCompact) {
 
         var dayStateCls = isTodayTarget ? 'nvx-checkin-day-today' : (isClaimed ? 'nvx-checkin-day-claimed' : '');
         var solidBg = isDarkTheme
-            ? (isTodayTarget ? '#1e293b' : (isClaimed ? '#1e293b' : '#1e293b'))
-            : (isTodayTarget ? '#fef3c7' : (isClaimed ? '#f1f5f9' : '#f1f5f9'));
+            ? (isTodayTarget ? '#1e293b' : (isClaimed ? '#064e3b' : '#1e293b'))
+            : (isTodayTarget ? '#fef3c7' : (isClaimed ? '#ecfdf5' : '#f1f5f9'));
         var solidBorder = isTodayTarget ? '#f59e0b' : (isClaimed ? '#059669' : (isDarkTheme ? '#334155' : '#cbd5e1'));
         var solidText = isDarkTheme ? '#f8fafc' : '#0f172a';
 
         var statusTag = isClaimed
-            ? '<span class="badge bg-success" style="font-size:9.5px;">✔ Đã nhận</span>'
+            ? '<span class="badge bg-success" style="font-size:9.5px;">✅ Đã nhận</span>'
             : (isTodayTarget
                 ? '<span class="badge bg-warning text-dark fw-bold" style="font-size:9.5px;">🎁 Hôm nay</span>'
                 : (isNextPreview
                     ? '<span class="badge bg-info text-dark" style="font-size:9.5px;">Ngày mai</span>'
                     : '<span class="badge bg-secondary" style="font-size:9.5px;">Mốc ' + d + '</span>'));
 
+        var clickAction = isTodayTarget
+            ? 'claimDailyStreakReward(false)'
+            : (showAdminTestBtns ? 'claimDailyStreakReward(true)' : 'claimDailyStreakReward(false)');
+
         return '<div class="col">' +
             '<div class="p-2 rounded-3 text-center h-100 d-flex flex-column justify-content-between nvx-checkin-day-card ' + dayStateCls + '" ' +
-                 'style="min-width:96px;background:' + solidBg + ' !important;color:' + solidText + ' !important;border:' + ((isClaimed || isTodayTarget) ? '2px' : '1px') + ' solid ' + solidBorder + ' !important;opacity:1 !important;cursor:pointer;" ' +
-                 'onclick="claimDailyStreakReward(' + (isTodayTarget ? 'false' : 'true') + ')">' +
+                 'style="min-width:96px;background:' + solidBg + ' !important;color:' + solidText + ' !important;border:' + ((isClaimed || isTodayTarget) ? '2px' : '1px') + ' solid ' + solidBorder + ' !important;opacity:1 !important;cursor:' + (isTodayTarget ? 'pointer' : 'default') + ';" ' +
+                 'onclick="' + clickAction + '">' +
                 '<div class="d-flex justify-content-between align-items-center mb-1">' +
                     '<strong class="small nvx-day-title ' + (isClaimed ? 'text-nvidia' : '') + '" style="color:' + (isClaimed ? '#059669' : (isTodayTarget ? (isDarkTheme ? '#facc15' : '#b45309') : solidText)) + ' !important;">Ngày ' + d + '</strong>' +
                     statusTag +
                 '</div>' +
                 '<div class="my-1" style="font-size:1.3rem;">' + (d === 7 ? '👑' : (item.spins > 0 ? '🎰' : '🪙')) + '</div>' +
                 '<div class="fw-bold text-nvidia" style="font-size:11.5px;">+' + Number(item.coins).toLocaleString('vi-VN') + ' Xu</div>' +
-                (item.spins > 0
-                    ? '<div class="fw-semibold" style="font-size:10px;color:#0284c7 !important;">+' + item.spins + ' Lượt quay</div>'
-                    : '<div style="font-size:10px;color:' + (isDarkTheme ? '#94a3b8' : '#475569') + ' !important;">Điểm danh</div>') +
+                (d === 7
+                    ? '<div class="fw-bold" style="font-size:9.5px;color:#e11d48 !important;">+3 Quay &amp; Voucher 100K</div>'
+                    : (item.spins > 0
+                        ? '<div class="fw-semibold" style="font-size:10px;color:#0284c7 !important;">+' + item.spins + ' Lượt quay</div>'
+                        : '<div style="font-size:10px;color:' + (isDarkTheme ? '#94a3b8' : '#475569') + ' !important;">Điểm danh</div>')) +
             '</div>' +
         '</div>';
     }).join('') + '</div>';
+
+    var adminDebugButtonsHtml = showAdminTestBtns
+        ? ('<button type="button" id="nvxCheckinAdminTestNextBtn" class="btn btn-outline-warning btn-sm fw-bold" title="[Admin QA] Bấm để giả lập qua ngày hôm sau và test nhận thưởng mốc tiếp theo ngay lập tức" onclick="claimDailyStreakReward(true)">' +
+               '⚡ Test +1 Ngày Chuỗi Tiếp Theo' +
+           '</button>' +
+           '<button type="button" id="nvxCheckinAdminResetBtn" class="btn btn-outline-secondary btn-sm py-0" title="[Admin QA] Đặt lại chuỗi về Ngày 1" onclick="resetDailyStreakCounter()">🔄 Reset</button>')
+        : '';
 
     return '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">' +
             '<div class="d-flex flex-wrap align-items-center gap-2">' +
@@ -743,13 +785,11 @@ function build7DayStreakStripHtml(data, isCompact) {
                 '<span class="badge bg-dark text-light border border-secondary font-monospace">Tổng tích lũy: ' + totalCheckins + ' ngày</span>' +
             '</div>' +
             '<div class="d-flex flex-wrap gap-2">' +
-                '<button type="button" class="btn btn-sm ' + (checkedToday ? 'btn-success' : 'btn-nvidia') + ' fw-bold px-3" onclick="claimDailyStreakReward(false)">' +
-                    (checkedToday ? ('☑️ Đã Điểm Danh Ngày ' + streak + '/7') : ('🎁 Điểm Danh Nhận Thưởng Ngày ' + nextDay + ' Ngay')) +
+                '<button type="button" id="nvxClaimDailyCheckinMainBtn" class="btn btn-sm ' + (checkedToday ? 'btn-success' : 'btn-nvidia') + ' fw-bold px-3" ' +
+                    (checkedToday ? 'disabled style="opacity:0.88;cursor:not-allowed;"' : 'onclick="claimDailyStreakReward(false)"') + '>' +
+                    (checkedToday ? '✅ Đã Điểm Danh Hôm Nay (Hẹn gặp lại ngày mai!)' : ('🎁 Điểm Danh Nhận Thưởng Ngày ' + nextDay + ' Ngay')) +
                 '</button>' +
-                '<button type="button" class="btn btn-outline-warning btn-sm fw-bold" title="Bấm để giả lập qua ngày hôm sau và test nhận thưởng mốc tiếp theo ngay lập tức" onclick="claimDailyStreakReward(true)">' +
-                    '⚡ Test +1 Ngày Chuỗi Tiếp Theo' +
-                '</button>' +
-                '<button type="button" class="btn btn-outline-secondary btn-sm py-0" title="Đặt lại chuỗi về Ngày 1" onclick="resetDailyStreakCounter()">🔄 Reset</button>' +
+                adminDebugButtonsHtml +
             '</div>' +
         '</div>' +
         daysGridHtml;
@@ -820,6 +860,7 @@ async function claimDailyStreakReward(forceNextDay) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 user_id: uid,
+                action: forceNextDay ? 'test_next_day' : 'checkin',
                 force_next_day: Boolean(forceNextDay)
             })
         });
@@ -831,11 +872,14 @@ async function claimDailyStreakReward(forceNextDay) {
             localStorage.setItem('auth_user', JSON.stringify(data.user));
         }
 
-        /* Cập nhật ngay lập tức con số cạnh ngọn lửa 🔥 trên Header mà không cần tải lại trang */
+        /* Cập nhật ngay lập tức con số cạnh ngọn lửa 🔥 và 🪙 Xu trên Header mà không cần tải lại trang */
         updateHeaderCoinsAndStreakDisplay(data);
 
         if (typeof notifyToast === 'function') {
-            notifyToast(data.message || '🎁 Đã điểm danh nhận thưởng thành công!', data.ok ? 'success' : 'info');
+            var claimedDay = data.current_streak || data.login_streak || 1;
+            var rewardCoins = Number(data.reward_coins_added || 5000).toLocaleString('vi-VN');
+            var fallbackMsg = '🎉 Điểm danh Ngày ' + claimedDay + ' thành công! Bạn nhận được +' + rewardCoins + ' Xu vào Ví Nexora Pay!';
+            notifyToast(data.message || fallbackMsg, data.already_checked_in ? 'info' : 'success');
         }
         await loadAndRenderDailyCheckinStreak();
     } catch (e) {}
@@ -849,12 +893,12 @@ async function resetDailyStreakCounter() {
         var res = await fetch('/api/settings/daily-checkin', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: uid, reset_streak: true })
+            body: JSON.stringify({ user_id: uid, action: 'reset', reset_streak: true })
         });
         var data = await res.json();
         __nvxStreakState = data;
         updateHeaderCoinsAndStreakDisplay(data);
-        if (typeof notifyToast === 'function') notifyToast(data.message || 'Đã đặt lại chuỗi điểm danh!', 'info');
+        if (typeof notifyToast === 'function') notifyToast(data.message || 'Đã đặt lại chuỗi điểm danh về Ngày 1!', 'info');
         await loadAndRenderDailyCheckinStreak();
     } catch (e) {}
 }
@@ -1026,7 +1070,7 @@ function mountSettingsEmailOtpRewardWidget() {
         loadUserActiveDisputesInSettings();
     }
 
-    /* KHỐI 1: XÁC MINH EMAIL BẰNG OTP NHẬN THƯỞNG */
+    /* [FEAT-AUTH-003.2] & [FEAT-AUTH-003.3] KHỐI 1: XÁC MINH EMAIL BẰNG OTP NHẬN THƯỞNG +20.000 XU & LÀM MỜ NÚT SAU XÁC MINH */
     if (!document.getElementById('nvxSettingsEmailOtpRewardCard')) {
         var card = document.createElement('section');
         card.id = 'nvxSettingsEmailOtpRewardCard';
@@ -1035,13 +1079,18 @@ function mountSettingsEmailOtpRewardWidget() {
         card.innerHTML =
             '<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom border-secondary border-opacity-25 pb-3 mb-3">' +
                 '<div>' +
-                    '<span class="badge bg-nvidia mb-1">XÁC MINH TÀI KHOẢN &amp; NHẬN THƯỞNG XU</span>' +
-                    '<h5 class="fw-bold m-0">Xác Thực Email Chính Chủ Bằng Mã OTP — Nhận Ngay +50.000 Xu &amp; +3 Lượt Quay</h5>' +
-                    '<div class="small text-secondary mt-1">Đăng ký tài khoản nhanh không cần chờ, xác minh Email bằng OTP bất cứ lúc nào tại Cài đặt để nhận thưởng vào Ví Nivida Pay.</div>' +
+                    '<span class="badge bg-nvidia mb-1">XÁC MINH TÀI KHOẢN &amp; NHẬN THƯỞNG XU [FEAT-AUTH-003.2]</span>' +
+                    '<h5 class="fw-bold m-0">Xác Thực Email Chính Chủ Bằng Mã OTP — Tặng Ngay +20.000 Xu Bảo Mật (&amp; Thưởng VIP)</h5>' +
+                    '<div class="small text-secondary mt-1">Đăng ký tài khoản nhanh không cần chờ, xác minh Email bằng OTP bất cứ lúc nào tại Cài đặt để nhận ngay +20.000 Xu vào Ví Nexora Pay.</div>' +
                 '</div>' +
-                '<span id="settingsEmailVerifiedStatusBadge" class="badge ' + (isVerified ? 'bg-success' : 'bg-warning text-dark') + ' px-3 py-2">' +
-                    (isVerified ? 'Đã Xác Minh Email Chính Chủ' : 'Chưa Xác Minh — Nhận +50.000 Xu Ngay') +
-                '</span>' +
+                '<div class="d-flex flex-wrap align-items-center gap-2">' +
+                    '<span id="settingsEmailVerifiedStatusBadge" class="badge ' + (isVerified ? 'bg-success' : 'bg-warning text-dark') + ' px-3 py-2">' +
+                        (isVerified ? '✅ Email Đã Được Xác Minh Bảo Mật' : 'Chưa Xác Minh — Nhận +20.000 Xu Ngay') +
+                    '</span>' +
+                    '<button type="button" id="btnSettingsUnlockOtpReverify" class="btn btn-outline-info btn-sm fw-bold ' + (isVerified ? '' : 'd-none') + '" onclick="unlockOtpReverification()">' +
+                        '🔄 Yêu cầu xác minh lại (Khi đổi Mật khẩu / Đổi Mã PIN / Đổi Email)' +
+                    '</button>' +
+                '</div>' +
             '</div>' +
             '<div class="row g-3 align-items-end">' +
                 '<div class="col-md-3">' +
@@ -1052,14 +1101,23 @@ function mountSettingsEmailOtpRewardWidget() {
                     '<label class="form-label small fw-bold mb-1">Địa chỉ Email nhận mã OTP</label>' +
                     '<div class="input-group input-group-sm">' +
                         '<input type="email" id="settingsOtpEmailInput" class="form-control font-monospace" value="' + defaultEmail + '" placeholder="VD: hungnguyendva@gmail.com">' +
-                        '<button type="button" id="btnSettingsSendOtpEmail" class="btn btn-nvidia fw-bold" onclick="sendSettingsVerificationOtpEmail()">Gửi Mã OTP</button>' +
+                        '<button type="button" id="btnSettingsSendOtpEmail" class="btn ' + (isVerified ? 'btn-secondary' : 'btn-nvidia') + ' fw-bold" ' +
+                            (isVerified ? 'disabled style="opacity:0.55;cursor:not-allowed;"' : '') +
+                            ' onclick="sendSettingsVerificationOtpEmail()">' +
+                            (isVerified ? '✅ Email Đã Được Xác Minh Bảo Mật' : 'Gửi Mã OTP') +
+                        '</button>' +
                     '</div>' +
                 '</div>' +
                 '<div class="col-md-5">' +
                     '<label class="form-label small fw-bold mb-1">Nhập mã OTP 6 số từ hộp thư Email</label>' +
                     '<div class="input-group input-group-sm">' +
-                        '<input type="text" id="settingsOtpCodeVerifyInput" class="form-control font-monospace text-center fw-bold" placeholder="Nhập 6 chữ số OTP..." maxlength="6">' +
-                        '<button type="button" id="btnSettingsVerifyOtpClaim" class="btn btn-info text-dark fw-bold px-3" onclick="verifySettingsOtpAndClaimReward()">Xác Nhận OTP &amp; Nhận +50.000 Xu</button>' +
+                        '<input type="text" id="settingsOtpCodeVerifyInput" class="form-control font-monospace text-center fw-bold" placeholder="Nhập 6 chữ số OTP..." maxlength="6" ' +
+                            (isVerified ? 'disabled style="opacity:0.55;"' : '') + '>' +
+                        '<button type="button" id="btnSettingsVerifyOtpClaim" class="btn btn-info text-dark fw-bold px-3" ' +
+                            (isVerified ? 'disabled style="opacity:0.55;cursor:not-allowed;"' : '') +
+                            ' onclick="verifySettingsOtpAndClaimReward()">' +
+                            (isVerified ? '✅ Đã Nhận Thưởng OTP' : 'Xác Nhận OTP &amp; Nhận +20.000 Xu') +
+                        '</button>' +
                     '</div>' +
                 '</div>' +
             '</div>' +
@@ -1072,6 +1130,63 @@ function mountSettingsEmailOtpRewardWidget() {
         }
     }
 }
+
+/* [FEAT-AUTH-003.3] Làm mờ / Khóa hoặc Mở khóa lại nút Gửi OTP khi cần đổi Mật khẩu / Mã PIN / Email */
+function applyVerifiedOtpUiLockState(locked) {
+    var sendBtns = [
+        document.getElementById('btnSettingsSendOtpEmail'),
+        document.getElementById('btnSendOtpInSettings'),
+        document.getElementById('nxBtnSendSecurityOtp')
+    ];
+    var codeInps = [
+        document.getElementById('settingsOtpCodeVerifyInput'),
+        document.getElementById('settingsOtpInput'),
+        document.getElementById('nxSecOtpCode')
+    ];
+    var verifyBtns = [
+        document.getElementById('btnSettingsVerifyOtpClaim')
+    ];
+    var unlockBtns = [
+        document.getElementById('btnSettingsUnlockOtpReverify'),
+        document.getElementById('btnUnlockOtpInSettingsPage'),
+        document.getElementById('nxBtnUnlockOtpReverify')
+    ];
+
+    sendBtns.forEach(function(btn) {
+        if (!btn) return;
+        btn.disabled = Boolean(locked);
+        btn.style.opacity = locked ? '0.55' : '1';
+        btn.style.cursor = locked ? 'not-allowed' : 'pointer';
+        btn.textContent = locked ? '✅ Email Đã Được Xác Minh Bảo Mật' : '📩 Gửi Mã OTP Tới Email';
+    });
+    codeInps.forEach(function(inp) {
+        if (!inp) return;
+        inp.disabled = Boolean(locked);
+        inp.style.opacity = locked ? '0.55' : '1';
+    });
+    verifyBtns.forEach(function(btn) {
+        if (!btn) return;
+        btn.disabled = Boolean(locked);
+        btn.style.opacity = locked ? '0.55' : '1';
+        btn.style.cursor = locked ? 'not-allowed' : 'pointer';
+        btn.textContent = locked ? '✅ Đã Nhận Thưởng OTP' : 'Xác Nhận OTP & Nhận +20.000 Xu';
+    });
+    unlockBtns.forEach(function(btn) {
+        if (!btn) return;
+        btn.classList.toggle('d-none', !locked);
+    });
+}
+window.applyVerifiedOtpUiLockState = applyVerifiedOtpUiLockState;
+
+function unlockOtpReverification() {
+    applyVerifiedOtpUiLockState(false);
+    var codeInp = document.getElementById('settingsOtpCodeVerifyInput') || document.getElementById('settingsOtpInput') || document.getElementById('nxSecOtpCode');
+    if (codeInp) codeInp.focus();
+    if (typeof notifyToast === 'function') {
+        notifyToast('🔓 Đã mở khóa gửi mã OTP xác minh lại để đổi Mật khẩu / Mã PIN / Email!', 'info');
+    }
+}
+window.unlockOtpReverification = unlockOtpReverification;
 
 async function loadUserActiveDisputesInSettings() {
     var box = document.getElementById('userSettingsActiveDisputesList');
@@ -1236,16 +1351,24 @@ async function verifySettingsOtpAndClaimReward() {
             }
             if (statusBadge) {
                 statusBadge.className = 'badge bg-success px-3 py-2';
-                statusBadge.textContent = 'Đã Xác Minh Email Chính Chủ (Đã Nhận Thưởng)';
+                statusBadge.textContent = '✅ Email Đã Được Xác Minh Bảo Mật';
             }
             if (banner) {
                 banner.classList.remove('d-none');
-                banner.innerHTML = '<div class="p-2 rounded bg-dark border border-success text-nvidia fw-bold">' + data.message + '</div>';
+                banner.innerHTML = '<div class="p-2 rounded bg-dark border border-success text-nvidia fw-bold">' + (data.message || '🎉 Xác thực OTP thành công! Bạn được tặng +20.000 Xu vào Ví Nexora Pay!') + '</div>';
             }
             if (codeInp) codeInp.value = '';
-            if (typeof notifyToast === 'function') notifyToast(data.message, 'success');
-            if (typeof window.renderDynamicHeaderAndFooter === 'function') {
-                setTimeout(function() { window.location.reload(); }, 1100);
+            /* [FEAT-AUTH-003.2] Cập nhật ngay 🪙 Xu trên Header */
+            if (data.new_coins_balance !== undefined) {
+                var headerCoinsEl = document.getElementById('headerUserCoinsBadge');
+                if (headerCoinsEl) {
+                    headerCoinsEl.textContent = '🪙 ' + Number(data.new_coins_balance).toLocaleString('vi-VN') + ' Xu';
+                }
+            }
+            /* [FEAT-AUTH-003.3] Làm mờ / khóa nút Gửi OTP sau khi xác minh thành công */
+            applyVerifiedOtpUiLockState(true);
+            if (typeof notifyToast === 'function') {
+                notifyToast(data.message || '🎉 Xác thực OTP thành công! Bạn được tặng +20.000 Xu vào Ví Nexora Pay!', 'success');
             }
         } else {
             if (banner) {
@@ -3142,10 +3265,10 @@ function initMultiWindowMessengerDock() {
                 <!-- TAB 1: ĐIỀU KHIỂN LINH VẬT MÈO LỎNG (4 NHÓM ACCORDION THU GỌN / MỞ RỘNG ▾ - ĐỦ 18 TÍNH NĂNG) -->
                 <div id="msgHubPane_cat" class="p-2 small">
                     <div class="nv-cat-accordion-stack">
-                        <!-- Nhóm 1: 🐾 1. Giống Mèo & Di Chuyển (4 nút) ▾ (Mặc định mở) -->
+                        <!-- Nhóm 1: 🐾 1. Giống Mèo & Di Chuyển (5 nút) ▾ (Mặc định mở) -->
                         <div class="nv-cat-acc-item open" id="catAccItem_move">
                             <button type="button" class="nv-cat-acc-header" onclick="toggleCatAccordionGroup('move')">
-                                <span>🐾 1. Giống Mèo &amp; Di Chuyển (4 nút)</span>
+                                <span>🐾 1. Giống Mèo &amp; Di Chuyển (5 nút)</span>
                                 <span class="nv-cat-acc-arrow">▾</span>
                             </button>
                             <div class="nv-cat-acc-body" id="catGrpPane_move">
@@ -3153,6 +3276,7 @@ function initMultiWindowMessengerDock() {
                                 <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToCeilingWalk()">🧗 Leo Trần</button>
                                 <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance?.goToRandom2DTarget()">🏃 Đi Khắp Màn</button>
                                 <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.goToRestingSpot() : null">🏠 Về Chỗ Nghỉ</button>
+                                <button type="button" id="catTuckToggleBtn" class="cat-action-chip" style="border-color:#f59e0b;color:#fde047;grid-column:span 2;" onclick="toggleTuckOrSummonCat()">🙈 Cất Mèo Đi (Trốn Sau Chat)</button>
                             </div>
                         </div>
 
@@ -3186,10 +3310,10 @@ function initMultiWindowMessengerDock() {
                             </div>
                         </div>
 
-                        <!-- Nhóm 4: ✨ 4. Hô Biến Sáng/Tối & Trợ Năng Mù Màu (4 nút) ▾ -->
+                        <!-- Nhóm 4: ✨ 4. Hô Biến Sáng/Tối & Trợ Năng Mù Màu (5 nút) ▾ -->
                         <div class="nv-cat-acc-item" id="catAccItem_magic">
                             <button type="button" class="nv-cat-acc-header" onclick="toggleCatAccordionGroup('magic')">
-                                <span>✨ 4. Hô Biến Sáng/Tối &amp; Trợ Năng Mù Màu (4 nút)</span>
+                                <span>✨ 4. Hô Biến Sáng/Tối &amp; Trợ Năng Mù Màu (5 nút)</span>
                                 <span class="nv-cat-acc-arrow">▾</span>
                             </button>
                             <div class="nv-cat-acc-body" id="catGrpPane_magic">
@@ -3197,6 +3321,7 @@ function initMultiWindowMessengerDock() {
                                 <button type="button" class="cat-action-chip" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.performMagicThemeToggle('light') : applyNvidiaVisualSkin('executive_light')">☀️ Hô Biến Nền Sáng</button>
                                 <button type="button" class="cat-action-chip" style="border-color:#38bdf8;color:#7dd3fc;" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.openColorblindPreviewFromCat() : openColorblindPreviewModal()">♿ Bộ Lọc &amp; Xem Trước Mù Màu</button>
                                 <button type="button" class="cat-action-chip" style="border-color:#f59e0b;color:#fde047;" onclick="window.__nividaCatInstance ? window.__nividaCatInstance.inspectProductColorsForAccessibility() : describeVisibleProductColorByCat()">🎨 Soi Màu Sản Phẩm</button>
+                                <button type="button" id="catHoverColorToggleBtn" class="cat-action-chip" style="border-color:#10b981;color:#6ee7b7;grid-column:span 2;" onclick="toggleHoverColorInspector()">🔍 Bật/Tắt Báo Màu Khi Di Chuột 2 Giây</button>
                             </div>
                         </div>
                     </div>
@@ -3683,8 +3808,9 @@ function ensureCatWidgetScriptLoaded() {
     document.body.appendChild(s);
 }
 
+/* [FEAT-HDR-001.1] Tự động tính chiều cao Spacer dưới Header cố định khi cuộn / đổi kích thước màn hình */
 function bindFixedHeaderSpacerResizeObserver() {
-    const headerEl = document.getElementById('mainHeader') || document.querySelector('header.nvidia-header-bar, .nv-global-header, .nvx-header-wrapper');
+    const headerEl = document.getElementById('mainHeader') || document.querySelector('header.nvidia-header-bar, .nv-global-header, .nvx-header-wrapper, header.sticky-top');
     if (!headerEl) return;
     let spacer = document.getElementById('nvxHeaderStickySpacer');
     if (!spacer) {
@@ -3695,7 +3821,8 @@ function bindFixedHeaderSpacerResizeObserver() {
         }
     }
     const syncHeight = () => {
-        const h = headerEl.offsetHeight || 124;
+        const rectH = headerEl.getBoundingClientRect ? Math.round(headerEl.getBoundingClientRect().height) : 0;
+        const h = rectH || headerEl.offsetHeight || 124;
         if (spacer) {
             spacer.style.height = h + 'px';
             spacer.style.minHeight = h + 'px';
@@ -3707,9 +3834,72 @@ function bindFixedHeaderSpacerResizeObserver() {
         const ro = new ResizeObserver(() => syncHeight());
         ro.observe(headerEl);
     }
-    window.addEventListener('resize', syncHeight);
+    if (!window.__nvHeaderScrollResizeBound) {
+        window.__nvHeaderScrollResizeBound = true;
+        window.addEventListener('resize', syncHeight, { passive: true });
+        window.addEventListener('scroll', syncHeight, { passive: true });
+    }
 }
 window.bindFixedHeaderSpacerResizeObserver = bindFixedHeaderSpacerResizeObserver;
+
+/* ==========================================================================
+   [FEAT-CAT-002.6] CẦU NỐI TOÀN CỤC: CẤT MÈO ĐI / GỌI MÈO RA
+   (`tuckCatBehindChat()`, `summonCatBackOut()`, `toggleTuckOrSummonCat()`)
+   ========================================================================== */
+function updateCatTuckToggleButtonLabel(isTucked) {
+    const btn = document.getElementById('catTuckToggleBtn');
+    if (!btn) return;
+    if (isTucked) {
+        btn.innerHTML = '📣 Gọi Mèo Ra (Đang Trốn Sau Chat)';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#6ee7b7';
+    } else {
+        btn.innerHTML = '🙈 Cất Mèo Đi (Trốn Sau Chat)';
+        btn.style.borderColor = '#f59e0b';
+        btn.style.color = '#fde047';
+    }
+}
+window.updateCatTuckToggleButtonLabel = updateCatTuckToggleButtonLabel;
+
+function tuckCatBehindChat() {
+    ensureCatWidgetScriptLoaded();
+    if (window.__nividaCatInstance && typeof window.__nividaCatInstance.tuckCatBehindChat === 'function') {
+        window.__nividaCatInstance.tuckCatBehindChat();
+    } else {
+        setTimeout(() => {
+            if (window.__nividaCatInstance && typeof window.__nividaCatInstance.tuckCatBehindChat === 'function') {
+                window.__nividaCatInstance.tuckCatBehindChat();
+            }
+        }, 280);
+    }
+    updateCatTuckToggleButtonLabel(true);
+}
+window.tuckCatBehindChat = tuckCatBehindChat;
+
+function summonCatBackOut() {
+    ensureCatWidgetScriptLoaded();
+    if (window.__nividaCatInstance && typeof window.__nividaCatInstance.summonCatBackOut === 'function') {
+        window.__nividaCatInstance.summonCatBackOut();
+    } else {
+        setTimeout(() => {
+            if (window.__nividaCatInstance && typeof window.__nividaCatInstance.summonCatBackOut === 'function') {
+                window.__nividaCatInstance.summonCatBackOut();
+            }
+        }, 280);
+    }
+    updateCatTuckToggleButtonLabel(false);
+}
+window.summonCatBackOut = summonCatBackOut;
+
+function toggleTuckOrSummonCat() {
+    const cat = window.__nividaCatInstance;
+    if (cat && cat.state === 'TUCKED_BEHIND_CHAT') {
+        summonCatBackOut();
+    } else {
+        tuckCatBehindChat();
+    }
+}
+window.toggleTuckOrSummonCat = toggleTuckOrSummonCat;
 
 /* ==========================================================================
    [FEAT-AUTH-003] & [FEAT-PAY-004] CỔNG BẮT BUỘC ĐĂNG NHẬP (QUICK AUTH MODAL)
