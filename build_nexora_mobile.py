@@ -321,6 +321,7 @@ def _ensure_account_security_and_settings_schema(conn):
     user_cols = [
         ("email", "TEXT DEFAULT ''"),
         ("phone", "TEXT DEFAULT ''"),
+        ("address", "TEXT DEFAULT ''"),
         ("shipping_address", "TEXT DEFAULT ''"),
         ("wallet_pin", "TEXT DEFAULT '123456'"),
         ("purchase_pin", "TEXT DEFAULT '123456'"),
@@ -329,7 +330,8 @@ def _ensure_account_security_and_settings_schema(conn):
         ("font_scale", "TEXT DEFAULT 'normal'"),
         ("ui_density", "TEXT DEFAULT 'comfortable'"),
         ("cvd_mode", "TEXT DEFAULT 'standard'"),
-        ("preferred_theme", "TEXT DEFAULT 'emerald_fintech_light'")
+        ("preferred_theme", "TEXT DEFAULT 'emerald_fintech_light'"),
+        ("terms_accepted_version", "TEXT DEFAULT ''")
     ]
     for col_name, col_def in user_cols:
         try:
@@ -337,35 +339,164 @@ def _ensure_account_security_and_settings_schema(conn):
         except Exception:
             pass
 
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS account_security_otps (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER DEFAULT 0,
-            target_key TEXT NOT NULL,
-            email TEXT NOT NULL,
-            otp_code TEXT NOT NULL,
-            purpose TEXT DEFAULT 'change_password',
-            expires_at REAL NOT NULL,
-            is_used INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT ''
+    order_cols = [
+        ("buyer_id", "INTEGER DEFAULT 0"),
+        ("customer_name", "TEXT DEFAULT ''"),
+        ("escrow_status", "TEXT DEFAULT 'holding'"),
+        ("logistics_stage", "TEXT DEFAULT ''"),
+        ("transfer_confirmed", "INTEGER DEFAULT 0"),
+        ("pay_token", "TEXT DEFAULT ''")
+    ]
+    for col_name, col_def in order_cols:
+        try:
+            cur.execute(f"ALTER TABLE orders ADD COLUMN {col_name} {col_def}")
+        except Exception:
+            pass
+
+    bid_cols = [
+        ("bidder_id", "INTEGER DEFAULT 0"),
+        ("bidder_name", "TEXT DEFAULT ''"),
+        ("deposit_locked", "REAL DEFAULT 0"),
+        ("is_refunded", "INTEGER DEFAULT 0")
+    ]
+    for col_name, col_def in bid_cols:
+        try:
+            cur.execute(f"ALTER TABLE auction_bids ADD COLUMN {col_name} {col_def}")
+        except Exception:
+            pass
+
+    try:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS account_security_otps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 0,
+                target_key TEXT NOT NULL,
+                email TEXT NOT NULL,
+                otp_code TEXT NOT NULL,
+                purpose TEXT DEFAULT 'change_password',
+                expires_at REAL NOT NULL,
+                is_used INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT ''
+            )
+            """
         )
-        """
-    )
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS security_audit_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER DEFAULT 0,
-            username TEXT DEFAULT '',
-            event_type TEXT NOT NULL,
-            detail TEXT DEFAULT '',
-            ip_addr TEXT DEFAULT '127.0.0.1',
-            created_at TEXT DEFAULT ''
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS security_audit_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 0,
+                username TEXT DEFAULT '',
+                event_type TEXT NOT NULL,
+                detail TEXT DEFAULT '',
+                ip_addr TEXT DEFAULT '127.0.0.1',
+                created_at TEXT DEFAULT ''
+            )
+            """
         )
-        """
-    )
-    conn.commit()
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS mobile_smart_otp_sessions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 0,
+                username TEXT DEFAULT '',
+                pin_length INTEGER DEFAULT 6,
+                dynamic_pin TEXT NOT NULL,
+                qr_login_token TEXT DEFAULT '',
+                expires_at REAL NOT NULL,
+                web_claimed INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS mobile_user_notifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER DEFAULT 0,
+                category TEXT DEFAULT 'balance',
+                title TEXT NOT NULL,
+                message TEXT NOT NULL,
+                target_url TEXT DEFAULT '/services/mobile/mobile-app.html',
+                is_read INTEGER DEFAULT 0,
+                terms_agreed INTEGER DEFAULT 0,
+                created_at TEXT DEFAULT ''
+            )
+            """
+        )
+        cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications")
+        n_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        if n_cnt == 0:
+            now_s = time.strftime("%Y-%m-%d %H:%M:%S")
+            seed_notifs = [
+                (
+                    0,
+                    "deal",
+                    "🏷️ Báo Động Giảm Giá Sâu: RTX 4070 Super Founders Edition",
+                    "Món hàng trong danh sách theo dõi vừa giảm thêm 1.500.000 ₫ kèm ưu đãi miễn phí bảo lãnh Escrow!",
+                    "/services/market_tracker/price-tracker.html",
+                    0,
+                    0,
+                    now_s
+                ),
+                (
+                    0,
+                    "deal",
+                    "🔥 Flash Deal Đấu Giá Ngược: RAM Corsair Dominator DDR5",
+                    "Giá sàn đang giảm mỗi 2 giây trên Sàn Đấu Giá Kép Nexora. Chạm để chốt giá ngay!",
+                    "/services/mobile/mobile-app.html#nxAuctionSection",
+                    0,
+                    0,
+                    now_s
+                ),
+                (
+                    0,
+                    "terms",
+                    "📜 Cập Nhật Điều Khoản Bảo Lãnh Nexora Escrow SOP-01 (V12)",
+                    "Bổ sung cơ chế Hoàn tiền tự động 100% trong 60 giây khi phát hiện trễ cam kết giao hàng và bảo vệ khóa Smart OTP.",
+                    "/services/legal/terms.html",
+                    0,
+                    0,
+                    now_s
+                ),
+                (
+                    0,
+                    "balance",
+                    "🛡️ Hệ Thống Bảo Chứng Nexora Pay & Loa Thần Tài Sẵn Sàng",
+                    "Mọi biến động số dư, thanh toán QR 2 bước và mã Smart OTP sẽ được đẩy trực tiếp ra Màn Hình Khóa điện thoại.",
+                    "/services/mobile/mobile-app.html",
+                    0,
+                    0,
+                    now_s
+                )
+            ]
+            cur.executemany(
+                """
+                INSERT INTO mobile_user_notifications (user_id, category, title, message, target_url, is_read, terms_agreed, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                seed_notifs
+            )
+        conn.commit()
+    except Exception:
+        pass
+
+
+def _push_mobile_notification_row(conn, user_id, category, title, message, target_url="/services/mobile/mobile-app.html"):
+    try:
+        cur = conn.cursor()
+        now_s = time.strftime("%Y-%m-%d %H:%M:%S")
+        cur.execute(
+            """
+            INSERT INTO mobile_user_notifications (user_id, category, title, message, target_url, is_read, terms_agreed, created_at)
+            VALUES (?, ?, ?, ?, ?, 0, 0, ?)
+            """,
+            (int(user_id or 0), str(category or "balance"), str(title), str(message), str(target_url), now_s)
+        )
+        conn.commit()
+        return int(cur.lastrowid or 0)
+    except Exception:
+        return 0
 
 
 def _resolve_authenticated_mobile_user(conn, req_data=None):
@@ -387,39 +518,39 @@ def _resolve_authenticated_mobile_user(conn, req_data=None):
         or ""
     ).strip()
 
-    if raw_uid is not None and str(raw_uid).strip().isdigit() and int(raw_uid) > 0:
-        cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (int(raw_uid),))
-        row = cur.fetchone()
-        if row:
-            return dict(row)
-
-    if raw_uname:
-        cur.execute(
-            "SELECT * FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? LIMIT 1",
-            (raw_uname, raw_uname, raw_uname)
-        )
-        row = cur.fetchone()
-        if row:
-            return dict(row)
-
     try:
+        if raw_uid is not None and str(raw_uid).strip().isdigit() and int(raw_uid) > 0:
+            cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (int(raw_uid),))
+            row = cur.fetchone()
+            if row:
+                return dict(row)
+
+        if raw_uname:
+            cur.execute(
+                "SELECT * FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone = ? LIMIT 1",
+                (raw_uname, raw_uname, raw_uname)
+            )
+            row = cur.fetchone()
+            if row:
+                return dict(row)
+
         sess_uid = flask.session.get("user_id")
         if sess_uid and int(sess_uid) > 0:
             cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (int(sess_uid),))
             row = cur.fetchone()
             if row:
                 return dict(row)
+
+        if qa_bot_header:
+            if qa_bot_header.isdigit():
+                cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (int(qa_bot_header),))
+            else:
+                cur.execute("SELECT * FROM users ORDER BY id ASC LIMIT 1")
+            row = cur.fetchone()
+            if row:
+                return dict(row)
     except Exception:
         pass
-
-    if qa_bot_header:
-        if qa_bot_header.isdigit():
-            cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (int(qa_bot_header),))
-        else:
-            cur.execute("SELECT * FROM users ORDER BY id ASC LIMIT 1")
-        row = cur.fetchone()
-        if row:
-            return dict(row)
 
     return None
 
@@ -467,6 +598,14 @@ def nexora_mobile_auth_login_api():
         )
         new_uid = int(cur.lastrowid)
         conn.commit()
+        _push_mobile_notification_row(
+            conn,
+            new_uid,
+            "balance",
+            "🎉 Chào Mừng Thành Viên Mới Nexora Pay",
+            f"Tài khoản [{uname}] đã được kích hoạt bảo mật SQLite. Xác thực OTP ngay để nhận +20.000 Xu!",
+            "/services/mobile/mobile-app.html"
+        )
         cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (new_uid,))
         u_dict = dict(cur.fetchone())
         conn.close()
@@ -524,14 +663,17 @@ def nexora_mobile_auth_login_api():
 
     uid = int(u["id"])
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
-    cur.execute(
-        """
-        INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
-        VALUES (?, ?, 'MOBILE_LOGIN', 'Đăng nhập thành công trên Nexora Mobile App', ?, ?)
-        """,
-        (uid, str(u.get("username") or ""), str(request.remote_addr or "127.0.0.1"), now_str)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            """
+            INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
+            VALUES (?, ?, 'MOBILE_LOGIN', 'Đăng nhập thành công trên Nexora Mobile App V12', ?, ?)
+            """,
+            (uid, str(u.get("username") or ""), str(request.remote_addr or "127.0.0.1"), now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
     conn.close()
 
     try:
@@ -569,6 +711,362 @@ def nexora_mobile_auth_logout_api():
     return jsonify({"ok": True, "authenticated": False, "message": "👋 Đã đăng xuất khỏi Nexora Mobile App!"}), 200
 
 
+@app.route("/api/mobile/smart-otp/generate", methods=["POST"])
+def nexora_mobile_smart_otp_generate_api():
+    data = request.get_json(silent=True) or {}
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    if not user:
+        conn.close()
+        return jsonify({
+            "ok": False,
+            "require_login": True,
+            "error": "🔒 Vui lòng đăng nhập trên điện thoại để kích hoạt Khóa Bảo Mật Smart OTP!"
+        }), 401
+
+    pin_len = int(data.get("pin_length") or 6)
+    if pin_len not in (4, 6, 8):
+        pin_len = 6
+
+    uid = int(user["id"])
+    uname = str(user.get("username") or "")
+    low_bound = 10 ** (pin_len - 1)
+    high_bound = (10 ** pin_len) - 1
+    dyn_pin = str(random.randint(low_bound, high_bound))
+    qr_tok = f"NXSMARTOTP-{uid}-{dyn_pin}-{int(time.time())}"
+    exp_ts = time.time() + 30.0
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE mobile_smart_otp_sessions SET web_claimed = 1 WHERE user_id = ? AND web_claimed = 0", (uid,))
+        cur.execute(
+            """
+            INSERT INTO mobile_smart_otp_sessions (user_id, username, pin_length, dynamic_pin, qr_login_token, expires_at, web_claimed, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+            """,
+            (uid, uname, pin_len, dyn_pin, qr_tok, exp_ts, now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+    if data.get("push_lockscreen"):
+        _push_mobile_notification_row(
+            conn,
+            uid,
+            "balance",
+            f"🔐 Mã Nexora Smart OTP ({pin_len} Số): {dyn_pin}",
+            f"Mã PIN động [{dyn_pin}] cho tài khoản {uname} có hiệu lực trong 30 giây để đăng nhập Web hoặc duyệt giao dịch.",
+            "/services/mobile/mobile-app.html"
+        )
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "user_id": uid,
+        "username": uname,
+        "pin_length": pin_len,
+        "dynamic_pin": dyn_pin,
+        "qr_login_token": qr_tok,
+        "ttl_seconds": 30,
+        "expires_at": exp_ts,
+        "message": f"🔐 Đã cấp mã Smart OTP {pin_len} số [{dyn_pin}] (Hiệu lực 30 giây)"
+    }), 200
+
+
+@app.route("/api/mobile/smart-otp/verify-web-login", methods=["POST"])
+def nexora_mobile_smart_otp_verify_web_login_api():
+    data = request.get_json(silent=True) or {}
+    pin_input = str(data.get("dynamic_pin") or data.get("otp_code") or "").strip()
+    if not pin_input or not pin_input.isdigit():
+        return jsonify({"ok": False, "error": "⚠️ Vui lòng nhập mã PIN Smart OTP đang hiển thị trên điện thoại!"}), 400
+
+    conn = _get_direct_sqlite_conn()
+    _ensure_account_security_and_settings_schema(conn)
+    cur = conn.cursor()
+    now_ts = time.time()
+
+    cur.execute(
+        """
+        SELECT * FROM mobile_smart_otp_sessions
+        WHERE dynamic_pin = ? AND web_claimed = 0 AND expires_at >= ?
+        ORDER BY id DESC LIMIT 1
+        """,
+        (pin_input, now_ts)
+    )
+    sess_row = cur.fetchone()
+    if not sess_row:
+        conn.close()
+        return jsonify({"ok": False, "error": "❌ Mã Smart OTP không chính xác hoặc đã hết chu kỳ 30 giây!"}), 401
+
+    sess_dict = dict(sess_row)
+    uid = int(sess_dict["user_id"])
+    cur.execute("UPDATE mobile_smart_otp_sessions SET web_claimed = 1 WHERE id = ?", (int(sess_dict["id"]),))
+    cur.execute("SELECT * FROM users WHERE id = ? LIMIT 1", (uid,))
+    u_row = cur.fetchone()
+    if not u_row:
+        conn.close()
+        return jsonify({"ok": False, "error": "❌ Không tìm thấy tài khoản liên kết với khóa Smart OTP này!"}), 404
+
+    u = dict(u_row)
+    _push_mobile_notification_row(
+        conn,
+        uid,
+        "balance",
+        "💻 Đăng Nhập Web Thành Công Qua Smart OTP",
+        f"Tài khoản [{u.get('username')}] vừa được xác thực đăng nhập trên máy tính bằng mã Smart OTP {pin_input}.",
+        "/services/mobile/mobile-app.html"
+    )
+    conn.commit()
+    conn.close()
+
+    try:
+        flask.session["user_id"] = uid
+    except Exception:
+        pass
+
+    bal = float(u.get("bank_balance") if u.get("bank_balance") is not None else (u.get("wallet_balance") or 0.0))
+    return jsonify({
+        "ok": True,
+        "authenticated": True,
+        "user_profile": {
+            "id": uid,
+            "username": str(u.get("username") or ""),
+            "full_name": str(u.get("full_name") or u.get("username") or ""),
+            "email": str(u.get("email") or ""),
+            "phone": str(u.get("phone") or ""),
+            "wallet_balance": bal,
+            "coins": int(u.get("coins") or 0)
+        },
+        "message": f"✅ Xác thực Smart OTP thành công! Đã đăng nhập tài khoản [{u.get('full_name') or u.get('username')}]."
+    }), 200
+
+
+@app.route("/api/mobile/smart-otp/approve-qr-login", methods=["POST"])
+def nexora_mobile_smart_otp_approve_qr_login_api():
+    data = request.get_json(silent=True) or {}
+    qr_token = str(data.get("qr_login_token") or data.get("token") or "").strip()
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    if not user:
+        conn.close()
+        return jsonify({"ok": False, "require_login": True, "error": "🔒 Vui lòng đăng nhập trên App trước khi duyệt QR Đăng nhập Web!"}), 401
+
+    uid = int(user["id"])
+    uname = str(user.get("username") or "")
+    dyn_pin = str(random.randint(100000, 999999))
+    exp_ts = time.time() + 120.0
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            INSERT INTO mobile_smart_otp_sessions (user_id, username, pin_length, dynamic_pin, qr_login_token, expires_at, web_claimed, created_at)
+            VALUES (?, ?, 6, ?, ?, ?, 0, ?)
+            """,
+            (uid, uname, dyn_pin, qr_token or f"QRWEB-{uid}-{int(time.time())}", exp_ts, now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+    _push_mobile_notification_row(
+        conn,
+        uid,
+        "balance",
+        "📲 Đã Duyệt Quét QR Đăng Nhập Máy Tính",
+        f"Điện thoại của bạn vừa phê duyệt phiên đăng nhập QR cho tài khoản [{uname}] (Mã đồng bộ: {dyn_pin}).",
+        "/services/mobile/mobile-app.html"
+    )
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "approved": True,
+        "user_id": uid,
+        "username": uname,
+        "sync_pin": dyn_pin,
+        "message": f"✅ Đã phê duyệt đăng nhập QR trên máy tính cho tài khoản [{uname}]!"
+    }), 200
+
+
+@app.route("/api/mobile/notifications", methods=["GET", "POST"])
+def nexora_mobile_notifications_center_api():
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn)
+    uid = int(user["id"]) if user else 0
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+        action = str(body.get("action") or "push_lockscreen").strip().lower()
+
+        if action == "mark_all_read":
+            try:
+                cur.execute("UPDATE mobile_user_notifications SET is_read = 1 WHERE user_id IN (0, ?)", (uid,))
+                conn.commit()
+            except Exception:
+                pass
+            conn.close()
+            return jsonify({"ok": True, "message": "✅ Đã đánh dấu đã đọc toàn bộ thông báo!"}), 200
+
+        if action == "mark_read":
+            nid = int(body.get("notification_id") or 0)
+            try:
+                cur.execute("UPDATE mobile_user_notifications SET is_read = 1 WHERE id = ?", (nid,))
+                conn.commit()
+            except Exception:
+                pass
+            conn.close()
+            return jsonify({"ok": True}), 200
+
+        cat = str(body.get("category") or "deal").strip().lower()
+        title = str(body.get("title") or "").strip()
+        msg = str(body.get("message") or "").strip()
+        target_url = str(body.get("target_url") or "/services/mobile/mobile-app.html").strip()
+
+        if not title:
+            if cat == "deal":
+                title = "🏷️ Báo Động Giảm Giá Sâu Trên Sàn Nexora!"
+                msg = msg or "Card đồ họa RTX 4070 Super FE & màn hình OLED vừa giảm giá chạm mốc mục tiêu của bạn. Chạm để xem ngay!"
+                target_url = "/services/market_tracker/price-tracker.html"
+            elif cat == "terms":
+                title = "📜 Cập Nhật Điều Khoản & Chính Sách Bảo Lãnh Escrow SOP-01"
+                msg = msg or "Nexora vừa cập nhật Chính sách Bảo vệ Người mua 100% và Quy chuẩn Khóa Smart OTP V12. Vui lòng xác nhận đồng ý!"
+                target_url = "/services/legal/terms.html"
+            else:
+                title = "💸 Biến Động Số Dư Ví Lục Bảo Nexora Pay"
+                msg = msg or "Tài khoản của bạn vừa phát sinh giao dịch bảo chứng thành công trên hệ thống SQLite."
+
+        new_id = _push_mobile_notification_row(conn, uid, cat, title, msg, target_url)
+        conn.close()
+        return jsonify({
+            "ok": True,
+            "notification_id": new_id,
+            "category": cat,
+            "title": title,
+            " body": msg,
+            "message": msg,
+            "target_url": target_url,
+            "lockscreen_ready": True
+        }), 200
+
+    unread_only = str(request.args.get("unread_only") or "0") == "1"
+    cat_filter = str(request.args.get("category") or "all").strip().lower()
+    mark_polled = str(request.args.get("mark_polled") or "0") == "1"
+
+    sql = "SELECT * FROM mobile_user_notifications WHERE user_id IN (0, ?)"
+    params = [uid]
+    if unread_only:
+        sql += " AND is_read = 0"
+    if cat_filter in ("deal", "terms", "balance"):
+        sql += " AND category = ?"
+        params.append(cat_filter)
+    sql += " ORDER BY id DESC LIMIT 30"
+
+    rows = []
+    try:
+        cur.execute(sql, tuple(params))
+        rows = [dict(r) for r in cur.fetchall()]
+        if mark_polled and rows:
+            ids = [int(r["id"]) for r in rows]
+            q_marks = ",".join(["?"] * len(ids))
+            cur.execute(f"UPDATE mobile_user_notifications SET is_read = 1 WHERE id IN ({q_marks})", tuple(ids))
+            conn.commit()
+    except Exception:
+        rows = []
+
+    unread_cnt = 0
+    deal_cnt = 0
+    terms_cnt = 0
+    bal_cnt = 0
+    try:
+        cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications WHERE user_id IN (0, ?) AND is_read = 0", (uid,))
+        unread_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications WHERE user_id IN (0, ?) AND category = 'deal'", (uid,))
+        deal_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications WHERE user_id IN (0, ?) AND category = 'terms'", (uid,))
+        terms_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications WHERE user_id IN (0, ?) AND category = 'balance'", (uid,))
+        bal_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+    except Exception:
+        pass
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "unread_count": unread_cnt,
+        "counts": {
+            "deal": deal_cnt,
+            "terms": terms_cnt,
+            "balance": bal_cnt
+        },
+        "notifications": rows
+    }), 200
+
+
+@app.route("/api/mobile/notifications/agree-terms", methods=["POST"])
+def nexora_mobile_agree_terms_notification_api():
+    data = request.get_json(silent=True) or {}
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    uid = int(user["id"]) if user else 0
+    uname = str(user.get("username") or "khach_mobile") if user else "khach_mobile"
+    cur = conn.cursor()
+    now_str = time.strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        cur.execute("UPDATE mobile_user_notifications SET terms_agreed = 1, is_read = 1 WHERE category = 'terms' AND user_id IN (0, ?)", (uid,))
+        if uid > 0:
+            cur.execute("UPDATE users SET terms_accepted_version = 'V12-SOP01' WHERE id = ?", (uid,))
+        cur.execute(
+            """
+            INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
+            VALUES (?, ?, 'TERMS_ACCEPTED_V12', 'Đã đọc và đồng ý Điều khoản Bảo lãnh Escrow SOP-01 & Smart OTP V12', ?, ?)
+            """,
+            (uid, uname, str(request.remote_addr or "127.0.0.1"), now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
+
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "terms_agreed": True,
+        "version": "V12-SOP01",
+        "accepted_at": now_str,
+        "message": "✅ Đã ghi nhận Xác Nhận Đồng Ý Điều Khoản & Chính Sách Nexora V12 vào cơ sở dữ liệu SQLite!"
+    }), 200
+
+
+@app.route("/api/mobile/transactions/clear", methods=["POST"])
+def nexora_mobile_clear_transactions_api():
+    data = request.get_json(silent=True) or {}
+    conn = _get_direct_sqlite_conn()
+    user = _resolve_authenticated_mobile_user(conn, data)
+    if not user:
+        conn.close()
+        return jsonify({"ok": False, "require_login": True, "error": "🔒 Vui lòng đăng nhập để làm sạch sổ cái lịch sử giao dịch!"}), 401
+
+    uid = int(user["id"])
+    cur = conn.cursor()
+    deleted_rows = 0
+    try:
+        cur.execute("SELECT COUNT(*) AS c FROM bank_transactions WHERE user_id = ?", (uid,))
+        deleted_rows = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        cur.execute("DELETE FROM bank_transactions WHERE user_id = ?", (uid,))
+        conn.commit()
+    except Exception:
+        pass
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "deleted_count": deleted_rows,
+        "message": f"🧹 Đã làm sạch {deleted_rows} bản ghi lịch sử giao dịch cũ trong SQLite về 0!"
+    }), 200
+
+
 @app.route("/api/mobile/wallet-action", methods=["POST"])
 def nexora_mobile_wallet_action_api():
     data = request.get_json(silent=True) or {}
@@ -590,7 +1088,7 @@ def nexora_mobile_wallet_action_api():
 
     if amount <= 0:
         conn.close()
-        return jsonify({"ok": False, "error": "Số tiền giao dịch phải lớn hơn 0 VNĐ!"}), 400
+        return jsonify({"ok": False, "error": "⚠️ Vui lòng nhập số tiền giao dịch lớn hơn 0 VNĐ!"}), 400
 
     cur = conn.cursor()
     uid = int(user["id"])
@@ -610,16 +1108,19 @@ def nexora_mobile_wallet_action_api():
         tx_type = "MOMO_TOPUP"
         tx_note = note or f"Nạp tiền vào Ví Nexora Pay (+{int(amount):,}đ)"
         signed_amt = amount
+        notif_title = f"📥 Nạp Tiền Thành Công +{int(amount):,} ₫"
     elif action == "withdraw":
         new_bal = max(0.0, cur_bal - amount)
         tx_type = "BANK_WITHDRAW"
         tx_note = note or f"Rút tiền từ Ví Nexora Pay về Ngân hàng liên kết (-{int(amount):,}đ)"
         signed_amt = -amount
+        notif_title = f"📤 Rút Tiền Thành Công -{int(amount):,} ₫"
     else:
         new_bal = max(0.0, cur_bal - amount)
         tx_type = "P2P_TRANSFER"
         tx_note = note or f"Chuyển tiền nhanh tới [{recipient}] qua Ví Nexora Pay"
         signed_amt = -amount
+        notif_title = f"💸 Chuyển Khoản Thành Công -{int(amount):,} ₫"
 
     cur.execute(
         "UPDATE users SET bank_balance = ?, wallet_balance = ?, coins = ? WHERE id = ?",
@@ -638,6 +1139,14 @@ def nexora_mobile_wallet_action_api():
     except Exception:
         pass
 
+    _push_mobile_notification_row(
+        conn,
+        uid,
+        "balance",
+        notif_title,
+        f"Mã GD: {tx_code} • Người nhận: {recipient} • Số dư mới: {int(new_bal):,} ₫",
+        "/services/mobile/mobile-app.html"
+    )
     conn.commit()
     conn.close()
     return jsonify({
@@ -645,7 +1154,12 @@ def nexora_mobile_wallet_action_api():
         "action": action,
         "tx_code": tx_code,
         "amount": amount,
+        "signed_amount": signed_amt,
+        "recipient": recipient,
+        "note": tx_note,
+        "created_at": now_str,
         "new_balance": new_bal,
+        "soundbox_speech": f"Nexora Pay thông báo: Giao dịch thành công {int(amount)} đồng. Số dư hiện tại là {int(new_bal)} đồng.",
         "message": f"Giao dịch thành công! Số dư Ví Nexora Pay hiện tại: {int(new_bal):,} ₫"
     }), 200
 
@@ -668,16 +1182,19 @@ def nexora_send_account_security_otp_api():
     exp_ts = time.time() + 600.0
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
 
-    cur.execute(
-        """
-        INSERT INTO account_security_otps (user_id, target_key, email, otp_code, purpose, expires_at, is_used, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, 0, ?)
-        """,
-        (uid, email, email, otp_code, str(data.get("purpose") or "security_verify"), exp_ts, now_str)
-    )
-    if uid > 0:
-        cur.execute("UPDATE users SET email = ? WHERE id = ?", (email, uid))
-    conn.commit()
+    try:
+        cur.execute(
+            """
+            INSERT INTO account_security_otps (user_id, target_key, email, otp_code, purpose, expires_at, is_used, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+            """,
+            (uid, email, email, otp_code, str(data.get("purpose") or "security_verify"), exp_ts, now_str)
+        )
+        if uid > 0:
+            cur.execute("UPDATE users SET email = ? WHERE id = ?", (email, uid))
+        conn.commit()
+    except Exception:
+        pass
     conn.close()
 
     resend_key = os.environ.get("RESEND_API_KEY", "").strip()
@@ -715,7 +1232,7 @@ def nexora_send_account_security_otp_api():
         "ok": True,
         "email": email,
         "mail_sent": mail_sent,
-        "demo_otp_hint": otp_code, "otp_code": otp_code,
+        "demo_otp_hint": otp_code if not mail_sent else "",
         "message": (
             f"📨 Đã gửi mã OTP 6 số tới [{email}] từ Nexora Mall CSKH!"
             if mail_sent else
@@ -746,23 +1263,31 @@ def nexora_verify_otp_and_change_password_api():
     email = str(data.get("email") or user.get("email") or "").strip().lower()
     cur = conn.cursor()
 
-    cur.execute(
-        """
-        SELECT * FROM account_security_otps
-        WHERE (user_id = ? OR LOWER(email) = LOWER(?))
-          AND otp_code = ?
-          AND is_used = 0
-        ORDER BY id DESC LIMIT 1
-        """,
-        (uid, email, otp_input)
-    )
-    otp_row = cur.fetchone()
+    otp_row = None
+    try:
+        cur.execute(
+            """
+            SELECT * FROM account_security_otps
+            WHERE (user_id = ? OR LOWER(email) = LOWER(?))
+              AND otp_code = ?
+              AND is_used = 0
+            ORDER BY id DESC LIMIT 1
+            """,
+            (uid, email, otp_input)
+        )
+        otp_row = cur.fetchone()
+    except Exception:
+        otp_row = None
+
     if not otp_row and otp_input != "888888":
         conn.close()
         return jsonify({"ok": False, "error": "❌ Mã OTP không chính xác hoặc đã hết hạn!"}), 400
 
     if otp_row:
-        cur.execute("UPDATE account_security_otps SET is_used = 1 WHERE id = ?", (int(otp_row["id"]),))
+        try:
+            cur.execute("UPDATE account_security_otps SET is_used = 1 WHERE id = ?", (int(otp_row["id"]),))
+        except Exception:
+            pass
 
     already_verified = int(user.get("email_verified") or 0) == 1
     reward_coins_added = 0
@@ -774,24 +1299,27 @@ def nexora_verify_otp_and_change_password_api():
         cur_coins += 20000
         cur_bal += 20000.0
 
-    if new_password:
-        pw_hash = generate_password_hash(new_password)
-        cur.execute("UPDATE users SET password = ?, password_hash = ? WHERE id = ?", (new_password, pw_hash, uid))
+    try:
+        if new_password:
+            pw_hash = generate_password_hash(new_password)
+            cur.execute("UPDATE users SET password = ?, password_hash = ? WHERE id = ?", (new_password, pw_hash, uid))
 
-    if new_pin and len(new_pin) >= 4:
-        cur.execute("UPDATE users SET wallet_pin = ?, purchase_pin = ? WHERE id = ?", (new_pin, new_pin, uid))
+        if new_pin and len(new_pin) >= 4:
+            cur.execute("UPDATE users SET wallet_pin = ?, purchase_pin = ? WHERE id = ?", (new_pin, new_pin, uid))
 
-    cur.execute(
-        """
-        UPDATE users
-        SET email_verified = 1,
-            coins = ?,
-            wallet_balance = ?,
-            bank_balance = ?
-        WHERE id = ?
-        """,
-        (cur_coins, cur_bal, cur_bal, uid)
-    )
+        cur.execute(
+            """
+            UPDATE users
+            SET email_verified = 1,
+                coins = ?,
+                wallet_balance = ?,
+                bank_balance = ?
+            WHERE id = ?
+            """,
+            (cur_coins, cur_bal, cur_bal, uid)
+        )
+    except Exception:
+        pass
 
     now_str = time.strftime("%Y-%m-%d %H:%M:%S")
     if reward_coins_added > 0:
@@ -806,15 +1334,26 @@ def nexora_verify_otp_and_change_password_api():
             )
         except Exception:
             pass
+        _push_mobile_notification_row(
+            conn,
+            uid,
+            "balance",
+            "🎁 Cộng +20.000 Xu Thưởng Xác Thực OTP Bảo Mật",
+            f"Tài khoản của bạn đã xác thực OTP thành công. Số dư mới: {int(cur_bal):,} ₫.",
+            "/services/mobile/mobile-app.html"
+        )
 
-    cur.execute(
-        """
-        INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
-        VALUES (?, ?, 'OTP_VERIFIED', ?, ?, ?)
-        """,
-        (uid, str(user.get("username") or ""), f"Xác thực OTP thành công (+{reward_coins_added} Xu)", str(request.remote_addr or "127.0.0.1"), now_str)
-    )
-    conn.commit()
+    try:
+        cur.execute(
+            """
+            INSERT INTO security_audit_logs (user_id, username, event_type, detail, ip_addr, created_at)
+            VALUES (?, ?, 'OTP_VERIFIED', ?, ?, ?)
+            """,
+            (uid, str(user.get("username") or ""), f"Xác thực OTP thành công (+{reward_coins_added} Xu)", str(request.remote_addr or "127.0.0.1"), now_str)
+        )
+        conn.commit()
+    except Exception:
+        pass
     conn.close()
 
     bonus_msg = " và cộng +20.000 Xu thưởng vào Ví!" if reward_coins_added > 0 else "!"
@@ -828,7 +1367,7 @@ def nexora_verify_otp_and_change_password_api():
     }), 200
 
 
-@app.route("/api/account/update-settings", methods=["GET", "POST"])
+@app.route("/api/account/update-settings", methods=["POST"])
 @app.route("/api/account/update-profile-and-settings", methods=["GET", "POST"])
 def nexora_update_account_settings_api():
     data = request.get_json(silent=True) or {}
@@ -848,18 +1387,21 @@ def nexora_update_account_settings_api():
         uid = int(user["id"])
         full_name = str(data.get("full_name") or user.get("full_name") or "").strip()
         phone = str(data.get("phone") or user.get("phone") or "").strip()
-        addr = str(data.get("shipping_address") or user.get("shipping_address") or user.get("address") or "").strip()
-        cur.execute(
-            """
-            UPDATE users
-            SET full_name = ?, phone = ?, shipping_address = ?,
-                cvd_mode = ?, font_scale = ?, ui_density = ?,
-                preferred_theme = COALESCE(NULLIF(?, ''), preferred_theme)
-            WHERE id = ?
-            """,
-            (full_name, phone, addr, cvd_mode, font_scale, ui_density, theme_id, uid)
-        )
-        conn.commit()
+        addr = str(data.get("shipping_address") or data.get("address") or user.get("shipping_address") or user.get("address") or "").strip()
+        try:
+            cur.execute(
+                """
+                UPDATE users
+                SET full_name = ?, phone = ?, shipping_address = ?, address = ?,
+                    cvd_mode = ?, font_scale = ?, ui_density = ?,
+                    preferred_theme = COALESCE(NULLIF(?, ''), preferred_theme)
+                WHERE id = ?
+                """,
+                (full_name, phone, addr, addr, cvd_mode, font_scale, ui_density, theme_id, uid)
+            )
+            conn.commit()
+        except Exception:
+            pass
 
     conn.close()
     return jsonify({
@@ -873,10 +1415,13 @@ def nexora_update_account_settings_api():
 
 def _build_enriched_mobile_bridge_payload():
     conn = _get_direct_sqlite_conn()
-    _ensure_stage2_qr_and_logistics_schema(conn)
-    _ensure_stage3_market_tracker_schema(conn)
-    _ensure_stage4_auctions_and_reflex_schema(conn)
-    _ensure_stage5_rfq_and_blockchain_schema(conn)
+    try:
+        _ensure_stage2_qr_and_logistics_schema(conn)
+        _ensure_stage3_market_tracker_schema(conn)
+        _ensure_stage4_auctions_and_reflex_schema(conn)
+        _ensure_stage5_rfq_and_blockchain_schema(conn)
+    except Exception:
+        pass
     user = _resolve_authenticated_mobile_user(conn)
     cur = conn.cursor()
 
@@ -888,6 +1433,7 @@ def _build_enriched_mobile_bridge_payload():
     coins_val = int(user.get("coins") or 0) if is_authenticated else 0
     email_verified = int(user.get("email_verified") or 0) if is_authenticated else 0
     cvd_mode = str(user.get("cvd_mode") or "standard") if is_authenticated else "standard"
+    streak_days = int(user.get("streak_days") or user.get("checkin_streak") or 0) if is_authenticated else 0
 
     escrow_locked = 0.0
     auction_deposit = 0.0
@@ -896,137 +1442,170 @@ def _build_enriched_mobile_bridge_payload():
     recent_txs = []
 
     if is_authenticated:
-        cur.execute(
-            """
-            SELECT COALESCE(SUM(total_amount), 0) AS escrow_sum
-            FROM orders
-            WHERE (LOWER(customer_name) = LOWER(?) OR id > 0)
-              AND (escrow_status = 'holding' OR logistics_stage IN ('ESCROW_LOCKED', 'WAREHOUSE_PACKED', 'IN_TRANSIT_HUB', 'OUT_FOR_DELIVERY'))
-            """,
-            (full_name,)
-        )
-        escrow_locked = float((cur.fetchone() or {"escrow_sum": 0})["escrow_sum"] or 0.0)
-
-        cur.execute(
-            """
-            SELECT COALESCE(SUM(deposit_locked), 0) AS dep_sum
-            FROM auction_bids
-            WHERE LOWER(bidder_name) = LOWER(?)
-              AND COALESCE(is_refunded, 0) = 0
-            """,
-            (full_name,)
-        )
-        auction_deposit = float((cur.fetchone() or {"dep_sum": 0})["dep_sum"] or 0.0)
-
-        cur.execute(
-            """
-            SELECT COALESCE(SUM(total_amount), 0) AS ref_sum
-            FROM orders
-            WHERE (LOWER(customer_name) = LOWER(?) OR id > 0)
-              AND (status IN ('refunded', 'returned') OR escrow_status = 'refunded')
-            """,
-            (full_name,)
-        )
-        refunded_total = float((cur.fetchone() or {"ref_sum": 0})["ref_sum"] or 0.0)
-
-        cur.execute(
-            """
-            SELECT COALESCE(SUM(total_amount), 0) AS paid_sum
-            FROM orders
-            WHERE (LOWER(customer_name) = LOWER(?) OR id > 0)
-              AND status NOT IN ('cancelled', 'refunded', 'returned')
-            """,
-            (full_name,)
-        )
-        tech_shopping_spend = float((cur.fetchone() or {"paid_sum": 0})["paid_sum"] or 0.0)
-
-        cur.execute(
-            """
-            SELECT id, tx_code, tx_type, amount, balance_after, note, created_at
-            FROM bank_transactions
-            WHERE user_id = ?
-            ORDER BY id DESC
-            LIMIT 10
-            """,
-            (uid,)
-        )
-        recent_txs = [dict(r) for r in cur.fetchall()]
-
-    cur.execute(
-        """
-        SELECT qr_token, pay_token, order_id, buyer_name, customer_phone, shipping_address,
-               amount, status, items_summary_json, created_at
-        FROM qr_payment_sessions
-        ORDER BY created_at DESC
-        LIMIT 12
-        """
-    )
-    qr_rows = [dict(r) for r in cur.fetchall()]
-    pending_qr_sessions = []
-    for qr in qr_rows:
-        ptok = str(qr.get("pay_token") or qr.get("qr_token") or "").strip()
-        if not ptok or ptok == "NVXPAY-DEMO-888":
-            continue
-        st = str(qr.get("status") or "AWAITING_PAYMENT").upper()
-        items_arr = []
         try:
-            items_arr = json.loads(qr.get("items_summary_json") or "[]")
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(total_amount), 0) AS escrow_sum
+                FROM orders
+                WHERE (buyer_id = ? OR LOWER(customer_name) = LOWER(?))
+                  AND (escrow_status = 'holding' OR logistics_stage IN ('ESCROW_LOCKED', 'WAREHOUSE_PACKED', 'IN_TRANSIT_HUB', 'OUT_FOR_DELIVERY'))
+                """,
+                (uid, full_name)
+            )
+            escrow_locked = float((cur.fetchone() or {"escrow_sum": 0})["escrow_sum"] or 0.0)
         except Exception:
-            items_arr = []
-        pending_qr_sessions.append({
-            "pay_token": ptok,
-            "order_code": str(qr.get("order_id") or "#NVD-101") if str(qr.get("order_id") or "").startswith("#") else f"#NVD-{qr.get('order_id') or 101}",
-            "buyer_name": str(qr.get("buyer_name") or "Khách mua hàng"),
-            "customer_phone": str(qr.get("customer_phone") or ""),
-            "shipping_address": str(qr.get("shipping_address") or ""),
-            "amount": float(qr.get("amount") or 0.0),
-            "status": "APPROVED" if st in ("APPROVED", "PAID", "ESCROW_LOCKED") else "AWAITING_PAYMENT",
-            "items": items_arr,
-            "items_count": len(items_arr) if items_arr else 1
-        })
+            escrow_locked = 0.0
 
-    if not pending_qr_sessions:
+        try:
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(deposit_locked), 0) AS dep_sum
+                FROM auction_bids
+                WHERE (bidder_id = ? OR LOWER(bidder_name) = LOWER(?))
+                  AND COALESCE(is_refunded, 0) = 0
+                """,
+                (uid, full_name)
+            )
+            auction_deposit = float((cur.fetchone() or {"dep_sum": 0})["dep_sum"] or 0.0)
+        except Exception:
+            auction_deposit = 0.0
+
+        try:
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(total_amount), 0) AS ref_sum
+                FROM orders
+                WHERE (buyer_id = ? OR LOWER(customer_name) = LOWER(?))
+                  AND (status IN ('refunded', 'returned') OR escrow_status = 'refunded')
+                """,
+                (uid, full_name)
+            )
+            refunded_total = float((cur.fetchone() or {"ref_sum": 0})["ref_sum"] or 0.0)
+        except Exception:
+            refunded_total = 0.0
+
+        try:
+            cur.execute(
+                """
+                SELECT COALESCE(SUM(total_amount), 0) AS paid_sum
+                FROM orders
+                WHERE (buyer_id = ? OR LOWER(customer_name) = LOWER(?))
+                  AND status NOT IN ('cancelled', 'refunded', 'returned')
+                """,
+                (uid, full_name)
+            )
+            tech_shopping_spend = float((cur.fetchone() or {"paid_sum": 0})["paid_sum"] or 0.0)
+        except Exception:
+            tech_shopping_spend = 0.0
+
+        try:
+            cur.execute(
+                """
+                SELECT id, tx_code, tx_type, amount, balance_after, note, created_at
+                FROM bank_transactions
+                WHERE user_id = ?
+                ORDER BY id DESC
+                LIMIT 15
+                """,
+                (uid,)
+            )
+            recent_txs = [dict(r) for r in cur.fetchall()]
+        except Exception:
+            recent_txs = []
+
+    pending_qr_sessions = []
+    try:
         cur.execute(
             """
-            SELECT id, customer_name, phone, shipping_address, total_amount, pay_token, transfer_confirmed
-            FROM orders
-            WHERE COALESCE(transfer_confirmed, 0) = 0
-            ORDER BY id DESC LIMIT 5
+            SELECT qr_token, pay_token, order_id, buyer_name, customer_phone, shipping_address,
+                   amount, status, items_summary_json, created_at
+            FROM qr_payment_sessions
+            ORDER BY created_at DESC
+            LIMIT 12
             """
         )
-        for o_row in cur.fetchall():
-            oid = int(o_row["id"])
-            ptok = str(o_row["pay_token"] or f"NVXPAY-{oid}")
+        qr_rows = [dict(r) for r in cur.fetchall()]
+        for qr in qr_rows:
+            ptok = str(qr.get("pay_token") or qr.get("qr_token") or "").strip()
+            if not ptok or ptok == "NVXPAY-DEMO-888":
+                continue
+            st = str(qr.get("status") or "AWAITING_PAYMENT").upper()
+            items_arr = []
+            try:
+                items_arr = json.loads(qr.get("items_summary_json") or "[]")
+            except Exception:
+                items_arr = []
             pending_qr_sessions.append({
                 "pay_token": ptok,
-                "order_code": f"#NVD-{oid}",
-                "buyer_name": str(o_row["customer_name"] or "Khách mua hàng"),
-                "customer_phone": str(o_row["phone"] or ""),
-                "shipping_address": str(o_row["shipping_address"] or ""),
-                "amount": float(o_row["total_amount"] or 0.0),
-                "status": "AWAITING_PAYMENT",
-                "items": [{"name": f"Đơn hàng công nghệ #NVD-{oid}", "quantity": 1, "price": float(o_row["total_amount"] or 0.0)}],
-                "items_count": 1
+                "order_code": str(qr.get("order_id") or "#NVD-101") if str(qr.get("order_id") or "").startswith("#") else f"#NVD-{qr.get('order_id') or 101}",
+                "buyer_name": str(qr.get("buyer_name") or "Khách mua hàng"),
+                "customer_phone": str(qr.get("customer_phone") or ""),
+                "shipping_address": str(qr.get("shipping_address") or ""),
+                "amount": float(qr.get("amount") or 0.0),
+                "status": "APPROVED" if st in ("APPROVED", "PAID", "ESCROW_LOCKED") else "AWAITING_PAYMENT",
+                "items": items_arr,
+                "items_count": len(items_arr) if items_arr else 1
             })
+    except Exception:
+        pending_qr_sessions = []
 
-    cur.execute("SELECT * FROM auctions ORDER BY id ASC LIMIT 8")
-    raw_auc_rows = cur.fetchall()
+    if not pending_qr_sessions:
+        try:
+            cur.execute(
+                """
+                SELECT id, customer_name, phone, shipping_address, total_amount, pay_token, transfer_confirmed
+                FROM orders
+                WHERE COALESCE(transfer_confirmed, 0) = 0
+                ORDER BY id DESC LIMIT 5
+                """
+            )
+            for o_row in cur.fetchall():
+                oid = int(o_row["id"])
+                ptok = str(o_row["pay_token"] or f"NVXPAY-{oid}")
+                pending_qr_sessions.append({
+                    "pay_token": ptok,
+                    "order_code": f"#NVD-{oid}",
+                    "buyer_name": str(o_row["customer_name"] or "Khách mua hàng"),
+                    "customer_phone": str(o_row["phone"] or ""),
+                    "shipping_address": str(o_row["shipping_address"] or ""),
+                    "amount": float(o_row["total_amount"] or 0.0),
+                    "status": "AWAITING_PAYMENT",
+                    "items": [{"name": f"Đơn hàng công nghệ #NVD-{oid}", "quantity": 1, "price": float(o_row["total_amount"] or 0.0)}],
+                    "items_count": 1
+                })
+        except Exception:
+            pass
+
     active_auctions = []
-    for r in raw_auc_rows:
-        computed = _compute_live_auction_dict(conn, r)
-        computed["product_name"] = computed.get("title") or "Sản phẩm Đấu Giá Nexora"
-        computed["min_step"] = float(computed.get("min_step_price") or 200000)
-        computed["floor_price"] = float(computed.get("reserve_price") or 0)
-        computed["drop_rate_per_sec"] = float(computed.get("dutch_drop_step") or 20000)
-        computed["bid_count"] = int(computed.get("total_bids") or 0)
-        active_auctions.append(computed)
+    try:
+        cur.execute("SELECT * FROM auctions ORDER BY id ASC LIMIT 8")
+        raw_auc_rows = cur.fetchall()
+        for r in raw_auc_rows:
+            computed = _compute_live_auction_dict(conn, r)
+            computed["product_name"] = computed.get("title") or "Sản phẩm Đấu Giá Nexora"
+            computed["min_step"] = float(computed.get("min_step_price") or 200000)
+            computed["floor_price"] = float(computed.get("reserve_price") or 0)
+            computed["drop_rate_per_sec"] = float(computed.get("dutch_drop_step") or 20000)
+            computed["bid_count"] = int(computed.get("total_bids") or 0)
+            active_auctions.append(computed)
+    except Exception:
+        active_auctions = []
 
-    cur.execute("SELECT id, name, category, brand, price, stock, image_url FROM products ORDER BY id ASC LIMIT 8")
-    prods = [dict(r) for r in cur.fetchall()]
-    cur.execute("SELECT COUNT(*) AS c FROM auctions WHERE status = 'ACTIVE'")
-    auc_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
-    cur.execute("SELECT COUNT(*) AS c FROM rfq_requests WHERE status = 'OPEN'")
-    rfq_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+    prods = []
+    auc_cnt = 0
+    rfq_cnt = 0
+    unread_notif_cnt = 0
+    try:
+        cur.execute("SELECT id, name, category, brand, price, stock, image_url FROM products ORDER BY id ASC LIMIT 8")
+        prods = [dict(r) for r in cur.fetchall()]
+        cur.execute("SELECT COUNT(*) AS c FROM auctions WHERE status = 'ACTIVE'")
+        auc_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        cur.execute("SELECT COUNT(*) AS c FROM rfq_requests WHERE status = 'OPEN'")
+        rfq_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+        cur.execute("SELECT COUNT(*) AS c FROM mobile_user_notifications WHERE user_id IN (0, ?) AND is_read = 0", (uid,))
+        unread_notif_cnt = int((cur.fetchone() or {"c": 0})["c"] or 0)
+    except Exception:
+        pass
     conn.close()
 
     theme_state = _get_nexora_theme_state()
@@ -1039,11 +1618,12 @@ def _build_enriched_mobile_bridge_payload():
         "ok": True,
         "authenticated": is_authenticated,
         "platform": "NEXORA Super-App & E-Commerce Ecosystem",
-        "bridge_version": "v11.0-ZERO-MOCK-EMERALD",
+        "bridge_version": "v12.0-ULTRA-SUPERAPP",
         "server_timestamp": int(time.time() * 1000),
         "active_theme": theme_state["theme_id"],
         "theme_detail": theme_obj,
         "themes_catalog": NEXORA_6_THEMES_CATALOG,
+        "unread_notifications_count": unread_notif_cnt,
         "user_profile": {
             "id": uid,
             "authenticated": is_authenticated,
@@ -1059,7 +1639,8 @@ def _build_enriched_mobile_bridge_payload():
             "refunded_100_balance": refund_100_amount if is_authenticated else None,
             "coins": coins_val if is_authenticated else None,
             "email_verified": email_verified,
-            "cvd_mode": cvd_mode
+            "cvd_mode": cvd_mode,
+            "streak_days": streak_days
         },
         "multi_pockets": {
             "nexora_pay_wallet": wallet_bal if is_authenticated else None,
@@ -1083,7 +1664,8 @@ def _build_enriched_mobile_bridge_payload():
             "active_auctions": auc_cnt or len(active_auctions),
             "open_rfq_requests": rfq_cnt,
             "featured_products_count": len(prods),
-            "awaiting_qr_count": sum(1 for s in pending_qr_sessions if s["status"] == "AWAITING_PAYMENT")
+            "awaiting_qr_count": sum(1 for s in pending_qr_sessions if s["status"] == "AWAITING_PAYMENT"),
+            "unread_notifications": unread_notif_cnt
         },
         "featured_products": prods,
         "mobile_endpoints": {
@@ -1092,9 +1674,16 @@ def _build_enriched_mobile_bridge_payload():
             "auth_login": "/api/mobile/auth-login",
             "auth_logout": "/api/mobile/auth-logout",
             "wallet_action": "/api/mobile/wallet-action",
+            "clear_transactions": "/api/mobile/transactions/clear",
+            "smart_otp_generate": "/api/mobile/smart-otp/generate",
+            "smart_otp_verify_web": "/api/mobile/smart-otp/verify-web-login",
+            "smart_otp_approve_qr": "/api/mobile/smart-otp/approve-qr-login",
+            "notifications": "/api/mobile/notifications",
+            "agree_terms": "/api/mobile/notifications/agree-terms",
             "send_otp": "/api/account/send-security-otp",
             "verify_otp": "/api/account/verify-otp-and-change-password",
             "update_settings": "/api/account/update-settings",
+            "update_profile_settings": "/api/account/update-profile-and-settings",
             "qr_create": "/api/payment/qr-session/create",
             "qr_inspect": "/api/payment/qr-session/<pay_token>",
             "qr_confirm": "/api/payment/qr-session/confirm"
@@ -1262,21 +1851,50 @@ body.nx-mobile-body {
     background: var(--nx-bg);
     color: var(--nx-text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    padding-bottom: 96px;
+    padding-bottom: 102px;
     transition: background 0.25s ease, color 0.25s ease;
 }
 
 .nx-app-shell {
-    max-width: 480px;
+    width: 100%;
+    max-width: 100%;
     margin: 0 auto;
     min-height: 100vh;
     position: relative;
 }
 
+.nx-bento-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 0 12px;
+}
+
+@media (min-width: 768px) {
+    .nx-app-shell {
+        max-width: 1280px;
+        padding: 0 20px;
+    }
+    .nx-top-hero {
+        border-radius: 28px;
+        margin-top: 12px;
+    }
+    .nx-bento-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        padding: 0;
+        align-items: start;
+    }
+    .nx-bento-full {
+        grid-column: 1 / -1;
+    }
+}
+
 .nx-top-hero {
     background: var(--nx-primary-grad);
     color: #ffffff;
-    padding: 14px 16px 26px 16px;
+    padding: 14px 16px 28px 16px;
     border-bottom-left-radius: 28px;
     border-bottom-right-radius: 28px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
@@ -1290,23 +1908,29 @@ body.nx-mobile-body {
     margin-bottom: 14px;
 }
 
-.nx-server-pill {
+.nx-live-ticker-pill {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     background: rgba(255, 255, 255, 0.16);
     backdrop-filter: blur(8px);
     color: #ffffff;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.28);
     padding: 5px 11px;
     border-radius: 999px;
-    font-size: 0.74rem;
-    font-weight: 600;
+    font-size: 0.73rem;
+    font-weight: 700;
     cursor: pointer;
-    max-width: 68%;
+    flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.nx-header-quick-btns {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .nx-theme-trigger-btn {
@@ -1314,13 +1938,32 @@ body.nx-mobile-body {
     color: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.35);
     border-radius: 999px;
-    padding: 5px 12px;
-    font-size: 0.76rem;
+    padding: 5px 10px;
+    font-size: 0.74rem;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    position: relative;
+}
+
+.nx-notif-badge-dot {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.62rem;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 1.5px solid #ffffff;
 }
 
 .nx-brand-strip {
@@ -1403,17 +2046,25 @@ body.nx-mobile-body {
     background: var(--nx-surface);
     border: 1px solid var(--nx-border);
     border-radius: 22px;
-    margin: -16px 14px 14px 14px;
+    margin: -16px 12px 14px 12px;
     padding: 14px 14px 10px 14px;
     box-shadow: var(--nx-card-shadow);
     position: relative;
     z-index: 5;
 }
 
+@media (min-width: 768px) {
+    .nx-multi-pocket-card {
+        margin: -16px 0 16px 0;
+    }
+}
+
 .nx-pocket-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
     margin-bottom: 10px;
 }
 
@@ -1422,7 +2073,7 @@ body.nx-mobile-body {
     background: var(--nx-surface-2);
     color: var(--nx-text);
     border-radius: 999px;
-    padding: 4px 10px;
+    padding: 5px 10px;
     font-size: 0.74rem;
     font-weight: 700;
     cursor: pointer;
@@ -1475,7 +2126,7 @@ body.nx-mobile-body {
 }
 
 .nx-search-pill-bar {
-    margin: 0 14px 14px 14px;
+    margin: 0 12px 14px 12px;
     background: var(--nx-surface);
     border: 1.5px solid var(--nx-border);
     border-radius: 999px;
@@ -1484,6 +2135,12 @@ body.nx-mobile-body {
     align-items: center;
     gap: 8px;
     box-shadow: var(--nx-card-shadow);
+}
+
+@media (min-width: 768px) {
+    .nx-search-pill-bar {
+        margin: 0 0 16px 0;
+    }
 }
 
 .nx-search-pill-bar input {
@@ -1499,9 +2156,9 @@ body.nx-mobile-body {
     background: var(--nx-surface);
     border: 1px solid var(--nx-border);
     border-radius: 22px;
-    margin: 0 14px 14px 14px;
     padding: 15px;
     box-shadow: var(--nx-card-shadow);
+    width: 100%;
 }
 
 .nx-service-grid-4x2 {
@@ -1586,7 +2243,7 @@ body.nx-mobile-body {
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    max-width: 480px;
+    max-width: 1280px;
     background: var(--nx-surface);
     border-top: 1px solid var(--nx-border);
     display: grid;
@@ -1655,8 +2312,8 @@ body.nx-mobile-body {
 
 .nx-modal-sheet {
     width: 100%;
-    max-width: 480px;
-    max-height: 91vh;
+    max-width: 620px;
+    max-height: 92vh;
     overflow-y: auto;
     background: var(--nx-surface);
     color: var(--nx-text);
@@ -1729,6 +2386,22 @@ body.nx-mobile-body {
     write_file_utf8("services/mobile/mobile-app.css", mobile_css.strip() + "\n")
 
     mobile_js = """
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        let radius = Array.isArray(r) ? r[0] : (r || 0);
+        if (w < 2 * radius) radius = w / 2;
+        if (h < 2 * radius) radius = h / 2;
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.arcTo(x + w, y, x + w, y + h, radius);
+        this.arcTo(x + w, y + h, x, y + h, radius);
+        this.arcTo(x, y + h, x, y, radius);
+        this.arcTo(x, y, x + w, y, radius);
+        this.closePath();
+        return this;
+    };
+}
+
 const NX_THEMES = [
     { id: 'emerald_fintech_light', name: '1. Lục Bảo Công Nghệ Nexora (Emerald Fintech Light - Mặc định)', swatch: 'linear-gradient(135deg,#064e3b,#10b981,#76b900)' },
     { id: 'executive_pearl_light', name: '2. Sáng Thanh Lịch (Executive Pearl Light)', swatch: 'linear-gradient(135deg,#1d4ed8,#0ea5e9)' },
@@ -1761,6 +2434,7 @@ let __nxState = {
     themeId: localStorage.getItem('nexora_active_theme') || 'emerald_fintech_light',
     cvdMode: localStorage.getItem('nexora_cvd_mode') || 'standard',
     hideBalance: localStorage.getItem('nexora_hide_balance') === '1',
+    soundboxEnabled: localStorage.getItem('nexora_soundbox_enabled') !== '0',
     authUser: loadSavedMobileAuthUser(),
     isLoggedIn: Boolean(loadSavedMobileAuthUser()),
     emailVerified: false,
@@ -1771,7 +2445,22 @@ let __nxState = {
     camStream: null,
     camTimer: null,
     confirmInFlight: false,
-    marketOverview: null
+    marketOverview: null,
+    smartOtpLen: 6,
+    smartOtpCode: '------',
+    smartOtpRemain: 30,
+    smartOtpTimer: null,
+    activeNotifTab: 'deal',
+    lastReceiptData: null,
+    activeMiniGame: 'wheel',
+    wheelAngle: 0,
+    wheelSpinning: false,
+    aimScore: 0,
+    aimTimeLeft: 30,
+    aimTarget: { x: 160, y: 120, r: 24 },
+    aimTimer: null,
+    treeWaterLevel: 3,
+    treeCoinsDrops: []
 };
 
 function nxApiUrl(path) {
@@ -1810,10 +2499,74 @@ function nxToast(msg) {
     clearTimeout(window.__nxToastTimer);
     window.__nxToastTimer = setTimeout(() => {
         if (box) box.style.opacity = '0';
-    }, 3200);
+    }, 3400);
 }
 
-if (typeof CanvasRenderingContext2D !== "undefined" && !CanvasRenderingContext2D.prototype.roundRect) { CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) { r = Math.min(r || 0, w / 2, h / 2); this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); return this; }; }
+function speakBalanceChangeByAiSoundbox(speechText) {
+    if (!__nxState.soundboxEnabled) return;
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            const actx = new AudioCtx();
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, actx.currentTime);
+            osc.frequency.setValueAtTime(1320, actx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.16, actx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.45);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start();
+            osc.stop(actx.currentTime + 0.45);
+        }
+    } catch (e) {}
+    try {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(speechText || 'Nexora Pay thông báo: Giao dịch thành công!');
+            utter.lang = 'vi-VN';
+            utter.rate = 1.05;
+            window.speechSynthesis.speak(utter);
+        }
+    } catch (e) {}
+}
+
+function triggerNativeOrWebLockScreenNotification(title, message, targetUrl = '/services/mobile/mobile-app.html') {
+    if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.pushLockScreenNotification === 'function') {
+        try {
+            window.NexoraNativeBridge.pushLockScreenNotification(String(title), String(message), String(targetUrl));
+            return;
+        } catch (e) {}
+    }
+    if ('Notification' in window) {
+        const sendWebNotif = () => {
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(title, {
+                        body: message,
+                        icon: '/assets/icons/pwa/icon-192x192.png',
+                        badge: '/assets/icons/pwa/icon-96x96.png',
+                        vibrate: [200, 100, 200],
+                        data: { url: targetUrl }
+                    });
+                }).catch(() => {
+                    new Notification(title, { body: message, icon: '/assets/icons/pwa/icon-192x192.png' });
+                });
+            } else {
+                new Notification(title, { body: message, icon: '/assets/icons/pwa/icon-192x192.png' });
+            }
+        };
+        if (Notification.permission === 'granted') {
+            sendWebNotif();
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(p => {
+                if (p === 'granted') sendWebNotif();
+            });
+        }
+    }
+}
+
 function drawSingleNexoraCanvasIcon(canvas, iconName) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width || 96;
@@ -1839,42 +2592,27 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
 
     if (iconName === 'topup_withdraw') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(14, 24, 68, 52, 14);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(14, 24, 68, 52, 14); ctx.fill();
         ctx.fillStyle = '#064e3b';
-        ctx.beginPath();
-        ctx.roundRect(54, 40, 28, 20, 8);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(54, 40, 28, 20, 8); ctx.fill();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(64, 50, 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(64, 50, 5, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = gGold;
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.moveTo(34, 42);
-        ctx.lineTo(34, 14);
-        ctx.moveTo(24, 24);
-        ctx.lineTo(34, 14);
-        ctx.lineTo(44, 24);
+        ctx.moveTo(34, 42); ctx.lineTo(34, 14);
+        ctx.moveTo(24, 24); ctx.lineTo(34, 14); ctx.lineTo(44, 24);
         ctx.stroke();
     } else if (iconName === 'receive_qr') {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.moveTo(48, 10);
-        ctx.lineTo(80, 22);
-        ctx.lineTo(80, 52);
+        ctx.moveTo(48, 10); ctx.lineTo(80, 22); ctx.lineTo(80, 52);
         ctx.quadraticCurveTo(80, 76, 48, 86);
         ctx.quadraticCurveTo(16, 76, 16, 52);
-        ctx.lineTo(16, 22);
-        ctx.closePath();
-        ctx.stroke();
+        ctx.lineTo(16, 22); ctx.closePath(); ctx.stroke();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(48, 48, 16, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 48, 16, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#052e16';
         ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
@@ -1897,67 +2635,39 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.fillRect(54, 54, 14, 14);
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(12, 48);
-        ctx.lineTo(84, 48);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(12, 48); ctx.lineTo(84, 48); ctx.stroke();
     } else if (iconName === 'utility_wallet') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(14, 26, 68, 54, 14);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(14, 26, 68, 54, 14); ctx.fill();
         ctx.strokeStyle = gGold;
         ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.roundRect(34, 14, 28, 16, 6);
-        ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(34, 14, 28, 16, 6); ctx.stroke();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(48, 52, 9, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 52, 9, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'fast_transfer') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.arc(48, 48, 34, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 48, 34, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = gGold;
         ctx.beginPath();
-        ctx.moveTo(54, 16);
-        ctx.lineTo(28, 52);
-        ctx.lineTo(46, 52);
-        ctx.lineTo(40, 80);
-        ctx.lineTo(68, 44);
-        ctx.lineTo(50, 44);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(54, 16); ctx.lineTo(28, 52); ctx.lineTo(46, 52);
+        ctx.lineTo(40, 80); ctx.lineTo(68, 44); ctx.lineTo(50, 44);
+        ctx.closePath(); ctx.fill();
     } else if (iconName === 'pay_behalf') {
         ctx.fillStyle = gPink;
-        ctx.beginPath();
-        ctx.arc(36, 44, 22, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(36, 44, 22, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.arc(60, 44, 22, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(60, 44, 22, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(36, 44);
-        ctx.lineTo(46, 54);
-        ctx.lineTo(62, 36);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(36, 44); ctx.lineTo(46, 54); ctx.lineTo(62, 36); ctx.stroke();
     } else if (iconName === 'dual_auction') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(18, 68, 60, 12, 6);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(18, 68, 60, 12, 6); ctx.fill();
         ctx.save();
         ctx.translate(48, 42);
         ctx.rotate(-Math.PI / 4);
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.roundRect(-22, -12, 44, 20, 6);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(-22, -12, 44, 20, 6); ctx.fill();
         ctx.fillStyle = '#047857';
         ctx.fillRect(-5, 8, 10, 32);
         ctx.restore();
@@ -1973,15 +2683,10 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.fillRect(57, 26, 14, 28);
         ctx.strokeStyle = gGold;
         ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(14, 66);
-        ctx.quadraticCurveTo(46, 58, 82, 20);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(14, 66); ctx.quadraticCurveTo(46, 58, 82, 20); ctx.stroke();
     } else if (iconName === 'reverse_rfq') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(20, 14, 56, 68, 10);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(20, 14, 56, 68, 10); ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -1990,9 +2695,7 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.moveTo(32, 60); ctx.lineTo(50, 60);
         ctx.stroke();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(64, 64, 14, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(64, 64, 14, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'daily_fire') {
         const gFire = ctx.createLinearGradient(48, 10, 48, 84);
         gFire.addColorStop(0, '#fde047');
@@ -2006,15 +2709,11 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.bezierCurveTo(14, 62, 22, 34, 48, 12);
         ctx.fill();
         ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(48, 64, 12, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 64, 12, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'esport_aim') {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.arc(48, 48, 30, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(48, 48, 30, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(48, 8); ctx.lineTo(48, 28);
         ctx.moveTo(48, 68); ctx.lineTo(48, 88);
@@ -2022,9 +2721,7 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.moveTo(68, 48); ctx.lineTo(88, 48);
         ctx.stroke();
         ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(48, 48, 7, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 48, 7, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'radar_truck') {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 4;
@@ -2032,11 +2729,9 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.beginPath(); ctx.arc(48, 48, 18, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = gGold;
         ctx.beginPath();
-        ctx.moveTo(48, 48);
-        ctx.lineTo(76, 28);
+        ctx.moveTo(48, 48); ctx.lineTo(76, 28);
         ctx.arc(48, 48, 34, -0.6, 0.1);
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#10b981';
         ctx.beginPath(); ctx.arc(48, 48, 6, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'ai_cat_mascot') {
@@ -2045,9 +2740,7 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.moveTo(22, 38); ctx.lineTo(18, 14); ctx.lineTo(38, 26);
         ctx.moveTo(74, 38); ctx.lineTo(78, 14); ctx.lineTo(58, 26);
         ctx.fill();
-        ctx.beginPath();
-        ctx.arc(48, 52, 28, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 52, 28, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(38, 48, 5, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(58, 48, 5, 0, Math.PI * 2); ctx.fill();
@@ -2056,20 +2749,12 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
     } else if (iconName === 'nav_home') {
         ctx.fillStyle = gEmerald;
         ctx.beginPath();
-        ctx.moveTo(48, 14);
-        ctx.lineTo(82, 44);
-        ctx.lineTo(72, 44);
-        ctx.lineTo(72, 80);
-        ctx.lineTo(24, 80);
-        ctx.lineTo(24, 44);
-        ctx.lineTo(14, 44);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(48, 14); ctx.lineTo(82, 44); ctx.lineTo(72, 44);
+        ctx.lineTo(72, 80); ctx.lineTo(24, 80); ctx.lineTo(24, 44); ctx.lineTo(14, 44);
+        ctx.closePath(); ctx.fill();
     } else if (iconName === 'nav_auction') {
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.roundRect(24, 20, 48, 22, 8);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(24, 20, 48, 22, 8); ctx.fill();
         ctx.fillStyle = gEmerald;
         ctx.fillRect(43, 42, 10, 36);
     } else if (iconName === 'nav_minigame') {
@@ -2084,6 +2769,36 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         }
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(48, 48, 10, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'smart_otp_key') {
+        ctx.fillStyle = gGold;
+        ctx.beginPath(); ctx.arc(34, 48, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(48, 43, 34, 10);
+        ctx.fillRect(64, 53, 7, 12);
+        ctx.fillRect(75, 53, 7, 16);
+        ctx.fillStyle = '#052e16';
+        ctx.beginPath(); ctx.arc(34, 48, 6, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'notif_bell') {
+        ctx.fillStyle = gGold;
+        ctx.beginPath();
+        ctx.moveTo(48, 14);
+        ctx.quadraticCurveTo(72, 18, 74, 58);
+        ctx.lineTo(82, 68);
+        ctx.lineTo(14, 68);
+        ctx.lineTo(22, 58);
+        ctx.quadraticCurveTo(24, 18, 48, 14);
+        ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(48, 76, 9, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'soundbox_speaker') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath();
+        ctx.moveTo(18, 36); ctx.lineTo(36, 36); ctx.lineTo(56, 18);
+        ctx.lineTo(56, 78); ctx.lineTo(36, 60); ctx.lineTo(18, 60);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(58, 48, 14, -0.7, 0.7); ctx.stroke();
+        ctx.beginPath(); ctx.arc(58, 48, 24, -0.8, 0.8); ctx.stroke();
     } else {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 8;
@@ -2234,6 +2949,10 @@ async function verifyMobileOtpAndSaveSecurity() {
             __nxState.emailVerified = true;
             updateOtpSendButtonLockState(true);
             nxToast(data.message || '✅ Xác minh OTP thành công!');
+            if (data.reward_coins_added > 0) {
+                speakBalanceChangeByAiSoundbox('Nexora Pay thông báo: Cộng 20 nghìn xu thưởng xác thực bảo mật OTP thành công!');
+                triggerNativeOrWebLockScreenNotification('🎁 +20.000 Xu Thưởng Bảo Mật OTP', data.message);
+            }
             await syncMobileBridge();
         } else {
             nxToast(data.error || '❌ Mã OTP không hợp lệ!');
@@ -2313,6 +3032,10 @@ function openNxModal(modalId) {
 
 function closeNxModal(modalId) {
     if (modalId === 'nxQrScannerModal') stopMobileCameraQr();
+    if (modalId === 'nxSmartOtpModal' && __nxState.smartOtpTimer) {
+        clearInterval(__nxState.smartOtpTimer);
+        __nxState.smartOtpTimer = null;
+    }
     const target = document.getElementById(modalId);
     if (target) target.classList.remove('show');
 }
@@ -2340,11 +3063,8 @@ function saveServerEndpointConfig(modeUrl) {
 function updateServerHeaderPill() {
     const lbl = document.getElementById('nxServerStatusText');
     if (!lbl) return;
-    let hostLabel = __nxState.apiBase.replace(/^https?:\\/\\//, '');
-    if (!hostLabel || hostLabel === window.location.host) {
-        hostLabel = window.location.host || 'nexora.castle-tech.cloud';
-    }
-    lbl.textContent = '🟢 Đang kết nối: ' + hostLabel;
+    const u = __nxState.isLoggedIn && __nxState.authUser ? (__nxState.authUser.username || 'VIP') : 'Chạm xem tin mới';
+    lbl.textContent = `⚡ Nexora Live • Bảo lãnh Escrow 100% • ${u}`;
 }
 
 async function syncMobileBridge() {
@@ -2375,7 +3095,7 @@ async function syncMobileBridge() {
         }
     } catch (err) {
         const lbl = document.getElementById('nxServerStatusText');
-        if (lbl) lbl.textContent = '🟠 Chế độ Offline/LAN: ' + (__nxState.apiBase || 'nexora.castle-tech.cloud');
+        if (lbl) lbl.textContent = '🟠 Chế độ Offline/LAN • Chạm để đổi cấu hình';
     }
 }
 
@@ -2400,6 +3120,13 @@ function renderBridgeDataToUi() {
     const uNameEl = document.getElementById('nxHeaderUserName');
     const uCoinsEl = document.getElementById('nxHeaderCoinsBadge');
     const authActionBtn = document.getElementById('nxHeaderAuthBtn');
+    const notifDot = document.getElementById('nxUnreadNotifBadge');
+
+    if (notifDot) {
+        const unread = Number(d.unread_notifications_count || (d.live_counters && d.live_counters.unread_notifications) || 0);
+        notifDot.textContent = unread > 99 ? '99+' : String(unread);
+        notifDot.style.display = unread > 0 ? 'flex' : 'none';
+    }
 
     if (__nxState.isLoggedIn) {
         if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 0);
@@ -2426,6 +3153,168 @@ function renderBridgeDataToUi() {
     renderSpendingDonut(d.spending_analytics);
     renderPendingQrSessionsList(d.pending_qr_sessions || []);
     renderLiveAuctionsPreview(d.active_auctions || []);
+    renderRealTransactionsLedger(d.recent_transactions || []);
+}
+
+function renderRealTransactionsLedger(txList) {
+    const box = document.getElementById('nxRealTransactionsList');
+    if (!box) return;
+    if (!__nxState.isLoggedIn) {
+        box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;">🔒 Vui lòng đăng nhập để xem sổ cái lịch sử giao dịch thực tế trong SQLite.</div>`;
+        return;
+    }
+    if (!txList || !txList.length) {
+        box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;background:var(--nx-surface-2);border-radius:14px;">Sổ cái sạch (0 giao dịch). Mọi giao dịch nạp/rút hoặc thanh toán QR mới sẽ hiển thị tại đây.</div>`;
+        return;
+    }
+    box.innerHTML = txList.map(tx => {
+        const amt = Number(tx.amount || 0);
+        const isPlus = amt >= 0;
+        const safeNote = String(tx.note || tx.tx_type || 'Giao dịch ví').replace(/'/g, '');
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:7px;cursor:pointer;" onclick="openReceiptForTransaction('${tx.tx_code || 'NXPAY'}', ${Math.abs(amt)}, '${safeNote}', '${tx.created_at || ''}')">
+            <div style="max-width:65%;">
+                <div style="font-weight:800;font-size:0.79rem;">${tx.tx_code || 'NXPAY'} • ${tx.tx_type || 'TX'}</div>
+                <div style="font-size:0.71rem;color:var(--nx-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.note || ''}</div>
+                <div style="font-size:0.66rem;color:var(--nx-muted);">${tx.created_at || ''} (Chạm xuất biên lai PNG)</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-weight:800;font-size:0.86rem;color:${isPlus ? '#10b981' : '#ef4444'};">${isPlus ? '+' : ''}${amt.toLocaleString('vi-VN')} ₫</div>
+                <div style="font-size:0.68rem;color:var(--nx-muted);">Dư: ${Number(tx.balance_after || 0).toLocaleString('vi-VN')} ₫</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function clearRealTransactionsHistory() {
+    if (!requireMobileLoginForAction('làm sạch lịch sử giao dịch về 0')) return;
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/transactions/clear'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ user_id: __nxState.authUser.id })
+        });
+        const data = await res.json();
+        nxToast(data.message || '🧹 Đã làm sạch lịch sử giao dịch về 0!');
+        await syncMobileBridge();
+    } catch (e) {
+        nxToast('❌ Không thể xóa lịch sử giao dịch!');
+    }
+}
+
+function openReceiptForTransaction(txCode, amount, note, createdAt) {
+    __nxState.lastReceiptData = {
+        tx_code: txCode,
+        amount: amount,
+        recipient: (__nxState.authUser && __nxState.authUser.full_name) || 'Ví Lục Bảo Nexora Pay',
+        note: note,
+        created_at: createdAt || new Date().toLocaleString('vi-VN')
+    };
+    openNxModal('nxDigitalReceiptModal');
+    drawDigitalReceiptOnCanvas(__nxState.lastReceiptData);
+}
+
+function drawDigitalReceiptOnCanvas(rcp) {
+    const cv = document.getElementById('nxReceiptCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const gBg = ctx.createLinearGradient(0, 0, w, h);
+    gBg.addColorStop(0, '#052e16');
+    gBg.addColorStop(0.5, '#064e3b');
+    gBg.addColorStop(1, '#047857');
+    ctx.fillStyle = gBg;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.roundRect(24, 24, w - 48, h - 48, 22);
+    ctx.fill();
+
+    ctx.fillStyle = '#059669';
+    ctx.beginPath();
+    ctx.roundRect(24, 24, w - 48, 92, [22, 22, 0, 0]);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BIÊN LAI GIAO DỊCH NEXORA PAY', w / 2, 64);
+    ctx.font = '13px sans-serif';
+    ctx.fillText('BẢO CHỨNG THANH TOÁN ESCROW SOP-01', w / 2, 92);
+
+    ctx.fillStyle = '#059669';
+    ctx.font = 'bold 34px sans-serif';
+    ctx.fillText(Number(rcp.amount || 0).toLocaleString('vi-VN') + ' VNĐ', w / 2, 166);
+
+    ctx.strokeStyle = '#d1fae5';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(52, 194);
+    ctx.lineTo(w - 52, 194);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#475569';
+    ctx.font = '14px sans-serif';
+    const rows = [
+        ['Mã giao dịch:', String(rcp.tx_code || 'NXPAY-888')],
+        ['Chủ tài khoản:', String((__nxState.authUser && __nxState.authUser.full_name) || 'Thành viên Nexora')],
+        ['Thụ hưởng:', String(rcp.recipient || 'Quỹ Bảo Lãnh Nexora Escrow')],
+        ['Thời gian:', String(rcp.created_at || new Date().toLocaleString('vi-VN'))],
+        ['Nội dung:', String(rcp.note || 'Giao dịch bảo mật Nexora Pay').slice(0, 42)]
+    ];
+    let yPos = 232;
+    rows.forEach(r => {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '14px sans-serif';
+        ctx.fillText(r[0], 52, yPos);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(r[1], 175, yPos);
+        yPos += 38;
+    });
+
+    ctx.save();
+    ctx.translate(w - 135, h - 105);
+    ctx.rotate(-0.2);
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.roundRect(-78, -28, 156, 56, 10);
+    ctx.stroke();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ĐÃ BẢO LÃNH ESCROW', 0, -4);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('NEXORA VERIFIED', 0, 14);
+    ctx.restore();
+}
+
+function renderAndDownloadCanvasReceipt() {
+    const cv = document.getElementById('nxReceiptCanvas');
+    if (!cv) return;
+    if (!__nxState.lastReceiptData) {
+        __nxState.lastReceiptData = {
+            tx_code: 'NXPAY-' + Date.now(),
+            amount: 0,
+            recipient: 'Ví Nexora Pay',
+            note: 'Biên lai xác thực ví điện tử',
+            created_at: new Date().toLocaleString('vi-VN')
+        };
+        drawDigitalReceiptOnCanvas(__nxState.lastReceiptData);
+    }
+    const url = cv.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BienLai_${__nxState.lastReceiptData.tx_code || 'NexoraPay'}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    nxToast('📥 Đã tải ảnh Biên Lai Điện Tử (.PNG) về thiết bị!');
 }
 
 function renderSpendingDonut(analytics) {
@@ -2556,14 +3445,16 @@ function renderThemeModalList() {
 
 async function openMobileQrScannerCenter() {
     openNxModal('nxQrScannerModal');
+    await startMobileCameraQr();
     await syncMobileBridge();
 }
 
 async function startMobileCameraQr() {
+    stopMobileCameraQr();
     const video = document.getElementById('nxMobileQrVideo');
     const wrap = document.getElementById('nxMobileCameraBox');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        nxToast('⚠️ Thiết bị không mở được Camera trực tiếp. Hãy chọn hóa đơn đang chờ bên dưới!');
+        nxToast('⚠️ Bạn có thể chọn Ảnh Mã QR từ Thư viện máy hoặc chọn đơn đang chờ bên dưới!');
         return;
     }
     try {
@@ -2586,12 +3477,12 @@ async function startMobileCameraQr() {
                 const code = jsQR(imgData.data, imgData.width, imgData.height);
                 if (code && code.data && String(code.data).trim()) {
                     stopMobileCameraQr();
-                    inspectQrTokenInvoice(code.data);
+                    handleDecodedQrString(code.data);
                 }
             }
-        }, 240);
+        }, 220);
     } catch (err) {
-        nxToast('⚠️ Camera đang bận hoặc bị chặn quyền. Bạn có thể bấm chọn ngay đơn AWAITING_PAYMENT bên dưới!');
+        nxToast('📷 Hãy chọn Ảnh Mã QR từ Thư viện máy hoặc bấm vào hóa đơn AWAITING_PAYMENT bên dưới!');
     }
 }
 
@@ -2604,6 +3495,64 @@ function stopMobileCameraQr() {
         __nxState.camStream.getTracks().forEach(t => t.stop());
         __nxState.camStream = null;
     }
+}
+
+function handleQrGalleryImageSelected(ev) {
+    const file = ev && ev.target && ev.target.files ? ev.target.files[0] : null;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(loadEv) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.getElementById('nxMobileQrCanvas');
+            const ctx = canvas.getContext('2d');
+            const scales = [1, 1.5, 0.75];
+            let foundData = '';
+            for (const sc of scales) {
+                const dw = Math.round((img.naturalWidth || img.width || 300) * sc);
+                const dh = Math.round((img.naturalHeight || img.height || 300) * sc);
+                canvas.width = dw + 40;
+                canvas.height = dh + 40;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 20, 20, dw, dh);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                if (typeof jsQR === 'function') {
+                    const res = jsQR(imgData.data, imgData.width, imgData.height);
+                    if (res && res.data && String(res.data).trim()) {
+                        foundData = String(res.data).trim();
+                        break;
+                    }
+                }
+            }
+            if (foundData) {
+                stopMobileCameraQr();
+                handleDecodedQrString(foundData);
+            } else {
+                nxToast('❌ Không tìm thấy mã QR hợp lệ trong bức ảnh bạn vừa chọn!');
+            }
+        };
+        img.src = loadEv.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function handleDecodedQrString(rawStr) {
+    const s = String(rawStr || '').trim();
+    if (s.toUpperCase().includes('QRWEB') || s.includes('web_login_token=')) {
+        const res = await fetch(nxApiUrl('/api/mobile/smart-otp/approve-qr-login'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ qr_login_token: s })
+        });
+        const data = await res.json();
+        nxToast(data.message || data.error || '📲 Đã duyệt QR đăng nhập máy tính!');
+        if (res.ok && data.ok) {
+            triggerNativeOrWebLockScreenNotification('📲 Duyệt QR Đăng Nhập Web', data.message);
+        }
+        return;
+    }
+    await inspectQrTokenInvoice(s);
 }
 
 function parseCleanPayToken(rawInput) {
@@ -2756,6 +3705,13 @@ async function confirmMobileQrPaymentNow() {
             if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.vibrateShort === 'function') {
                 try { window.NexoraNativeBridge.vibrateShort(); } catch (e) {}
             }
+            const paidAmt = Number(data.paid_amount || info.amount || 0);
+            speakBalanceChangeByAiSoundbox(`Nexora Pay thông báo: Đã khóa bảo lãnh Escrow thành công ${paidAmt} đồng cho đơn hàng ${info.order_code || ''}`);
+            triggerNativeOrWebLockScreenNotification(
+                `✅ Đã Thanh Toán QR ${info.order_code || ''}`,
+                `Số tiền ${paidAmt.toLocaleString('vi-VN')} ₫ đã được bảo vệ trong Quỹ Bảo Lãnh Escrow.`,
+                data.next_step_url || '/services/order_tracking/tracking.html'
+            );
             localStorage.setItem('nvx_qr_payment_confirmed', JSON.stringify({
                 ts: Date.now(),
                 pay_token: info.pay_token,
@@ -2763,14 +3719,21 @@ async function confirmMobileQrPaymentNow() {
                 tx_id: data.tx_code || info.pay_token,
                 order_id: data.order_id || info.order_id,
                 tracking_code: data.tracking_code || info.tracking_code,
-                amount: data.paid_amount || info.amount,
+                amount: paidAmt,
                 is_paid_on_behalf: Boolean(data.is_paid_on_behalf),
                 payer_name: data.payer_name || '',
                 payer_message: data.payer_message || '',
                 next_step_url: data.next_step_url || '/services/order_tracking/tracking.html',
                 status: 'APPROVED'
             }));
-            nxToast('🎉 Đã xác nhận thanh toán QR! Màn hình checkout.html trên máy tính đã tự động nhảy sang trang Vận đơn tracking.html!');
+            __nxState.lastReceiptData = {
+                tx_code: data.tx_code || info.pay_token,
+                amount: paidAmt,
+                recipient: 'Quỹ Bảo Lãnh Nexora Escrow',
+                note: `Thanh toán QR ${info.order_code || ''}`,
+                created_at: new Date().toLocaleString('vi-VN')
+            };
+            nxToast('🎉 Đã xác nhận thanh toán QR! Màn hình checkout.html trên PC đã tự động nhảy sang trang Vận đơn!');
             await inspectQrTokenInvoice(info.pay_token);
             await syncMobileBridge();
         } else {
@@ -2796,7 +3759,7 @@ async function submitMobileWalletAction(actionType) {
     const recInput = document.getElementById('nxWalletActionRecipient');
     const noteInput = document.getElementById('nxWalletActionNote');
     const amount = Number(amtInput ? amtInput.value : 0);
-    const recipient = recInput ? recInput.value : 'Ví Nexora Pay';
+    const recipient = (recInput ? recInput.value : '') || 'Ví Nexora Pay';
     const note = noteInput ? noteInput.value : '';
 
     try {
@@ -2820,14 +3783,433 @@ async function submitMobileWalletAction(actionType) {
             return;
         }
         if (res.ok && data.ok) {
-            nxToast('✅ ' + data.message);
+            if (amtInput) amtInput.value = '';
+            speakBalanceChangeByAiSoundbox(data.soundbox_speech || data.message);
+            triggerNativeOrWebLockScreenNotification('💸 Biến Động Số Dư Nexora Pay', data.message);
             closeNxModal('nxTopupWithdrawModal');
             await syncMobileBridge();
+            openReceiptForTransaction(data.tx_code, amount, data.note || note, data.created_at);
         } else {
             nxToast(data.error || '⚠️ Giao dịch không thành công');
         }
     } catch (e) {
         nxToast('❌ Lỗi kết nối máy chủ khi thực hiện giao dịch ví!');
+    }
+}
+
+async function openSmartOtpKeyModal() {
+    if (!requireMobileLoginForAction('mở Khóa Bảo Mật Động Smart OTP Key')) return;
+    openNxModal('nxSmartOtpModal');
+    await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+    if (__nxState.smartOtpTimer) clearInterval(__nxState.smartOtpTimer);
+    __nxState.smartOtpTimer = setInterval(async () => {
+        __nxState.smartOtpRemain -= 1;
+        if (__nxState.smartOtpRemain <= 0) {
+            await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+        } else {
+            drawSmartOtpCountdownRing();
+        }
+    }, 1000);
+}
+
+async function generateNewSmartOtpCode(pinLength = 6, pushLockscreen = false) {
+    if (!requireMobileLoginForAction('cấp mã Smart OTP')) return;
+    __nxState.smartOtpLen = Number(pinLength) || 6;
+    [4, 6, 8].forEach(l => {
+        const b = document.getElementById('nxSmartOtpLenBtn' + l);
+        if (b) {
+            b.style.background = l === __nxState.smartOtpLen ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = l === __nxState.smartOtpLen ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/smart-otp/generate'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+                user_id: __nxState.authUser.id,
+                pin_length: __nxState.smartOtpLen,
+                push_lockscreen: pushLockscreen
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            __nxState.smartOtpCode = data.dynamic_pin;
+            __nxState.smartOtpRemain = 30;
+            const codeEl = document.getElementById('nxSmartOtpDigitsDisplay');
+            if (codeEl) codeEl.textContent = String(data.dynamic_pin).split('').join(' ');
+            drawSmartOtpCountdownRing();
+            if (pushLockscreen) {
+                triggerNativeOrWebLockScreenNotification(
+                    `🔐 Mã Smart OTP (${__nxState.smartOtpLen} Số): ${data.dynamic_pin}`,
+                    `Mã xác thực đăng nhập Web của bạn là ${data.dynamic_pin} (Hiệu lực 30 giây).`
+                );
+                nxToast('📲 Đã bắn mã Smart OTP ra Màn Hình Khóa điện thoại!');
+            }
+        }
+    } catch (e) {}
+}
+
+function drawSmartOtpCountdownRing() {
+    const cv = document.getElementById('nxSmartOtpRingCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+    const pct = Math.max(0, __nxState.smartOtpRemain) / 30;
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(5, 150, 105, 0.16)';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, 46, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = __nxState.smartOtpRemain <= 7 ? '#ef4444' : '#059669';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, 46, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = __nxState.smartOtpRemain <= 7 ? '#ef4444' : '#052e16';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(__nxState.smartOtpRemain + 's', w / 2, h / 2);
+}
+
+async function openNotificationInboxModal(tab = 'deal') {
+    __nxState.activeNotifTab = tab;
+    openNxModal('nxNotificationCenterModal');
+    await loadNotificationsByTab(tab);
+}
+
+async function loadNotificationsByTab(tab = 'deal') {
+    __nxState.activeNotifTab = tab;
+    ['deal', 'terms', 'balance'].forEach(t => {
+        const b = document.getElementById('nxNotifTabBtn_' + t);
+        if (b) {
+            b.style.background = t === tab ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = t === tab ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    const termsAgreeBar = document.getElementById('nxTermsAgreementBox');
+    if (termsAgreeBar) termsAgreeBar.style.display = tab === 'terms' ? 'block' : 'none';
+
+    const listEl = document.getElementById('nxNotificationsInboxList');
+    if (!listEl) return;
+    try {
+        const res = await fetch(nxApiUrl(`/api/mobile/notifications?category=${encodeURIComponent(tab)}&_t=${Date.now()}`), {
+            headers: nxAuthHeaders()
+        });
+        const data = await res.json();
+        const rows = (data && data.notifications) || [];
+        if (!rows.length) {
+            listEl.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:14px;">Chưa có thông báo nào trong mục này.</div>`;
+            return;
+        }
+        listEl.innerHTML = rows.map(n => {
+            return `<div style="padding:11px 12px;border-radius:14px;background:var(--nx-surface-2);border:1.5px solid ${n.is_read ? 'var(--nx-border)' : 'var(--nx-primary)'};margin-bottom:8px;cursor:pointer;" onclick="window.location.href='${n.target_url || '/services/mobile/mobile-app.html'}'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <strong style="font-size:0.82rem;color:var(--nx-primary);">${n.title}</strong>
+                    <span style="font-size:0.65rem;color:var(--nx-muted);">${n.created_at || ''}</span>
+                </div>
+                <div style="font-size:0.76rem;line-height:1.35;">${n.message}</div>
+            </div>`;
+        }).join('');
+    } catch (e) {}
+}
+
+async function triggerPushLockscreenDemo(category) {
+    const delayCheck = document.getElementById('nxDelayLockscreenToggle');
+    const delayMs = delayCheck && delayCheck.checked ? 3000 : 100;
+    if (delayMs >= 1000) {
+        nxToast('⏳ Đã hẹn 3 giây! Hãy bấm nút Nguồn tắt/khóa màn hình điện thoại ngay để xem thông báo bật sáng trên Màn Hình Khóa!');
+    }
+    setTimeout(async () => {
+        try {
+            const res = await fetch(nxApiUrl('/api/mobile/notifications'), {
+                method: 'POST',
+                headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ action: 'push_lockscreen', category })
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                triggerNativeOrWebLockScreenNotification(data.title, data.message, data.target_url);
+                await loadNotificationsByTab(category);
+                await syncMobileBridge();
+            }
+        } catch (e) {}
+    }, delayMs);
+}
+
+async function submitAgreeTermsV12() {
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/notifications/agree-terms'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        nxToast(data.message || '✅ Đã xác nhận đồng ý Điều khoản & Chính sách V12!');
+        triggerNativeOrWebLockScreenNotification('📜 Đã Đồng Ý Điều Khoản Nexora V12', data.message);
+        await loadNotificationsByTab('terms');
+    } catch (e) {}
+}
+
+function openCheckin7DaysModal() {
+    openNxModal('nxCheckin7DaysModal');
+    drawCheckin7DaysCanvas();
+}
+
+function drawCheckin7DaysCanvas() {
+    const cv = document.getElementById('nxCheckin7DaysCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+    const streak = (__nxState.authUser && Number(__nxState.authUser.streak_days || 1)) || 1;
+    const rewards = ['+5K', '+10K', '+15K', '+20K', '+25K', '+30K', '+50K'];
+
+    for (let i = 0; i < 7; i++) {
+        const x = 14 + i * 54;
+        const y = 22;
+        const done = (i + 1) <= streak;
+        ctx.fillStyle = done ? '#059669' : '#dcfce7';
+        ctx.beginPath();
+        ctx.roundRect(x, y, 46, 76, 12);
+        ctx.fill();
+        ctx.fillStyle = done ? '#ffffff' : '#052e16';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Ngày ' + (i + 1), x + 23, y + 22);
+        ctx.fillStyle = done ? '#fde047' : '#059669';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(rewards[i], x + 23, y + 48);
+        ctx.font = '12px sans-serif';
+        ctx.fillText(done ? '🔥' : '🪙', x + 23, y + 68);
+    }
+}
+
+async function triggerMobileDailyCheckin() {
+    if (!requireMobileLoginForAction('điểm danh chuỗi lửa 7 ngày nhận Xu')) return;
+    try {
+        const res = await fetch(nxApiUrl('/api/settings/daily-checkin'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ user_id: __nxState.authUser.id })
+        });
+        const data = await res.json();
+        nxToast(data.message || '🔥 Điểm danh chuỗi lửa thành công!');
+        speakBalanceChangeByAiSoundbox(data.message || 'Điểm danh chuỗi lửa thành công');
+        await syncMobileBridge();
+        drawCheckin7DaysCanvas();
+    } catch (e) {
+        nxToast('❌ Không thể kết nối API Điểm danh!');
+    }
+}
+
+function openMiniGameCenterModal(gameType = 'wheel') {
+    openNxModal('nxMiniGameCenterModal');
+    switchMiniGameMode(gameType);
+}
+
+function switchMiniGameMode(gameType) {
+    __nxState.activeMiniGame = gameType;
+    if (__nxState.aimTimer) {
+        clearInterval(__nxState.aimTimer);
+        __nxState.aimTimer = null;
+    }
+    ['wheel', 'aim', 'tree'].forEach(g => {
+        const b = document.getElementById('nxGameTab_' + g);
+        if (b) {
+            b.style.background = g === gameType ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = g === gameType ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    const actBtn = document.getElementById('nxMiniGamePrimaryBtn');
+    if (gameType === 'wheel') {
+        if (actBtn) {
+            actBtn.textContent = '🎡 QUAY VÒNG QUAY LỤC BẢO NGAY';
+            actBtn.onclick = startCanvasWheelSpin;
+        }
+        drawLuckyWheelGameCanvas();
+    } else if (gameType === 'aim') {
+        __nxState.aimScore = 0;
+        __nxState.aimTimeLeft = 30;
+        if (actBtn) {
+            actBtn.textContent = '🎯 BẮT ĐẦU BẮN TÂM 30 GIÂY & NHẬN XU';
+            actBtn.onclick = startAimReflexCanvasGame;
+        }
+        drawAimReflexGameCanvas();
+    } else {
+        if (actBtn) {
+            actBtn.textContent = '🌱 TƯỚI NƯỚC & THU HOẠCH QUẢ TIỀN VÀNG';
+            actBtn.onclick = waterAndHarvestEmeraldTree;
+        }
+        drawMoneyTreeGameCanvas();
+    }
+}
+
+function drawLuckyWheelGameCanvas() {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = 105;
+    const prizes = ['50K Xu', 'GEAR50K', '20K Xu', 'BRAND30K', '10K Xu', 'START15K', '5K Xu', '1K Xu'];
+    const cols = ['#059669', '#10b981', '#047857', '#0ea5e9', '#d97706', '#76b900', '#0284c7', '#f59e0b'];
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(__nxState.wheelAngle);
+    for (let i = 0; i < 8; i++) {
+        const a0 = (i * Math.PI) / 4;
+        const a1 = ((i + 1) * Math.PI) / 4;
+        ctx.fillStyle = cols[i];
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, a0, a1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.save();
+        ctx.rotate(a0 + Math.PI / 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(prizes[i], r - 12, 4);
+        ctx.restore();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r - 10);
+    ctx.lineTo(cx - 10, cy - r + 12);
+    ctx.lineTo(cx + 10, cy - r + 12);
+    ctx.closePath();
+    ctx.fill();
+}
+
+async function startCanvasWheelSpin() {
+    if (!requireMobileLoginForAction('quay Vòng Quay Lục Bảo')) return;
+    if (__nxState.wheelSpinning) return;
+    __nxState.wheelSpinning = true;
+    let vel = 0.42;
+    const anim = setInterval(() => {
+        __nxState.wheelAngle += vel;
+        vel *= 0.96;
+        drawLuckyWheelGameCanvas();
+        if (vel < 0.01) {
+            clearInterval(anim);
+            __nxState.wheelSpinning = false;
+            triggerMobileLuckySpin();
+        }
+    }, 30);
+}
+
+function drawAimReflexGameCanvas() {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.fillStyle = '#052e16';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`🎯 Điểm: ${__nxState.aimScore}  |  ⏱️ Còn: ${__nxState.aimTimeLeft}s`, 16, 26);
+
+    const t = __nxState.aimTarget;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r * 0.28, 0, Math.PI * 2); ctx.fill();
+}
+
+function startAimReflexCanvasGame() {
+    if (!requireMobileLoginForAction('chơi Bắn Tâm Phản Xạ nhận Xu')) return;
+    __nxState.aimScore = 0;
+    __nxState.aimTimeLeft = 15;
+    if (__nxState.aimTimer) clearInterval(__nxState.aimTimer);
+    __nxState.aimTimer = setInterval(() => {
+        __nxState.aimTimeLeft -= 1;
+        drawAimReflexGameCanvas();
+        if (__nxState.aimTimeLeft <= 0) {
+            clearInterval(__nxState.aimTimer);
+            __nxState.aimTimer = null;
+            triggerMobileReflexArenaClaim();
+        }
+    }, 1000);
+    drawAimReflexGameCanvas();
+}
+
+function drawMoneyTreeGameCanvas() {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.fillStyle = '#ecfdf5';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(w / 2 - 14, h - 90, 28, 70);
+    ctx.fillStyle = '#059669';
+    ctx.beginPath(); ctx.arc(w / 2, h - 120, 56, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w / 2 - 38, h - 100, 40, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w / 2 + 38, h - 100, 40, 0, Math.PI * 2); ctx.fill();
+
+    const coinCoords = [[w / 2 - 30, h - 130], [w / 2 + 26, h - 135], [w / 2, h - 155], [w / 2 - 44, h - 95], [w / 2 + 44, h - 95]];
+    coinCoords.forEach(c => {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath(); ctx.arc(c[0], c[1], 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('XU', c[0], c[1] + 3);
+    });
+}
+
+async function waterAndHarvestEmeraldTree() {
+    if (!requireMobileLoginForAction('tưới cây & thu hoạch Xu')) return;
+    drawMoneyTreeGameCanvas();
+    await triggerMobileDailyCheckin();
+}
+
+function handleInteractiveGameCanvasTap(ev) {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const rect = cv.getBoundingClientRect();
+    const scaleX = cv.width / rect.width;
+    const scaleY = cv.height / rect.height;
+    const px = (ev.clientX - rect.left) * scaleX;
+    const py = (ev.clientY - rect.top) * scaleY;
+
+    if (__nxState.activeMiniGame === 'aim') {
+        const d = Math.hypot(px - __nxState.aimTarget.x, py - __nxState.aimTarget.y);
+        if (d <= __nxState.aimTarget.r + 14) {
+            __nxState.aimScore += 1;
+            __nxState.aimTarget.x = 40 + Math.random() * (cv.width - 80);
+            __nxState.aimTarget.y = 50 + Math.random() * (cv.height - 90);
+            drawAimReflexGameCanvas();
+        }
+    } else if (__nxState.activeMiniGame === 'wheel') {
+        startCanvasWheelSpin();
+    } else {
+        waterAndHarvestEmeraldTree();
     }
 }
 
@@ -2874,22 +4256,6 @@ async function claimDutchAuctionOnMobile(auctionId) {
     }
 }
 
-async function triggerMobileDailyCheckin() {
-    if (!requireMobileLoginForAction('điểm danh chuỗi lửa nhận Xu')) return;
-    try {
-        const res = await fetch(nxApiUrl('/api/settings/daily-checkin'), {
-            method: 'POST',
-            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ user_id: __nxState.authUser.id })
-        });
-        const data = await res.json();
-        nxToast(data.message || '🔥 Điểm danh chuỗi lửa thành công!');
-        await syncMobileBridge();
-    } catch (e) {
-        nxToast('❌ Không thể kết nối API Điểm danh!');
-    }
-}
-
 async function triggerMobileLuckySpin() {
     if (!requireMobileLoginForAction('quay Vòng Quay May Mắn')) return;
     try {
@@ -2899,7 +4265,9 @@ async function triggerMobileLuckySpin() {
             body: JSON.stringify({ user_id: __nxState.authUser.id })
         });
         const data = await res.json();
-        nxToast(data.message || (data.prize && data.prize.label ? '🎡 Chúc mừng bạn quay trúng: ' + data.prize.label : '🎡 Đã quay Vòng Quay May Mắn!'));
+        const msg = data.message || (data.prize && data.prize.label ? '🎡 Chúc mừng bạn quay trúng: ' + data.prize.label : '🎡 Đã quay Vòng Quay May Mắn!');
+        nxToast(msg);
+        speakBalanceChangeByAiSoundbox(msg);
         await syncMobileBridge();
     } catch (e) {
         nxToast('❌ Không thể kết nối API Vòng quay may mắn!');
@@ -2909,18 +4277,20 @@ async function triggerMobileLuckySpin() {
 async function triggerMobileReflexArenaClaim() {
     if (!requireMobileLoginForAction('nhận thưởng Bắn Tâm Phản Xạ Esport')) return;
     try {
+        const hits = Math.max(15, __nxState.aimScore || 25);
         const res = await fetch(nxApiUrl('/api/minigame/reflex-arena/claim'), {
             method: 'POST',
             headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({
-                score: 28,
-                hits: 28,
+                score: hits,
+                hits: hits,
                 user_id: __nxState.authUser.id,
                 username: __nxState.authUser.username
             })
         });
         const data = await res.json();
-        nxToast(data.message || '🎯 Đã nhận thưởng Bắn Tâm Phản Xạ Esport 30s!');
+        nxToast(data.message || '🎯 Đã nhận thưởng Bắn Tâm Phản Xạ Esport!');
+        speakBalanceChangeByAiSoundbox(data.message || 'Đã nhận thưởng bắn tâm phản xạ');
         await syncMobileBridge();
     } catch (e) {
         nxToast('❌ Không thể kết nối API Minigame!');
@@ -2979,7 +4349,9 @@ async function submitMobileWatchlistAlert() {
             })
         });
         const data = await res.json();
-        nxToast(data.message || `🔔 Đã đặt báo động giảm giá ở mức ${targetPrice.toLocaleString('vi-VN')} ₫!`);
+        const msg = data.message || `🔔 Đã đặt báo động giảm giá ở mức ${targetPrice.toLocaleString('vi-VN')} ₫!`;
+        nxToast(msg);
+        triggerNativeOrWebLockScreenNotification('🏷️ Đã Đặt Báo Động Giảm Giá', msg, '/services/market_tracker/price-tracker.html');
     } catch (e) {
         nxToast('❌ Lỗi khi lưu báo động giá!');
     }
@@ -2989,7 +4361,7 @@ function handleQuickSearchInput(ev) {
     if (ev && ev.key === 'Enter') {
         const val = (ev.target.value || '').trim();
         if (!val) return;
-        inspectQrTokenInvoice(val);
+        handleDecodedQrString(val);
     }
 }
 
@@ -2997,6 +4369,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderNexoraCanvasIcons();
     await nxApplyTheme(__nxState.themeId, false);
     await nxApplyCvdMode(__nxState.cvdMode, false);
+    if ('Notification' in window && Notification.permission === 'default') {
+        try { Notification.requestPermission(); } catch (e) {}
+    }
+    if ('serviceWorker' in navigator) {
+        try { navigator.serviceWorker.register('/sw.js'); } catch (e) {}
+    }
     await syncMobileBridge();
     await refreshLiveAuctionsList();
     const params = new URLSearchParams(window.location.search);
@@ -3016,7 +4394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#059669">
-    <title>Nexora Mobile — Siêu Ứng Dụng Tài Chính Lục Bảo, Quét QR 2 Bước &amp; Đấu Giá Kép</title>
+    <title>Nexora Mobile V12 Ultra — Siêu Ứng Dụng Tài Chính Lục Bảo, Smart OTP &amp; Lock-Screen Push</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/assets/icons/pwa/icon-192x192.png">
     <link rel="apple-touch-icon" href="/assets/icons/pwa/icon-192x192.png">
@@ -3027,19 +4405,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     <div class="nx-app-shell">
         <header class="nx-top-hero">
             <div class="nx-status-bar">
-                <div class="nx-server-pill" onclick="promptSwitchServerEndpoint()" id="nxServerStatusText">
-                    🟢 Đang kết nối: nexora.castle-tech.cloud
+                <div class="nx-live-ticker-pill" onclick="openNotificationInboxModal('deal')" id="nxServerStatusText">
+                    ⚡ Nexora Live • Bảo lãnh Escrow 100%
                 </div>
-                <button type="button" class="nx-theme-trigger-btn" onclick="openNxModal('nxThemeModal')">
-                    🎨 Giao Diện &amp; Cài Đặt
-                </button>
+                <div class="nx-header-quick-btns">
+                    <button type="button" class="nx-theme-trigger-btn" onclick="openSmartOtpKeyModal()" title="Khóa Smart OTP">
+                        <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="smart_otp_key" width="96" height="96" style="width:18px;height:18px;"></canvas>
+                        <span>Smart OTP</span>
+                    </button>
+                    <button type="button" class="nx-theme-trigger-btn" onclick="openNotificationInboxModal('deal')" title="Trung tâm Thông báo">
+                        <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="notif_bell" width="96" height="96" style="width:18px;height:18px;"></canvas>
+                        <span class="nx-notif-badge-dot" id="nxUnreadNotifBadge">4</span>
+                    </button>
+                    <button type="button" class="nx-theme-trigger-btn" onclick="openNxModal('nxThemeModal')">
+                        <span>🎨</span>
+                    </button>
+                </div>
             </div>
 
             <div class="nx-brand-strip">
                 <div class="nx-brand-left" style="cursor:pointer;" onclick="if(!__nxState.isLoggedIn)openNxModal('nxMobileAuthModal')">
                     <img src="/assets/icons/nexora_mobile_crest.svg" alt="NX" id="brandLogoImg" class="nx-crest-avatar">
                     <div>
-                        <div style="font-size:0.72rem;opacity:0.9;font-weight:600;">SIÊU ỨNG DỤNG LỤC BẢO NEXORA</div>
+                        <div style="font-size:0.72rem;opacity:0.9;font-weight:600;">SIÊU ỨNG DỤNG LỤC BẢO NEXORA V12</div>
                         <div style="font-size:0.94rem;font-weight:800;" id="nxHeaderUserName">Khách vãng lai • Bấm để Đăng nhập</div>
                     </div>
                 </div>
@@ -3063,13 +4451,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="nx-top-action-icon">
                         <canvas class="nx-canvas-icon" data-nx-icon="qr_scanner" width="96" height="96"></canvas>
                     </div>
-                    <div class="nx-top-action-label">QR Thanh Toán</div>
+                    <div class="nx-top-action-label">QR Tự Bật Cam</div>
                 </div>
-                <div class="nx-top-action-item" onclick="window.location.href='/services/cart_checkout/bank.html'">
+                <div class="nx-top-action-item" onclick="openSmartOtpKeyModal()">
                     <div class="nx-top-action-icon">
-                        <canvas class="nx-canvas-icon" data-nx-icon="utility_wallet" width="96" height="96"></canvas>
+                        <canvas class="nx-canvas-icon" data-nx-icon="smart_otp_key" width="96" height="96"></canvas>
                     </div>
-                    <div class="nx-top-action-label">Ví Tiện Ích</div>
+                    <div class="nx-top-action-label">Smart OTP 30s</div>
                 </div>
             </div>
         </header>
@@ -3077,9 +4465,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         <section class="nx-multi-pocket-card">
             <div class="nx-pocket-header">
                 <span style="font-size:0.76rem;font-weight:800;color:var(--nx-muted);">🛡️ TÀI SẢN ĐA TÚI TIỀN (SQLITE REALTIME)</span>
-                <div style="display:flex;gap:6px;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     <button type="button" class="nx-eye-btn" id="nxHeaderAuthBtn" onclick="openNxModal('nxMobileAuthModal')">🔑 Đăng Nhập</button>
                     <button type="button" class="nx-eye-btn" id="nxEyeToggleBtn" onclick="toggleBalanceVisibility()">👁️ Ẩn số dư</button>
+                    <button type="button" class="nx-eye-btn" onclick="speakBalanceChangeByAiSoundbox('Loa Thần Tài AI Nexora Pay đã sẵn sàng thông báo biến động số dư!')">🔊 Loa AI</button>
                 </div>
             </div>
             <div class="nx-pocket-grid">
@@ -3096,8 +4485,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="nx-pocket-val" id="nxPocketAuctionVal">🔒 Đăng nhập để xem</div>
                 </div>
             </div>
-            <div class="nx-pocket-footer" onclick="window.location.href='/services/cart_checkout/bank.html'">
-                <span>✨ Trung Tâm Tài Chính &amp; Bảo Chứng Giao Dịch</span>
+            <div class="nx-pocket-footer" onclick="openNotificationInboxModal('terms')">
+                <span>✨ Trung Tâm Bảo Chứng Giao Dịch &amp; Điều Khoản V12</span>
                 <span>&gt;</span>
             </div>
         </section>
@@ -3105,101 +4494,112 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="nx-search-pill-bar">
             <span>🔍</span>
             <input type="text" id="nxQuickSearchInput" placeholder="Nhập mã đơn hàng, mã QR hoặc tên bạn bè để chuyển tiền / trả hộ" onkeydown="handleQuickSearchInput(event)">
-            <span style="cursor:pointer;font-weight:800;color:var(--nx-primary);" onclick="inspectQrTokenInvoice(document.getElementById('nxQuickSearchInput').value)">QR</span>
+            <span style="cursor:pointer;font-weight:800;color:var(--nx-primary);" onclick="handleDecodedQrString(document.getElementById('nxQuickSearchInput').value)">QR</span>
         </div>
 
-        <section class="nx-section-card">
-            <div class="nx-service-grid-4x2">
-                <div class="nx-service-cell" onclick="openProtectedWalletModal()">
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="fast_transfer" width="96" height="96"></canvas>
+        <div class="nx-bento-grid">
+            <section class="nx-section-card">
+                <div class="nx-service-grid-4x2">
+                    <div class="nx-service-cell" onclick="openProtectedWalletModal()">
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="fast_transfer" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Chuyển tiền nhanh</div>
                     </div>
-                    <div class="nx-service-name">Chuyển tiền nhanh</div>
-                </div>
-                <div class="nx-service-cell" onclick="setMobilePayerMode('behalf');openMobileQrScannerCenter();">
-                    <span class="nx-hot-tag">Hot</span>
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="pay_behalf" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="setMobilePayerMode('behalf');openMobileQrScannerCenter();">
+                        <span class="nx-hot-tag">Hot</span>
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="pay_behalf" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Thanh toán hộ QR</div>
                     </div>
-                    <div class="nx-service-name">Thanh toán hộ QR</div>
-                </div>
-                <div class="nx-service-cell" onclick="document.getElementById('nxAuctionSection').scrollIntoView({behavior:'smooth'})">
-                    <span class="nx-hot-tag">Hot</span>
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="dual_auction" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="document.getElementById('nxAuctionSection').scrollIntoView({behavior:'smooth'})">
+                        <span class="nx-hot-tag">Hot</span>
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="dual_auction" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Sàn Đấu Giá Kép</div>
                     </div>
-                    <div class="nx-service-name">Sàn Đấu Giá Kép</div>
-                </div>
-                <div class="nx-service-cell" onclick="openMobileMarketTrackerModal(1)">
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="market_chart" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="openMobileMarketTrackerModal(1)">
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="market_chart" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Theo Dõi Giá VN</div>
                     </div>
-                    <div class="nx-service-name">Theo Dõi Giá VN</div>
-                </div>
-                <div class="nx-service-cell" onclick="window.location.href='/services/rfq/rfq.html'">
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="reverse_rfq" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="window.location.href='/services/rfq/rfq.html'">
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="reverse_rfq" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Đấu Thầu Ngược RFQ</div>
                     </div>
-                    <div class="nx-service-name">Đấu Thầu Ngược RFQ</div>
-                </div>
-                <div class="nx-service-cell" onclick="triggerMobileDailyCheckin()">
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="daily_fire" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="openCheckin7DaysModal()">
+                        <span class="nx-hot-tag">7 Ngày</span>
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="daily_fire" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Điểm Danh Chuỗi Lửa</div>
                     </div>
-                    <div class="nx-service-name">Điểm Danh Chuỗi Lửa</div>
-                </div>
-                <div class="nx-service-cell" onclick="triggerMobileReflexArenaClaim()">
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="esport_aim" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="openMiniGameCenterModal('aim')">
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="esport_aim" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Bắn Tâm Esport 30s</div>
                     </div>
-                    <div class="nx-service-name">Bắn Tâm Esport 30s</div>
-                </div>
-                <div class="nx-service-cell" onclick="window.location.href='/services/order_tracking/tracking.html'">
-                    <div class="nx-service-icon-box">
-                        <canvas class="nx-canvas-icon" data-nx-icon="radar_truck" width="96" height="96"></canvas>
+                    <div class="nx-service-cell" onclick="window.location.href='/services/order_tracking/tracking.html'">
+                        <div class="nx-service-icon-box">
+                            <canvas class="nx-canvas-icon" data-nx-icon="radar_truck" width="96" height="96"></canvas>
+                        </div>
+                        <div class="nx-service-name">Tra Cứu Vận Đơn Radar</div>
                     </div>
-                    <div class="nx-service-name">Tra Cứu Vận Đơn Radar</div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="nx-section-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <div style="font-weight:800;font-size:0.86rem;">⚡ Hóa Đơn QR Thực Tế Trong SQLite (1-Chạm Xem Giá)</div>
-                <button class="nx-eye-btn" onclick="syncMobileBridge()">🔄 Đồng bộ</button>
-            </div>
-            <div id="nxAwaitingQrQuickList"></div>
-        </section>
-
-        <section class="nx-section-card">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                <div style="width:46px;height:46px;border-radius:14px;background:var(--nx-surface-2);display:flex;align-items:center;justify-content:center;border:1px solid var(--nx-border);">
-                    <canvas class="nx-canvas-icon" data-nx-icon="ai_cat_mascot" width="96" height="96"></canvas>
-                </div>
-                <div>
-                    <div style="font-weight:800;font-size:0.88rem;">Trợ Thủ AI - Mèo Nexora &amp; Biểu Đồ Chi Tiêu Thật</div>
-                    <div style="font-size:0.73rem;color:var(--nx-muted);">Tổng hợp 100% từ bảng orders &amp; bank_transactions của bạn</div>
-                </div>
-            </div>
-            <div class="nx-ai-donut-row">
-                <div class="nx-donut-wrap">
-                    <svg id="nxSpendingDonutSvg" viewBox="0 0 108 108" width="108" height="108"></svg>
-                    <div class="nx-donut-center">
-                        <span style="color:var(--nx-muted);">Tháng này</span>
-                        <strong id="nxDonutCenterTotal" style="font-size:0.82rem;color:var(--nx-primary);">🔒</strong>
+            <section class="nx-section-card">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <div style="width:46px;height:46px;border-radius:14px;background:var(--nx-surface-2);display:flex;align-items:center;justify-content:center;border:1px solid var(--nx-border);">
+                        <canvas class="nx-canvas-icon" data-nx-icon="ai_cat_mascot" width="96" height="96"></canvas>
+                    </div>
+                    <div>
+                        <div style="font-weight:800;font-size:0.88rem;">Trợ Thủ AI - Mèo Nexora &amp; Biểu Đồ Chi Tiêu Thật</div>
+                        <div style="font-size:0.73rem;color:var(--nx-muted);">Tổng hợp 100% từ bảng orders &amp; bank_transactions của bạn</div>
                     </div>
                 </div>
-                <div id="nxSpendingLegendBox"></div>
-            </div>
-        </section>
+                <div class="nx-ai-donut-row">
+                    <div class="nx-donut-wrap">
+                        <svg id="nxSpendingDonutSvg" viewBox="0 0 108 108" width="108" height="108"></svg>
+                        <div class="nx-donut-center">
+                            <span style="color:var(--nx-muted);">Tháng này</span>
+                            <strong id="nxDonutCenterTotal" style="font-size:0.82rem;color:var(--nx-primary);">🔒</strong>
+                        </div>
+                    </div>
+                    <div id="nxSpendingLegendBox"></div>
+                </div>
+            </section>
 
-        <section class="nx-section-card" id="nxAuctionSection">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <div style="font-weight:800;font-size:0.88rem;">🔨 Sàn Đấu Giá Kép Thời Gian Thực</div>
-                <a href="/services/auction/auction.html" style="font-size:0.74rem;font-weight:700;color:var(--nx-primary);text-decoration:none;">Mở toàn sàn &gt;</a>
-            </div>
-            <div id="nxMobileAuctionsList"></div>
-        </section>
+            <section class="nx-section-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <div style="font-weight:800;font-size:0.86rem;">⚡ Hóa Đơn QR Thực Tế Trong SQLite (1-Chạm Xem Giá)</div>
+                    <button class="nx-eye-btn" onclick="syncMobileBridge()">🔄 Đồng bộ</button>
+                </div>
+                <div id="nxAwaitingQrQuickList"></div>
+            </section>
+
+            <section class="nx-section-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <div style="font-weight:800;font-size:0.86rem;">📜 Sổ Cái Lịch Sử Chuyển Khoản Thật (SQLite)</div>
+                    <button class="nx-eye-btn" style="color:#ef4444;" onclick="clearRealTransactionsHistory()">🧹 Làm Sạch Lịch Sử Cũ Về 0</button>
+                </div>
+                <div id="nxRealTransactionsList"></div>
+            </section>
+
+            <section class="nx-section-card nx-bento-full" id="nxAuctionSection">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <div style="font-weight:800;font-size:0.88rem;">🔨 Sàn Đấu Giá Kép Thời Gian Thực</div>
+                    <a href="/services/auction/auction.html" style="font-size:0.74rem;font-weight:700;color:var(--nx-primary);text-decoration:none;">Mở toàn sàn &gt;</a>
+                </div>
+                <div id="nxMobileAuctionsList"></div>
+            </section>
+        </div>
     </div>
 
     <nav class="nx-bottom-nav">
@@ -3217,7 +4617,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
             <span style="font-size:0.66rem;font-weight:800;color:var(--nx-primary);margin-top:3px;">QUÉT MÃ QR</span>
         </div>
-        <button type="button" class="nx-nav-btn" onclick="triggerMobileLuckySpin()">
+        <button type="button" class="nx-nav-btn" onclick="openMiniGameCenterModal('wheel')">
             <canvas class="nx-canvas-icon-sm nx-canvas-icon" data-nx-icon="nav_minigame" width="96" height="96"></canvas>
             <span>Săn Xu</span>
         </button>
@@ -3234,7 +4634,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="nx-eye-btn" onclick="closeNxModal('nxMobileAuthModal')">✕ Đóng</button>
             </div>
             <input type="text" id="nxAuthIdentifierInput" placeholder="Tên đăng nhập hoặc Email (VD: khach_hang_vip)..." style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface-2);color:var(--nx-text);">
-            <input type="password" id="nxAuthPasswordInput" placeholder="Mật khẩu (Mặc định demo: 123456)..." value="123456" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface-2);color:var(--nx-text);">
+            <input type="password" id="nxAuthPasswordInput" placeholder="Nhập mật khẩu tài khoản..." style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface-2);color:var(--nx-text);">
             <input type="text" id="nxAuthFullNameInput" placeholder="Họ và tên (Nếu đăng ký tài khoản mới)..." style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:12px;background:var(--nx-surface-2);color:var(--nx-text);">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                 <button type="button" style="padding:11px;border:none;border-radius:12px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="submitMobileAuthForm('login')">🔑 Đăng Nhập Ngay</button>
@@ -3246,7 +4646,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     <div class="nx-modal-backdrop" id="nxQrScannerModal">
         <div class="nx-modal-sheet">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <strong style="font-size:0.98rem;">📷 Quét Mã QR Thanh Toán / Chuyển Khoản Hộ</strong>
+                <strong style="font-size:0.98rem;">📷 Quét Mã QR Tự Động &amp; Chọn Ảnh QR Từ Máy</strong>
                 <button class="nx-eye-btn" onclick="closeNxModal('nxQrScannerModal')">✕ Đóng</button>
             </div>
             <div class="nx-qr-camera-box" id="nxMobileCameraBox">
@@ -3254,16 +4654,125 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="nx-laser-line"></div>
             </div>
             <canvas id="nxMobileQrCanvas" style="display:none;"></canvas>
-            <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <button type="button" style="flex:1;background:var(--nx-primary-grad);color:#fff;border:none;border-radius:12px;padding:10px;font-weight:800;cursor:pointer;" onclick="startMobileCameraQr()">🎥 Bật Camera Thật Quét QR</button>
-                <button type="button" style="background:var(--nx-surface-2);color:var(--nx-text);border:1px solid var(--nx-border);border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;" onclick="stopMobileCameraQr()">⏹️ Tắt</button>
+            <div style="display:flex;gap:8px;margin-bottom:10px;">
+                <label for="nxQrGalleryFileInput" style="flex:1;text-align:center;background:var(--nx-primary-grad);color:#fff;border-radius:12px;padding:10px;font-weight:800;font-size:0.8rem;cursor:pointer;">
+                    🖼️ Chọn Ảnh Mã QR Từ Thư Viện Máy
+                </label>
+                <input type="file" id="nxQrGalleryFileInput" accept="image/*" style="display:none;" onchange="handleQrGalleryImageSelected(event)">
+                <button type="button" style="background:var(--nx-surface-2);color:var(--nx-text);border:1px solid var(--nx-border);border-radius:12px;padding:10px 12px;font-weight:700;cursor:pointer;" onclick="startMobileCameraQr()">🔄 Bật Lại Cam</button>
             </div>
             <div style="display:flex;gap:8px;margin-bottom:14px;">
-                <input type="text" id="nxManualPayTokenInput" placeholder="Hoặc nhập mã pay_token (VD: NVXPAY-101)..." style="flex:1;padding:9px 12px;border-radius:12px;border:1px solid var(--nx-border);background:var(--nx-surface-2);color:var(--nx-text);">
-                <button type="button" style="background:var(--nx-primary);color:#fff;border:none;border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;" onclick="inspectQrTokenInvoice(document.getElementById('nxManualPayTokenInput').value)">Xem Giá</button>
+                <input type="text" id="nxManualPayTokenInput" placeholder="Hoặc nhập mã pay_token / QRWEB..." style="flex:1;padding:9px 12px;border-radius:12px;border:1px solid var(--nx-border);background:var(--nx-surface-2);color:var(--nx-text);">
+                <button type="button" style="background:var(--nx-primary);color:#fff;border:none;border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;" onclick="handleDecodedQrString(document.getElementById('nxManualPayTokenInput').value)">Kiểm Tra</button>
             </div>
             <div style="font-size:0.8rem;font-weight:800;margin-bottom:6px;">⚡ Đơn Hàng AWAITING_PAYMENT Thực Tế Trong SQLite:</div>
             <div id="nxModalPendingQrList"></div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxSmartOtpModal">
+        <div class="nx-modal-sheet" style="text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <strong style="font-size:0.96rem;">🔐 Khóa Bảo Mật Động Nexora Smart OTP (30s)</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxSmartOtpModal')">✕ Đóng</button>
+            </div>
+            <div style="font-size:0.76rem;color:var(--nx-muted);margin-bottom:10px;">Dùng mã PIN động này để đăng nhập nhanh trên trình duyệt máy tính hoặc xác thực giao dịch lớn</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+                <button type="button" id="nxSmartOtpLenBtn4" class="nx-eye-btn" style="padding:8px;" onclick="generateNewSmartOtpCode(4, false)">4 Số</button>
+                <button type="button" id="nxSmartOtpLenBtn6" class="nx-eye-btn" style="padding:8px;background:var(--nx-primary);color:#fff;" onclick="generateNewSmartOtpCode(6, false)">6 Số (Chuẩn)</button>
+                <button type="button" id="nxSmartOtpLenBtn8" class="nx-eye-btn" style="padding:8px;" onclick="generateNewSmartOtpCode(8, false)">8 Số (Siêu Bảo Mật)</button>
+            </div>
+            <div style="padding:16px;border-radius:20px;background:var(--nx-surface-2);border:2px solid var(--nx-primary);margin-bottom:12px;">
+                <div style="font-size:1.75rem;font-weight:900;letter-spacing:6px;color:var(--nx-primary);margin-bottom:10px;" id="nxSmartOtpDigitsDisplay">------</div>
+                <canvas id="nxSmartOtpRingCanvas" width="112" height="112" style="margin:0 auto;display:block;"></canvas>
+            </div>
+            <button type="button" style="width:100%;padding:12px;border:none;border-radius:14px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="generateNewSmartOtpCode(__nxState.smartOtpLen, true)">
+                📲 Đổi Mã Mới &amp; Bắn Mã Này Ra Màn Hình Khóa Điện Thoại
+            </button>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxNotificationCenterModal">
+        <div class="nx-modal-sheet">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.96rem;">🔔 Trung Tâm Thông Báo Đa Luồng &amp; Màn Hình Khóa</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxNotificationCenterModal')">✕ Đóng</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+                <button type="button" id="nxNotifTabBtn_deal" class="nx-eye-btn" style="padding:8px;background:var(--nx-primary);color:#fff;" onclick="loadNotificationsByTab('deal')">🏷️ Giảm Giá</button>
+                <button type="button" id="nxNotifTabBtn_terms" class="nx-eye-btn" style="padding:8px;" onclick="loadNotificationsByTab('terms')">📜 Điều Khoản</button>
+                <button type="button" id="nxNotifTabBtn_balance" class="nx-eye-btn" style="padding:8px;" onclick="loadNotificationsByTab('balance')">💸 Số Dư</button>
+            </div>
+
+            <div style="padding:10px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:10px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:0.75rem;font-weight:700;margin-bottom:8px;cursor:pointer;">
+                    <input type="checkbox" id="nxDelayLockscreenToggle" checked>
+                    <span>⏱️ Hẹn 3 giây sau khi bấm (Để bạn kịp bấm nút Nguồn tắt màn hình điện thoại xem thông báo trên Màn Hình Khóa)</span>
+                </label>
+                <div style="display:grid;grid-template-columns:1fr;gap:6px;">
+                    <button type="button" style="padding:9px;border:none;border-radius:10px;background:var(--nx-primary-grad);color:#fff;font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="triggerPushLockscreenDemo('deal')">
+                        📲 Bắn Thông Báo "Món Hàng Giảm Giá" Ra Màn Hình Khóa
+                    </button>
+                    <button type="button" style="padding:9px;border:none;border-radius:10px;background:#0ea5e9;color:#fff;font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="triggerPushLockscreenDemo('terms')">
+                        📜 Bắn Thông Báo "Cập Nhật Điều Khoản" Ra Màn Hình Khóa
+                    </button>
+                    <button type="button" style="padding:9px;border:none;border-radius:10px;background:#f59e0b;color:#000;font-weight:800;font-size:0.76rem;cursor:pointer;" onclick="triggerPushLockscreenDemo('balance')">
+                        💸 Bắn Thông Báo "Nhận Tiền Ví" Ra Màn Hình Khóa
+                    </button>
+                </div>
+            </div>
+
+            <div id="nxTermsAgreementBox" style="display:none;margin-bottom:10px;">
+                <button type="button" style="width:100%;padding:11px;border:none;border-radius:12px;background:#10b981;color:#fff;font-weight:800;cursor:pointer;" onclick="submitAgreeTermsV12()">
+                    ✅ Tôi Đã Đọc &amp; Đồng Ý Điều Khoản Bảo Lãnh Nexora V12 (Lưu SQLite)
+                </button>
+            </div>
+
+            <div id="nxNotificationsInboxList"></div>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxDigitalReceiptModal">
+        <div class="nx-modal-sheet" style="text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.96rem;">🧾 Biên Lai Giao Dịch Điện Tử Nexora Pay</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxDigitalReceiptModal')">✕ Đóng</button>
+            </div>
+            <canvas id="nxReceiptCanvas" width="440" height="460" style="width:100%;max-width:380px;border-radius:18px;box-shadow:var(--nx-card-shadow);margin-bottom:12px;"></canvas>
+            <button type="button" style="width:100%;padding:12px;border:none;border-radius:14px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="renderAndDownloadCanvasReceipt()">
+                📥 Tải Ảnh Biên Lai (.PNG) Về Máy
+            </button>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxCheckin7DaysModal">
+        <div class="nx-modal-sheet" style="text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.96rem;">🔥 Điểm Danh Chuỗi Lửa 7 Ngày Liên Tiếp</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxCheckin7DaysModal')">✕ Đóng</button>
+            </div>
+            <canvas id="nxCheckin7DaysCanvas" width="396" height="120" style="width:100%;border-radius:16px;background:var(--nx-surface-2);margin-bottom:12px;"></canvas>
+            <button type="button" style="width:100%;padding:12px;border:none;border-radius:14px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="triggerMobileDailyCheckin()">
+                🔥 Điểm Danh Hôm Nay &amp; Cộng Xu Thật Vào SQLite
+            </button>
+        </div>
+    </div>
+
+    <div class="nx-modal-backdrop" id="nxMiniGameCenterModal">
+        <div class="nx-modal-sheet" style="text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <strong style="font-size:0.96rem;">🎮 Trung Tâm 3 Mini-Game Cảm Ứng HTML5 Canvas 2D</strong>
+                <button class="nx-eye-btn" onclick="closeNxModal('nxMiniGameCenterModal')">✕ Đóng</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+                <button type="button" id="nxGameTab_wheel" class="nx-eye-btn" style="padding:8px;background:var(--nx-primary);color:#fff;" onclick="switchMiniGameMode('wheel')">🎡 Vòng Quay</button>
+                <button type="button" id="nxGameTab_aim" class="nx-eye-btn" style="padding:8px;" onclick="switchMiniGameMode('aim')">🎯 Bắn Tâm 30s</button>
+                <button type="button" id="nxGameTab_tree" class="nx-eye-btn" style="padding:8px;" onclick="switchMiniGameMode('tree')">🌱 Cây Tiền</button>
+            </div>
+            <canvas id="nxInteractiveGameCanvas" width="360" height="250" style="width:100%;max-width:360px;border-radius:18px;border:2px solid var(--nx-primary);margin-bottom:12px;cursor:pointer;" onclick="handleInteractiveGameCanvasTap(event)"></canvas>
+            <button type="button" id="nxMiniGamePrimaryBtn" style="width:100%;padding:12px;border:none;border-radius:14px;background:var(--nx-primary-grad);color:#fff;font-weight:800;cursor:pointer;" onclick="startCanvasWheelSpin()">
+                🎡 QUAY VÒNG QUAY LỤC BẢO NGAY
+            </button>
         </div>
     </div>
 
@@ -3317,7 +4826,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="nx-eye-btn" onclick="closeNxModal('nxThemeModal')">✕ Đóng</button>
             </div>
 
-            <div style="font-size:0.8rem;font-weight:800;color:var(--nx-primary);margin-bottom:6px;">KHU VỰC 1: BỘ ĐỔI 6 GIAO DIỆN TRỰC TIẾP</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-size:0.8rem;font-weight:800;color:var(--nx-primary);">KHU VỰC 1: BỘ ĐỔI 6 GIAO DIỆN TRỰC TIẾP</span>
+                <button type="button" class="nx-eye-btn" onclick="promptSwitchServerEndpoint()">🌐 Đổi Máy Chủ / IP LAN</button>
+            </div>
             <div id="nxThemeSelectorList" style="margin-bottom:14px;"></div>
 
             <div style="font-size:0.8rem;font-weight:800;color:var(--nx-primary);margin-bottom:6px;">KHU VỰC 2: XÁC MINH OTP BẢO MẬT (+20.000 XU THẬT) &amp; ĐỔI MẬT KHẨU</div>
@@ -3358,9 +4870,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="nx-eye-btn" onclick="document.getElementById('nxWalletActionAmount').value=2000000">+2.000.000đ</button>
                 <button class="nx-eye-btn" onclick="document.getElementById('nxWalletActionAmount').value=10000000">+10.000.000đ</button>
             </div>
-            <input type="number" id="nxWalletActionAmount" value="500000" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;font-weight:800;font-size:1rem;background:var(--nx-surface-2);color:var(--nx-text);">
-            <input type="text" id="nxWalletActionRecipient" value="Ví Nexora Pay / NAPAS 247" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface-2);color:var(--nx-text);">
-            <input type="text" id="nxWalletActionNote" value="Giao dịch thực tế lưu SQLite trên Nexora Mobile" style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:12px;background:var(--nx-surface-2);color:var(--nx-text);">
+            <input type="number" id="nxWalletActionAmount" placeholder="Nhập số tiền giao dịch (VNĐ)..." style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;font-weight:800;font-size:1rem;background:var(--nx-surface-2);color:var(--nx-text);">
+            <input type="text" id="nxWalletActionRecipient" placeholder="Nhập tên hoặc số tài khoản người nhận..." style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:8px;background:var(--nx-surface-2);color:var(--nx-text);">
+            <input type="text" id="nxWalletActionNote" placeholder="Nhập nội dung chuyển khoản..." style="width:100%;padding:10px;border-radius:12px;border:1px solid var(--nx-border);margin-bottom:12px;background:var(--nx-surface-2);color:var(--nx-text);">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
                 <button type="button" style="padding:11px;border:none;border-radius:12px;background:#10b981;color:#fff;font-weight:800;cursor:pointer;" onclick="submitMobileWalletAction('topup')">📥 Nạp Tiền</button>
                 <button type="button" style="padding:11px;border:none;border-radius:12px;background:#f59e0b;color:#000;font-weight:800;cursor:pointer;" onclick="submitMobileWalletAction('withdraw')">📤 Rút Tiền</button>
@@ -3580,6 +5092,7 @@ def generate_android_native_project(png_cache=None):
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -3596,6 +5109,7 @@ def generate_android_native_project(png_cache=None):
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -3617,9 +5131,11 @@ def generate_android_native_project(png_cache=None):
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -3627,10 +5143,9 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Vibrator;
-import android.text.InputType;
-import android.view.Gravity;
-import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
@@ -3642,28 +5157,38 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends Activity {
     private static final String PREFS_NAME = "NexoraMobilePrefs";
     private static final String KEY_SERVER_URL = "server_url";
     private static final String KEY_ACTIVE_THEME = "active_theme";
+    private static final String KEY_LAST_NOTIF_ID = "last_notif_id";
     private static final String DEFAULT_SERVER_URL = "https://nexora.castle-tech.cloud";
-    private static final int REQ_CAMERA_PERMISSION = 1001;
+    private static final String CHANNEL_ID = "nexora_lockscreen_high_channel";
+    private static final int REQ_RUNTIME_PERMISSIONS = 1001;
     private static final int REQ_FILE_CHOOSER = 1002;
 
     private WebView webView;
-    private TextView serverStatusTv;
     private ValueCallback<Uri[]> filePathCallback;
+    private Handler bgPollHandler;
+    private Runnable bgPollRunnable;
+    private int notificationSeq = 2000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestCameraPermissionIfNeeded();
+        createLockScreenNotificationChannel();
+        requestRuntimePermissionsIfNeeded();
 
         LinearLayout rootLayout = new LinearLayout(this);
         rootLayout.setOrientation(LinearLayout.VERTICAL);
@@ -3673,71 +5198,192 @@ public class MainActivity extends Activity {
         ));
         rootLayout.setBackgroundColor(Color.parseColor("#052E16"));
 
-        LinearLayout topBar = new LinearLayout(this);
-        topBar.setOrientation(LinearLayout.HORIZONTAL);
-        topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding(24, 14, 24, 14);
-        topBar.setBackgroundColor(Color.parseColor("#064E3B"));
-
-        serverStatusTv = new TextView(this);
-        serverStatusTv.setTextColor(Color.parseColor("#10B981"));
-        serverStatusTv.setTextSize(12.0f);
-        LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f
-        );
-        serverStatusTv.setLayoutParams(statusParams);
-        serverStatusTv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showServerSwitchDialog();
-            }
-        });
-
-        Button btnReload = new Button(this);
-        btnReload.setText("Làm mới");
-        btnReload.setTextSize(11.0f);
-        btnReload.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadNexoraPortal();
-            }
-        });
-
-        Button btnSwitchIp = new Button(this);
-        btnSwitchIp.setText("Đổi IP/Miền");
-        btnSwitchIp.setTextSize(11.0f);
-        btnSwitchIp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showServerSwitchDialog();
-            }
-        });
-
-        topBar.addView(serverStatusTv);
-        topBar.addView(btnReload);
-        topBar.addView(btnSwitchIp);
-
         webView = new WebView(this);
         LinearLayout.LayoutParams webParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                0,
-                1.0f
+                ViewGroup.LayoutParams.MATCH_PARENT
         );
         webView.setLayoutParams(webParams);
 
         configureWebViewSettings();
-
-        rootLayout.addView(topBar);
         rootLayout.addView(webView);
         setContentView(rootLayout);
 
-        loadNexoraPortal();
+        loadNexoraPortal(getIntent());
+        startBackgroundNotificationPoller();
     }
 
-    private void requestCameraPermissionIfNeeded() {
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (intent != null && intent.getStringExtra("target_url") != null) {
+            String tUrl = intent.getStringExtra("target_url");
+            if (tUrl.startsWith("http://") || tUrl.startsWith("https://")) {
+                webView.loadUrl(tUrl);
+            } else {
+                webView.loadUrl(getSavedServerUrl() + (tUrl.startsWith("/") ? tUrl : "/" + tUrl));
+            }
+        }
+    }
+
+    private void createLockScreenNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                NotificationChannel channel = new NotificationChannel(
+                        CHANNEL_ID,
+                        "Thông Báo Khẩn & Biến Động Số Dư Nexora",
+                        NotificationManager.IMPORTANCE_HIGH
+                );
+                channel.setDescription("Hiển thị thông báo giảm giá, cập nhật điều khoản, Smart OTP và biến động số dư trên Màn Hình Khóa");
+                channel.enableLights(true);
+                channel.setLightColor(Color.parseColor("#10B981"));
+                channel.enableVibration(true);
+                channel.setVibrationPattern(new long[]{0, 250, 120, 250});
+                channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+                nm.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void requestRuntimePermissionsIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAMERA_PERMISSION);
+            if (Build.VERSION.SDK_INT >= 33) {
+                if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
+                        || checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{
+                            Manifest.permission.CAMERA,
+                            "android.permission.POST_NOTIFICATIONS"
+                    }, REQ_RUNTIME_PERMISSIONS);
+                }
+            } else {
+                if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_RUNTIME_PERMISSIONS);
+                }
+            }
+        }
+    }
+
+    public void showSystemLockScreenNotification(String title, String body, String targetUrl) {
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+
+            Intent openIntent = new Intent(this, MainActivity.class);
+            openIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            if (targetUrl != null && !targetUrl.isEmpty()) {
+                openIntent.putExtra("target_url", targetUrl);
+            }
+            int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flags |= PendingIntent.FLAG_IMMUTABLE;
+            }
+            int id = ++notificationSeq;
+            PendingIntent pi = PendingIntent.getActivity(this, id, openIntent, flags);
+
+            Notification.Builder builder;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                builder = new Notification.Builder(this, CHANNEL_ID);
+            } else {
+                builder = new Notification.Builder(this);
+                builder.setPriority(Notification.PRIORITY_MAX);
+                builder.setDefaults(Notification.DEFAULT_ALL);
+            }
+
+            builder.setSmallIcon(R.mipmap.ic_launcher)
+                    .setContentTitle(title != null ? title : "Nexora Super-App")
+                    .setContentText(body != null ? body : "Bạn có thông báo mới trên Nexora Mobile")
+                    .setStyle(new Notification.BigTextStyle().bigText(body != null ? body : ""))
+                    .setAutoCancel(true)
+                    .setContentIntent(pi);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                builder.setVisibility(Notification.VISIBILITY_PUBLIC);
+                builder.setColor(Color.parseColor("#059669"));
+            }
+
+            nm.notify(id, builder.build());
+
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (v != null) {
+                v.vibrate(180);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void startBackgroundNotificationPoller() {
+        bgPollHandler = new Handler(Looper.getMainLooper());
+        bgPollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        pollServerUnreadNotificationsOnce();
+                    }
+                }).start();
+                if (bgPollHandler != null) {
+                    bgPollHandler.postDelayed(this, 20000);
+                }
+            }
+        };
+        bgPollHandler.postDelayed(bgPollRunnable, 12000);
+    }
+
+    private void pollServerUnreadNotificationsOnce() {
+        HttpURLConnection conn = null;
+        try {
+            String apiUrl = getSavedServerUrl() + "/api/mobile/notifications?unread_only=1&mark_polled=1&_t=" + System.currentTimeMillis();
+            URL url = new URL(apiUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(6000);
+            int code = conn.getResponseCode();
+            if (code == 200) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "UTF-8"));
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line);
+                }
+                br.close();
+
+                JSONObject json = new JSONObject(sb.toString());
+                if (json.optBoolean("ok", false)) {
+                    JSONArray arr = json.optJSONArray("notifications");
+                    if (arr != null && arr.length() > 0) {
+                        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+                        int lastId = prefs.getInt(KEY_LAST_NOTIF_ID, 0);
+                        int maxId = lastId;
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject n = arr.getJSONObject(i);
+                            int nid = n.optInt("id", 0);
+                            if (nid > lastId) {
+                                final String t = n.optString("title", "Thông báo mới từ Nexora");
+                                final String m = n.optString("message", "");
+                                final String u = n.optString("target_url", "/services/mobile/mobile-app.html");
+                                if (nid > maxId) maxId = nid;
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        showSystemLockScreenNotification(t, m, u);
+                                    }
+                                });
+                            }
+                        }
+                        if (maxId > lastId) {
+                            prefs.edit().putInt(KEY_LAST_NOTIF_ID, maxId).apply();
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
             }
         }
     }
@@ -3758,13 +5404,6 @@ public class MainActivity extends Activity {
         }
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         prefs.edit().putString(KEY_SERVER_URL, clean).apply();
-        updateTopBarStatus();
-    }
-
-    private void updateTopBarStatus() {
-        if (serverStatusTv != null) {
-            serverStatusTv.setText("🟢 Nexora Server: " + getSavedServerUrl());
-        }
     }
 
     private void configureWebViewSettings() {
@@ -3822,43 +5461,18 @@ public class MainActivity extends Activity {
         });
     }
 
-    private void loadNexoraPortal() {
-        updateTopBarStatus();
-        Intent startIntent = getIntent();
+    private void loadNexoraPortal(Intent startIntent) {
         Uri dataUri = startIntent != null ? startIntent.getData() : null;
         String base = getSavedServerUrl();
-        if (dataUri != null && dataUri.getQueryParameter("pay_token") != null) {
+        if (startIntent != null && startIntent.getStringExtra("target_url") != null) {
+            String target = startIntent.getStringExtra("target_url");
+            webView.loadUrl(base + (target.startsWith("/") ? target : "/" + target));
+        } else if (dataUri != null && dataUri.getQueryParameter("pay_token") != null) {
             String tok = dataUri.getQueryParameter("pay_token");
             webView.loadUrl(base + "/services/mobile/mobile-app.html?pay_token=" + Uri.encode(tok));
         } else {
             webView.loadUrl(base + "/services/mobile/mobile-app.html");
         }
-    }
-
-    private void showServerSwitchDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Cấu hình Máy chủ Nexora (Cloud / IP LAN)");
-        final EditText input = new EditText(this);
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
-        input.setText(getSavedServerUrl());
-        builder.setView(input);
-
-        builder.setPositiveButton("Lưu & Kết nối", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                saveServerUrl(input.getText().toString());
-                loadNexoraPortal();
-            }
-        });
-        builder.setNeutralButton("Dùng Cloud Mặc Định", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                saveServerUrl(DEFAULT_SERVER_URL);
-                loadNexoraPortal();
-            }
-        });
-        builder.setNegativeButton("Hủy", null);
-        builder.show();
     }
 
     @Override
@@ -3909,11 +5523,21 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void pushLockScreenNotification(final String title, final String message, final String targetUrl) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showSystemLockScreenNotification(title, message, targetUrl);
+                }
+            });
+        }
+
+        @JavascriptInterface
         public void vibrateShort() {
             try {
                 Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
                 if (v != null) {
-                    v.vibrate(45);
+                    v.vibrate(65);
                 }
             } catch (Exception ignored) {
             }
@@ -3964,8 +5588,8 @@ android {
         applicationId "cloud.castletech.nexora.mobile"
         minSdk 24
         targetSdk 34
-        versionCode 70
-        versionName "7.0-NEXORA-SUPERAPP"
+        versionCode 120
+        versionName "12.0-NEXORA-ULTRA"
     }
 
     buildTypes {
@@ -4009,9 +5633,9 @@ dependencies {
 
 def generate_pwa_and_github_action_apk():
     manifest_data = {
-        "name": "Nexora Mobile — Siêu Ứng Dụng Tài Chính Lục Bảo & Thương Mại Công Nghệ",
+        "name": "Nexora Mobile V12 Ultra — Siêu Ứng Dụng Tài Chính Lục Bảo & Smart OTP",
         "short_name": "Nexora Mobile",
-        "description": "Siêu ứng dụng Ví Nexora Pay, Quét QR Xem Giá 2 Bước, Chuyển Khoản Hộ & Sàn Đấu Giá Kép",
+        "description": "Siêu ứng dụng Ví Nexora Pay, Quét QR Xem Giá 2 Bước, Khóa Smart OTP 30s & Thông Báo Màn Hình Khóa",
         "start_url": "/services/mobile/mobile-app.html",
         "scope": "/",
         "display": "standalone",
@@ -4059,7 +5683,7 @@ def generate_pwa_and_github_action_apk():
     }
     write_file_utf8("manifest.json", json.dumps(manifest_data, ensure_ascii=False, indent=2))
 
-    sw_js = """const CACHE_NAME = 'nexora-mobile-pwa-v11';
+    sw_js = """const CACHE_NAME = 'nexora-mobile-pwa-v12-ultra';
 const CORE_ASSETS = [
     '/services/mobile/mobile-app.html',
     '/services/mobile/mobile-app.css',
@@ -4083,6 +5707,24 @@ self.addEventListener('activate', event => {
         ))
     );
     self.clients.claim();
+});
+
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const targetUrl = (event.notification.data && event.notification.data.url) || '/services/mobile/mobile-app.html';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+            for (const client of windowClients) {
+                if ('focus' in client) {
+                    client.navigate(targetUrl);
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
 });
 
 self.addEventListener('fetch', event => {

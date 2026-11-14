@@ -1,3 +1,19 @@
+if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        let radius = Array.isArray(r) ? r[0] : (r || 0);
+        if (w < 2 * radius) radius = w / 2;
+        if (h < 2 * radius) radius = h / 2;
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.arcTo(x + w, y, x + w, y + h, radius);
+        this.arcTo(x + w, y + h, x, y + h, radius);
+        this.arcTo(x, y + h, x, y, radius);
+        this.arcTo(x, y, x + w, y, radius);
+        this.closePath();
+        return this;
+    };
+}
+
 const NX_THEMES = [
     { id: 'emerald_fintech_light', name: '1. Lục Bảo Công Nghệ Nexora (Emerald Fintech Light - Mặc định)', swatch: 'linear-gradient(135deg,#064e3b,#10b981,#76b900)' },
     { id: 'executive_pearl_light', name: '2. Sáng Thanh Lịch (Executive Pearl Light)', swatch: 'linear-gradient(135deg,#1d4ed8,#0ea5e9)' },
@@ -30,6 +46,7 @@ let __nxState = {
     themeId: localStorage.getItem('nexora_active_theme') || 'emerald_fintech_light',
     cvdMode: localStorage.getItem('nexora_cvd_mode') || 'standard',
     hideBalance: localStorage.getItem('nexora_hide_balance') === '1',
+    soundboxEnabled: localStorage.getItem('nexora_soundbox_enabled') !== '0',
     authUser: loadSavedMobileAuthUser(),
     isLoggedIn: Boolean(loadSavedMobileAuthUser()),
     emailVerified: false,
@@ -40,7 +57,22 @@ let __nxState = {
     camStream: null,
     camTimer: null,
     confirmInFlight: false,
-    marketOverview: null
+    marketOverview: null,
+    smartOtpLen: 6,
+    smartOtpCode: '------',
+    smartOtpRemain: 30,
+    smartOtpTimer: null,
+    activeNotifTab: 'deal',
+    lastReceiptData: null,
+    activeMiniGame: 'wheel',
+    wheelAngle: 0,
+    wheelSpinning: false,
+    aimScore: 0,
+    aimTimeLeft: 30,
+    aimTarget: { x: 160, y: 120, r: 24 },
+    aimTimer: null,
+    treeWaterLevel: 3,
+    treeCoinsDrops: []
 };
 
 function nxApiUrl(path) {
@@ -79,10 +111,74 @@ function nxToast(msg) {
     clearTimeout(window.__nxToastTimer);
     window.__nxToastTimer = setTimeout(() => {
         if (box) box.style.opacity = '0';
-    }, 3200);
+    }, 3400);
 }
 
-if (typeof CanvasRenderingContext2D !== "undefined" && !CanvasRenderingContext2D.prototype.roundRect) { CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) { r = Math.min(r || 0, w / 2, h / 2); this.moveTo(x + r, y); this.arcTo(x + w, y, x + w, y + h, r); this.arcTo(x + w, y + h, x, y + h, r); this.arcTo(x, y + h, x, y, r); this.arcTo(x, y, x + w, y, r); this.closePath(); return this; }; }
+function speakBalanceChangeByAiSoundbox(speechText) {
+    if (!__nxState.soundboxEnabled) return;
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            const actx = new AudioCtx();
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, actx.currentTime);
+            osc.frequency.setValueAtTime(1320, actx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.16, actx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.45);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start();
+            osc.stop(actx.currentTime + 0.45);
+        }
+    } catch (e) {}
+    try {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(speechText || 'Nexora Pay thông báo: Giao dịch thành công!');
+            utter.lang = 'vi-VN';
+            utter.rate = 1.05;
+            window.speechSynthesis.speak(utter);
+        }
+    } catch (e) {}
+}
+
+function triggerNativeOrWebLockScreenNotification(title, message, targetUrl = '/services/mobile/mobile-app.html') {
+    if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.pushLockScreenNotification === 'function') {
+        try {
+            window.NexoraNativeBridge.pushLockScreenNotification(String(title), String(message), String(targetUrl));
+            return;
+        } catch (e) {}
+    }
+    if ('Notification' in window) {
+        const sendWebNotif = () => {
+            if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+                navigator.serviceWorker.ready.then(reg => {
+                    reg.showNotification(title, {
+                        body: message,
+                        icon: '/assets/icons/pwa/icon-192x192.png',
+                        badge: '/assets/icons/pwa/icon-96x96.png',
+                        vibrate: [200, 100, 200],
+                        data: { url: targetUrl }
+                    });
+                }).catch(() => {
+                    new Notification(title, { body: message, icon: '/assets/icons/pwa/icon-192x192.png' });
+                });
+            } else {
+                new Notification(title, { body: message, icon: '/assets/icons/pwa/icon-192x192.png' });
+            }
+        };
+        if (Notification.permission === 'granted') {
+            sendWebNotif();
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(p => {
+                if (p === 'granted') sendWebNotif();
+            });
+        }
+    }
+}
+
 function drawSingleNexoraCanvasIcon(canvas, iconName) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width || 96;
@@ -108,42 +204,27 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
 
     if (iconName === 'topup_withdraw') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(14, 24, 68, 52, 14);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(14, 24, 68, 52, 14); ctx.fill();
         ctx.fillStyle = '#064e3b';
-        ctx.beginPath();
-        ctx.roundRect(54, 40, 28, 20, 8);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(54, 40, 28, 20, 8); ctx.fill();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(64, 50, 5, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(64, 50, 5, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = gGold;
         ctx.lineWidth = 6;
         ctx.beginPath();
-        ctx.moveTo(34, 42);
-        ctx.lineTo(34, 14);
-        ctx.moveTo(24, 24);
-        ctx.lineTo(34, 14);
-        ctx.lineTo(44, 24);
+        ctx.moveTo(34, 42); ctx.lineTo(34, 14);
+        ctx.moveTo(24, 24); ctx.lineTo(34, 14); ctx.lineTo(44, 24);
         ctx.stroke();
     } else if (iconName === 'receive_qr') {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 5;
         ctx.beginPath();
-        ctx.moveTo(48, 10);
-        ctx.lineTo(80, 22);
-        ctx.lineTo(80, 52);
+        ctx.moveTo(48, 10); ctx.lineTo(80, 22); ctx.lineTo(80, 52);
         ctx.quadraticCurveTo(80, 76, 48, 86);
         ctx.quadraticCurveTo(16, 76, 16, 52);
-        ctx.lineTo(16, 22);
-        ctx.closePath();
-        ctx.stroke();
+        ctx.lineTo(16, 22); ctx.closePath(); ctx.stroke();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(48, 48, 16, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 48, 16, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#052e16';
         ctx.font = 'bold 16px sans-serif';
         ctx.textAlign = 'center';
@@ -166,67 +247,39 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.fillRect(54, 54, 14, 14);
         ctx.strokeStyle = '#ef4444';
         ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(12, 48);
-        ctx.lineTo(84, 48);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(12, 48); ctx.lineTo(84, 48); ctx.stroke();
     } else if (iconName === 'utility_wallet') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(14, 26, 68, 54, 14);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(14, 26, 68, 54, 14); ctx.fill();
         ctx.strokeStyle = gGold;
         ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.roundRect(34, 14, 28, 16, 6);
-        ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(34, 14, 28, 16, 6); ctx.stroke();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(48, 52, 9, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 52, 9, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'fast_transfer') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.arc(48, 48, 34, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 48, 34, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = gGold;
         ctx.beginPath();
-        ctx.moveTo(54, 16);
-        ctx.lineTo(28, 52);
-        ctx.lineTo(46, 52);
-        ctx.lineTo(40, 80);
-        ctx.lineTo(68, 44);
-        ctx.lineTo(50, 44);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(54, 16); ctx.lineTo(28, 52); ctx.lineTo(46, 52);
+        ctx.lineTo(40, 80); ctx.lineTo(68, 44); ctx.lineTo(50, 44);
+        ctx.closePath(); ctx.fill();
     } else if (iconName === 'pay_behalf') {
         ctx.fillStyle = gPink;
-        ctx.beginPath();
-        ctx.arc(36, 44, 22, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(36, 44, 22, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.arc(60, 44, 22, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(60, 44, 22, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(36, 44);
-        ctx.lineTo(46, 54);
-        ctx.lineTo(62, 36);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(36, 44); ctx.lineTo(46, 54); ctx.lineTo(62, 36); ctx.stroke();
     } else if (iconName === 'dual_auction') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(18, 68, 60, 12, 6);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(18, 68, 60, 12, 6); ctx.fill();
         ctx.save();
         ctx.translate(48, 42);
         ctx.rotate(-Math.PI / 4);
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.roundRect(-22, -12, 44, 20, 6);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(-22, -12, 44, 20, 6); ctx.fill();
         ctx.fillStyle = '#047857';
         ctx.fillRect(-5, 8, 10, 32);
         ctx.restore();
@@ -242,15 +295,10 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.fillRect(57, 26, 14, 28);
         ctx.strokeStyle = gGold;
         ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(14, 66);
-        ctx.quadraticCurveTo(46, 58, 82, 20);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(14, 66); ctx.quadraticCurveTo(46, 58, 82, 20); ctx.stroke();
     } else if (iconName === 'reverse_rfq') {
         ctx.fillStyle = gEmerald;
-        ctx.beginPath();
-        ctx.roundRect(20, 14, 56, 68, 10);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(20, 14, 56, 68, 10); ctx.fill();
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 4;
         ctx.beginPath();
@@ -259,9 +307,7 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.moveTo(32, 60); ctx.lineTo(50, 60);
         ctx.stroke();
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.arc(64, 64, 14, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(64, 64, 14, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'daily_fire') {
         const gFire = ctx.createLinearGradient(48, 10, 48, 84);
         gFire.addColorStop(0, '#fde047');
@@ -275,15 +321,11 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.bezierCurveTo(14, 62, 22, 34, 48, 12);
         ctx.fill();
         ctx.fillStyle = '#fef08a';
-        ctx.beginPath();
-        ctx.arc(48, 64, 12, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 64, 12, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'esport_aim') {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.arc(48, 48, 30, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(48, 48, 30, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(48, 8); ctx.lineTo(48, 28);
         ctx.moveTo(48, 68); ctx.lineTo(48, 88);
@@ -291,9 +333,7 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.moveTo(68, 48); ctx.lineTo(88, 48);
         ctx.stroke();
         ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(48, 48, 7, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 48, 7, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'radar_truck') {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 4;
@@ -301,11 +341,9 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.beginPath(); ctx.arc(48, 48, 18, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = gGold;
         ctx.beginPath();
-        ctx.moveTo(48, 48);
-        ctx.lineTo(76, 28);
+        ctx.moveTo(48, 48); ctx.lineTo(76, 28);
         ctx.arc(48, 48, 34, -0.6, 0.1);
-        ctx.closePath();
-        ctx.fill();
+        ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#10b981';
         ctx.beginPath(); ctx.arc(48, 48, 6, 0, Math.PI * 2); ctx.fill();
     } else if (iconName === 'ai_cat_mascot') {
@@ -314,9 +352,7 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         ctx.moveTo(22, 38); ctx.lineTo(18, 14); ctx.lineTo(38, 26);
         ctx.moveTo(74, 38); ctx.lineTo(78, 14); ctx.lineTo(58, 26);
         ctx.fill();
-        ctx.beginPath();
-        ctx.arc(48, 52, 28, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(48, 52, 28, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(38, 48, 5, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.arc(58, 48, 5, 0, Math.PI * 2); ctx.fill();
@@ -325,20 +361,12 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
     } else if (iconName === 'nav_home') {
         ctx.fillStyle = gEmerald;
         ctx.beginPath();
-        ctx.moveTo(48, 14);
-        ctx.lineTo(82, 44);
-        ctx.lineTo(72, 44);
-        ctx.lineTo(72, 80);
-        ctx.lineTo(24, 80);
-        ctx.lineTo(24, 44);
-        ctx.lineTo(14, 44);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(48, 14); ctx.lineTo(82, 44); ctx.lineTo(72, 44);
+        ctx.lineTo(72, 80); ctx.lineTo(24, 80); ctx.lineTo(24, 44); ctx.lineTo(14, 44);
+        ctx.closePath(); ctx.fill();
     } else if (iconName === 'nav_auction') {
         ctx.fillStyle = gGold;
-        ctx.beginPath();
-        ctx.roundRect(24, 20, 48, 22, 8);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(24, 20, 48, 22, 8); ctx.fill();
         ctx.fillStyle = gEmerald;
         ctx.fillRect(43, 42, 10, 36);
     } else if (iconName === 'nav_minigame') {
@@ -353,6 +381,36 @@ function drawSingleNexoraCanvasIcon(canvas, iconName) {
         }
         ctx.fillStyle = '#ffffff';
         ctx.beginPath(); ctx.arc(48, 48, 10, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'smart_otp_key') {
+        ctx.fillStyle = gGold;
+        ctx.beginPath(); ctx.arc(34, 48, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillRect(48, 43, 34, 10);
+        ctx.fillRect(64, 53, 7, 12);
+        ctx.fillRect(75, 53, 7, 16);
+        ctx.fillStyle = '#052e16';
+        ctx.beginPath(); ctx.arc(34, 48, 6, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'notif_bell') {
+        ctx.fillStyle = gGold;
+        ctx.beginPath();
+        ctx.moveTo(48, 14);
+        ctx.quadraticCurveTo(72, 18, 74, 58);
+        ctx.lineTo(82, 68);
+        ctx.lineTo(14, 68);
+        ctx.lineTo(22, 58);
+        ctx.quadraticCurveTo(24, 18, 48, 14);
+        ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath(); ctx.arc(48, 76, 9, 0, Math.PI * 2); ctx.fill();
+    } else if (iconName === 'soundbox_speaker') {
+        ctx.fillStyle = gEmerald;
+        ctx.beginPath();
+        ctx.moveTo(18, 36); ctx.lineTo(36, 36); ctx.lineTo(56, 18);
+        ctx.lineTo(56, 78); ctx.lineTo(36, 60); ctx.lineTo(18, 60);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = gGold;
+        ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(58, 48, 14, -0.7, 0.7); ctx.stroke();
+        ctx.beginPath(); ctx.arc(58, 48, 24, -0.8, 0.8); ctx.stroke();
     } else {
         ctx.strokeStyle = gEmerald;
         ctx.lineWidth = 8;
@@ -503,6 +561,10 @@ async function verifyMobileOtpAndSaveSecurity() {
             __nxState.emailVerified = true;
             updateOtpSendButtonLockState(true);
             nxToast(data.message || '✅ Xác minh OTP thành công!');
+            if (data.reward_coins_added > 0) {
+                speakBalanceChangeByAiSoundbox('Nexora Pay thông báo: Cộng 20 nghìn xu thưởng xác thực bảo mật OTP thành công!');
+                triggerNativeOrWebLockScreenNotification('🎁 +20.000 Xu Thưởng Bảo Mật OTP', data.message);
+            }
             await syncMobileBridge();
         } else {
             nxToast(data.error || '❌ Mã OTP không hợp lệ!');
@@ -582,6 +644,10 @@ function openNxModal(modalId) {
 
 function closeNxModal(modalId) {
     if (modalId === 'nxQrScannerModal') stopMobileCameraQr();
+    if (modalId === 'nxSmartOtpModal' && __nxState.smartOtpTimer) {
+        clearInterval(__nxState.smartOtpTimer);
+        __nxState.smartOtpTimer = null;
+    }
     const target = document.getElementById(modalId);
     if (target) target.classList.remove('show');
 }
@@ -609,11 +675,8 @@ function saveServerEndpointConfig(modeUrl) {
 function updateServerHeaderPill() {
     const lbl = document.getElementById('nxServerStatusText');
     if (!lbl) return;
-    let hostLabel = __nxState.apiBase.replace(/^https?:\/\//, '');
-    if (!hostLabel || hostLabel === window.location.host) {
-        hostLabel = window.location.host || 'nexora.castle-tech.cloud';
-    }
-    lbl.textContent = '🟢 Đang kết nối: ' + hostLabel;
+    const u = __nxState.isLoggedIn && __nxState.authUser ? (__nxState.authUser.username || 'VIP') : 'Chạm xem tin mới';
+    lbl.textContent = `⚡ Nexora Live • Bảo lãnh Escrow 100% • ${u}`;
 }
 
 async function syncMobileBridge() {
@@ -644,7 +707,7 @@ async function syncMobileBridge() {
         }
     } catch (err) {
         const lbl = document.getElementById('nxServerStatusText');
-        if (lbl) lbl.textContent = '🟠 Chế độ Offline/LAN: ' + (__nxState.apiBase || 'nexora.castle-tech.cloud');
+        if (lbl) lbl.textContent = '🟠 Chế độ Offline/LAN • Chạm để đổi cấu hình';
     }
 }
 
@@ -669,6 +732,13 @@ function renderBridgeDataToUi() {
     const uNameEl = document.getElementById('nxHeaderUserName');
     const uCoinsEl = document.getElementById('nxHeaderCoinsBadge');
     const authActionBtn = document.getElementById('nxHeaderAuthBtn');
+    const notifDot = document.getElementById('nxUnreadNotifBadge');
+
+    if (notifDot) {
+        const unread = Number(d.unread_notifications_count || (d.live_counters && d.live_counters.unread_notifications) || 0);
+        notifDot.textContent = unread > 99 ? '99+' : String(unread);
+        notifDot.style.display = unread > 0 ? 'flex' : 'none';
+    }
 
     if (__nxState.isLoggedIn) {
         if (wEl) wEl.textContent = nxFormatVnd(pockets.nexora_pay_wallet ?? prof.wallet_balance ?? 0);
@@ -695,6 +765,168 @@ function renderBridgeDataToUi() {
     renderSpendingDonut(d.spending_analytics);
     renderPendingQrSessionsList(d.pending_qr_sessions || []);
     renderLiveAuctionsPreview(d.active_auctions || []);
+    renderRealTransactionsLedger(d.recent_transactions || []);
+}
+
+function renderRealTransactionsLedger(txList) {
+    const box = document.getElementById('nxRealTransactionsList');
+    if (!box) return;
+    if (!__nxState.isLoggedIn) {
+        box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;">🔒 Vui lòng đăng nhập để xem sổ cái lịch sử giao dịch thực tế trong SQLite.</div>`;
+        return;
+    }
+    if (!txList || !txList.length) {
+        box.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:12px;background:var(--nx-surface-2);border-radius:14px;">Sổ cái sạch (0 giao dịch). Mọi giao dịch nạp/rút hoặc thanh toán QR mới sẽ hiển thị tại đây.</div>`;
+        return;
+    }
+    box.innerHTML = txList.map(tx => {
+        const amt = Number(tx.amount || 0);
+        const isPlus = amt >= 0;
+        const safeNote = String(tx.note || tx.tx_type || 'Giao dịch ví').replace(/'/g, '');
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 11px;border-radius:14px;background:var(--nx-surface-2);border:1px solid var(--nx-border);margin-bottom:7px;cursor:pointer;" onclick="openReceiptForTransaction('${tx.tx_code || 'NXPAY'}', ${Math.abs(amt)}, '${safeNote}', '${tx.created_at || ''}')">
+            <div style="max-width:65%;">
+                <div style="font-weight:800;font-size:0.79rem;">${tx.tx_code || 'NXPAY'} • ${tx.tx_type || 'TX'}</div>
+                <div style="font-size:0.71rem;color:var(--nx-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${tx.note || ''}</div>
+                <div style="font-size:0.66rem;color:var(--nx-muted);">${tx.created_at || ''} (Chạm xuất biên lai PNG)</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-weight:800;font-size:0.86rem;color:${isPlus ? '#10b981' : '#ef4444'};">${isPlus ? '+' : ''}${amt.toLocaleString('vi-VN')} ₫</div>
+                <div style="font-size:0.68rem;color:var(--nx-muted);">Dư: ${Number(tx.balance_after || 0).toLocaleString('vi-VN')} ₫</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function clearRealTransactionsHistory() {
+    if (!requireMobileLoginForAction('làm sạch lịch sử giao dịch về 0')) return;
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/transactions/clear'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ user_id: __nxState.authUser.id })
+        });
+        const data = await res.json();
+        nxToast(data.message || '🧹 Đã làm sạch lịch sử giao dịch về 0!');
+        await syncMobileBridge();
+    } catch (e) {
+        nxToast('❌ Không thể xóa lịch sử giao dịch!');
+    }
+}
+
+function openReceiptForTransaction(txCode, amount, note, createdAt) {
+    __nxState.lastReceiptData = {
+        tx_code: txCode,
+        amount: amount,
+        recipient: (__nxState.authUser && __nxState.authUser.full_name) || 'Ví Lục Bảo Nexora Pay',
+        note: note,
+        created_at: createdAt || new Date().toLocaleString('vi-VN')
+    };
+    openNxModal('nxDigitalReceiptModal');
+    drawDigitalReceiptOnCanvas(__nxState.lastReceiptData);
+}
+
+function drawDigitalReceiptOnCanvas(rcp) {
+    const cv = document.getElementById('nxReceiptCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const gBg = ctx.createLinearGradient(0, 0, w, h);
+    gBg.addColorStop(0, '#052e16');
+    gBg.addColorStop(0.5, '#064e3b');
+    gBg.addColorStop(1, '#047857');
+    ctx.fillStyle = gBg;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.roundRect(24, 24, w - 48, h - 48, 22);
+    ctx.fill();
+
+    ctx.fillStyle = '#059669';
+    ctx.beginPath();
+    ctx.roundRect(24, 24, w - 48, 92, [22, 22, 0, 0]);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('BIÊN LAI GIAO DỊCH NEXORA PAY', w / 2, 64);
+    ctx.font = '13px sans-serif';
+    ctx.fillText('BẢO CHỨNG THANH TOÁN ESCROW SOP-01', w / 2, 92);
+
+    ctx.fillStyle = '#059669';
+    ctx.font = 'bold 34px sans-serif';
+    ctx.fillText(Number(rcp.amount || 0).toLocaleString('vi-VN') + ' VNĐ', w / 2, 166);
+
+    ctx.strokeStyle = '#d1fae5';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(52, 194);
+    ctx.lineTo(w - 52, 194);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#475569';
+    ctx.font = '14px sans-serif';
+    const rows = [
+        ['Mã giao dịch:', String(rcp.tx_code || 'NXPAY-888')],
+        ['Chủ tài khoản:', String((__nxState.authUser && __nxState.authUser.full_name) || 'Thành viên Nexora')],
+        ['Thụ hưởng:', String(rcp.recipient || 'Quỹ Bảo Lãnh Nexora Escrow')],
+        ['Thời gian:', String(rcp.created_at || new Date().toLocaleString('vi-VN'))],
+        ['Nội dung:', String(rcp.note || 'Giao dịch bảo mật Nexora Pay').slice(0, 42)]
+    ];
+    let yPos = 232;
+    rows.forEach(r => {
+        ctx.fillStyle = '#64748b';
+        ctx.font = '14px sans-serif';
+        ctx.fillText(r[0], 52, yPos);
+        ctx.fillStyle = '#0f172a';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(r[1], 175, yPos);
+        yPos += 38;
+    });
+
+    ctx.save();
+    ctx.translate(w - 135, h - 105);
+    ctx.rotate(-0.2);
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.roundRect(-78, -28, 156, 56, 10);
+    ctx.stroke();
+    ctx.fillStyle = '#dc2626';
+    ctx.font = 'bold 13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('ĐÃ BẢO LÃNH ESCROW', 0, -4);
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText('NEXORA VERIFIED', 0, 14);
+    ctx.restore();
+}
+
+function renderAndDownloadCanvasReceipt() {
+    const cv = document.getElementById('nxReceiptCanvas');
+    if (!cv) return;
+    if (!__nxState.lastReceiptData) {
+        __nxState.lastReceiptData = {
+            tx_code: 'NXPAY-' + Date.now(),
+            amount: 0,
+            recipient: 'Ví Nexora Pay',
+            note: 'Biên lai xác thực ví điện tử',
+            created_at: new Date().toLocaleString('vi-VN')
+        };
+        drawDigitalReceiptOnCanvas(__nxState.lastReceiptData);
+    }
+    const url = cv.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `BienLai_${__nxState.lastReceiptData.tx_code || 'NexoraPay'}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    nxToast('📥 Đã tải ảnh Biên Lai Điện Tử (.PNG) về thiết bị!');
 }
 
 function renderSpendingDonut(analytics) {
@@ -825,14 +1057,16 @@ function renderThemeModalList() {
 
 async function openMobileQrScannerCenter() {
     openNxModal('nxQrScannerModal');
+    await startMobileCameraQr();
     await syncMobileBridge();
 }
 
 async function startMobileCameraQr() {
+    stopMobileCameraQr();
     const video = document.getElementById('nxMobileQrVideo');
     const wrap = document.getElementById('nxMobileCameraBox');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        nxToast('⚠️ Thiết bị không mở được Camera trực tiếp. Hãy chọn hóa đơn đang chờ bên dưới!');
+        nxToast('⚠️ Bạn có thể chọn Ảnh Mã QR từ Thư viện máy hoặc chọn đơn đang chờ bên dưới!');
         return;
     }
     try {
@@ -855,12 +1089,12 @@ async function startMobileCameraQr() {
                 const code = jsQR(imgData.data, imgData.width, imgData.height);
                 if (code && code.data && String(code.data).trim()) {
                     stopMobileCameraQr();
-                    inspectQrTokenInvoice(code.data);
+                    handleDecodedQrString(code.data);
                 }
             }
-        }, 240);
+        }, 220);
     } catch (err) {
-        nxToast('⚠️ Camera đang bận hoặc bị chặn quyền. Bạn có thể bấm chọn ngay đơn AWAITING_PAYMENT bên dưới!');
+        nxToast('📷 Hãy chọn Ảnh Mã QR từ Thư viện máy hoặc bấm vào hóa đơn AWAITING_PAYMENT bên dưới!');
     }
 }
 
@@ -873,6 +1107,64 @@ function stopMobileCameraQr() {
         __nxState.camStream.getTracks().forEach(t => t.stop());
         __nxState.camStream = null;
     }
+}
+
+function handleQrGalleryImageSelected(ev) {
+    const file = ev && ev.target && ev.target.files ? ev.target.files[0] : null;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(loadEv) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.getElementById('nxMobileQrCanvas');
+            const ctx = canvas.getContext('2d');
+            const scales = [1, 1.5, 0.75];
+            let foundData = '';
+            for (const sc of scales) {
+                const dw = Math.round((img.naturalWidth || img.width || 300) * sc);
+                const dh = Math.round((img.naturalHeight || img.height || 300) * sc);
+                canvas.width = dw + 40;
+                canvas.height = dh + 40;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 20, 20, dw, dh);
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                if (typeof jsQR === 'function') {
+                    const res = jsQR(imgData.data, imgData.width, imgData.height);
+                    if (res && res.data && String(res.data).trim()) {
+                        foundData = String(res.data).trim();
+                        break;
+                    }
+                }
+            }
+            if (foundData) {
+                stopMobileCameraQr();
+                handleDecodedQrString(foundData);
+            } else {
+                nxToast('❌ Không tìm thấy mã QR hợp lệ trong bức ảnh bạn vừa chọn!');
+            }
+        };
+        img.src = loadEv.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+async function handleDecodedQrString(rawStr) {
+    const s = String(rawStr || '').trim();
+    if (s.toUpperCase().includes('QRWEB') || s.includes('web_login_token=')) {
+        const res = await fetch(nxApiUrl('/api/mobile/smart-otp/approve-qr-login'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ qr_login_token: s })
+        });
+        const data = await res.json();
+        nxToast(data.message || data.error || '📲 Đã duyệt QR đăng nhập máy tính!');
+        if (res.ok && data.ok) {
+            triggerNativeOrWebLockScreenNotification('📲 Duyệt QR Đăng Nhập Web', data.message);
+        }
+        return;
+    }
+    await inspectQrTokenInvoice(s);
 }
 
 function parseCleanPayToken(rawInput) {
@@ -1025,6 +1317,13 @@ async function confirmMobileQrPaymentNow() {
             if (window.NexoraNativeBridge && typeof window.NexoraNativeBridge.vibrateShort === 'function') {
                 try { window.NexoraNativeBridge.vibrateShort(); } catch (e) {}
             }
+            const paidAmt = Number(data.paid_amount || info.amount || 0);
+            speakBalanceChangeByAiSoundbox(`Nexora Pay thông báo: Đã khóa bảo lãnh Escrow thành công ${paidAmt} đồng cho đơn hàng ${info.order_code || ''}`);
+            triggerNativeOrWebLockScreenNotification(
+                `✅ Đã Thanh Toán QR ${info.order_code || ''}`,
+                `Số tiền ${paidAmt.toLocaleString('vi-VN')} ₫ đã được bảo vệ trong Quỹ Bảo Lãnh Escrow.`,
+                data.next_step_url || '/services/order_tracking/tracking.html'
+            );
             localStorage.setItem('nvx_qr_payment_confirmed', JSON.stringify({
                 ts: Date.now(),
                 pay_token: info.pay_token,
@@ -1032,14 +1331,21 @@ async function confirmMobileQrPaymentNow() {
                 tx_id: data.tx_code || info.pay_token,
                 order_id: data.order_id || info.order_id,
                 tracking_code: data.tracking_code || info.tracking_code,
-                amount: data.paid_amount || info.amount,
+                amount: paidAmt,
                 is_paid_on_behalf: Boolean(data.is_paid_on_behalf),
                 payer_name: data.payer_name || '',
                 payer_message: data.payer_message || '',
                 next_step_url: data.next_step_url || '/services/order_tracking/tracking.html',
                 status: 'APPROVED'
             }));
-            nxToast('🎉 Đã xác nhận thanh toán QR! Màn hình checkout.html trên máy tính đã tự động nhảy sang trang Vận đơn tracking.html!');
+            __nxState.lastReceiptData = {
+                tx_code: data.tx_code || info.pay_token,
+                amount: paidAmt,
+                recipient: 'Quỹ Bảo Lãnh Nexora Escrow',
+                note: `Thanh toán QR ${info.order_code || ''}`,
+                created_at: new Date().toLocaleString('vi-VN')
+            };
+            nxToast('🎉 Đã xác nhận thanh toán QR! Màn hình checkout.html trên PC đã tự động nhảy sang trang Vận đơn!');
             await inspectQrTokenInvoice(info.pay_token);
             await syncMobileBridge();
         } else {
@@ -1065,7 +1371,7 @@ async function submitMobileWalletAction(actionType) {
     const recInput = document.getElementById('nxWalletActionRecipient');
     const noteInput = document.getElementById('nxWalletActionNote');
     const amount = Number(amtInput ? amtInput.value : 0);
-    const recipient = recInput ? recInput.value : 'Ví Nexora Pay';
+    const recipient = (recInput ? recInput.value : '') || 'Ví Nexora Pay';
     const note = noteInput ? noteInput.value : '';
 
     try {
@@ -1089,14 +1395,433 @@ async function submitMobileWalletAction(actionType) {
             return;
         }
         if (res.ok && data.ok) {
-            nxToast('✅ ' + data.message);
+            if (amtInput) amtInput.value = '';
+            speakBalanceChangeByAiSoundbox(data.soundbox_speech || data.message);
+            triggerNativeOrWebLockScreenNotification('💸 Biến Động Số Dư Nexora Pay', data.message);
             closeNxModal('nxTopupWithdrawModal');
             await syncMobileBridge();
+            openReceiptForTransaction(data.tx_code, amount, data.note || note, data.created_at);
         } else {
             nxToast(data.error || '⚠️ Giao dịch không thành công');
         }
     } catch (e) {
         nxToast('❌ Lỗi kết nối máy chủ khi thực hiện giao dịch ví!');
+    }
+}
+
+async function openSmartOtpKeyModal() {
+    if (!requireMobileLoginForAction('mở Khóa Bảo Mật Động Smart OTP Key')) return;
+    openNxModal('nxSmartOtpModal');
+    await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+    if (__nxState.smartOtpTimer) clearInterval(__nxState.smartOtpTimer);
+    __nxState.smartOtpTimer = setInterval(async () => {
+        __nxState.smartOtpRemain -= 1;
+        if (__nxState.smartOtpRemain <= 0) {
+            await generateNewSmartOtpCode(__nxState.smartOtpLen, false);
+        } else {
+            drawSmartOtpCountdownRing();
+        }
+    }, 1000);
+}
+
+async function generateNewSmartOtpCode(pinLength = 6, pushLockscreen = false) {
+    if (!requireMobileLoginForAction('cấp mã Smart OTP')) return;
+    __nxState.smartOtpLen = Number(pinLength) || 6;
+    [4, 6, 8].forEach(l => {
+        const b = document.getElementById('nxSmartOtpLenBtn' + l);
+        if (b) {
+            b.style.background = l === __nxState.smartOtpLen ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = l === __nxState.smartOtpLen ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/smart-otp/generate'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+                user_id: __nxState.authUser.id,
+                pin_length: __nxState.smartOtpLen,
+                push_lockscreen: pushLockscreen
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+            __nxState.smartOtpCode = data.dynamic_pin;
+            __nxState.smartOtpRemain = 30;
+            const codeEl = document.getElementById('nxSmartOtpDigitsDisplay');
+            if (codeEl) codeEl.textContent = String(data.dynamic_pin).split('').join(' ');
+            drawSmartOtpCountdownRing();
+            if (pushLockscreen) {
+                triggerNativeOrWebLockScreenNotification(
+                    `🔐 Mã Smart OTP (${__nxState.smartOtpLen} Số): ${data.dynamic_pin}`,
+                    `Mã xác thực đăng nhập Web của bạn là ${data.dynamic_pin} (Hiệu lực 30 giây).`
+                );
+                nxToast('📲 Đã bắn mã Smart OTP ra Màn Hình Khóa điện thoại!');
+            }
+        }
+    } catch (e) {}
+}
+
+function drawSmartOtpCountdownRing() {
+    const cv = document.getElementById('nxSmartOtpRingCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+    const pct = Math.max(0, __nxState.smartOtpRemain) / 30;
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(5, 150, 105, 0.16)';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, 46, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = __nxState.smartOtpRemain <= 7 ? '#ef4444' : '#059669';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(w / 2, h / 2, 46, -Math.PI / 2, -Math.PI / 2 + pct * Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = __nxState.smartOtpRemain <= 7 ? '#ef4444' : '#052e16';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(__nxState.smartOtpRemain + 's', w / 2, h / 2);
+}
+
+async function openNotificationInboxModal(tab = 'deal') {
+    __nxState.activeNotifTab = tab;
+    openNxModal('nxNotificationCenterModal');
+    await loadNotificationsByTab(tab);
+}
+
+async function loadNotificationsByTab(tab = 'deal') {
+    __nxState.activeNotifTab = tab;
+    ['deal', 'terms', 'balance'].forEach(t => {
+        const b = document.getElementById('nxNotifTabBtn_' + t);
+        if (b) {
+            b.style.background = t === tab ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = t === tab ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    const termsAgreeBar = document.getElementById('nxTermsAgreementBox');
+    if (termsAgreeBar) termsAgreeBar.style.display = tab === 'terms' ? 'block' : 'none';
+
+    const listEl = document.getElementById('nxNotificationsInboxList');
+    if (!listEl) return;
+    try {
+        const res = await fetch(nxApiUrl(`/api/mobile/notifications?category=${encodeURIComponent(tab)}&_t=${Date.now()}`), {
+            headers: nxAuthHeaders()
+        });
+        const data = await res.json();
+        const rows = (data && data.notifications) || [];
+        if (!rows.length) {
+            listEl.innerHTML = `<div style="font-size:0.78rem;color:var(--nx-muted);text-align:center;padding:14px;">Chưa có thông báo nào trong mục này.</div>`;
+            return;
+        }
+        listEl.innerHTML = rows.map(n => {
+            return `<div style="padding:11px 12px;border-radius:14px;background:var(--nx-surface-2);border:1.5px solid ${n.is_read ? 'var(--nx-border)' : 'var(--nx-primary)'};margin-bottom:8px;cursor:pointer;" onclick="window.location.href='${n.target_url || '/services/mobile/mobile-app.html'}'">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                    <strong style="font-size:0.82rem;color:var(--nx-primary);">${n.title}</strong>
+                    <span style="font-size:0.65rem;color:var(--nx-muted);">${n.created_at || ''}</span>
+                </div>
+                <div style="font-size:0.76rem;line-height:1.35;">${n.message}</div>
+            </div>`;
+        }).join('');
+    } catch (e) {}
+}
+
+async function triggerPushLockscreenDemo(category) {
+    const delayCheck = document.getElementById('nxDelayLockscreenToggle');
+    const delayMs = delayCheck && delayCheck.checked ? 3000 : 100;
+    if (delayMs >= 1000) {
+        nxToast('⏳ Đã hẹn 3 giây! Hãy bấm nút Nguồn tắt/khóa màn hình điện thoại ngay để xem thông báo bật sáng trên Màn Hình Khóa!');
+    }
+    setTimeout(async () => {
+        try {
+            const res = await fetch(nxApiUrl('/api/mobile/notifications'), {
+                method: 'POST',
+                headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+                body: JSON.stringify({ action: 'push_lockscreen', category })
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                triggerNativeOrWebLockScreenNotification(data.title, data.message, data.target_url);
+                await loadNotificationsByTab(category);
+                await syncMobileBridge();
+            }
+        } catch (e) {}
+    }, delayMs);
+}
+
+async function submitAgreeTermsV12() {
+    try {
+        const res = await fetch(nxApiUrl('/api/mobile/notifications/agree-terms'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({})
+        });
+        const data = await res.json();
+        nxToast(data.message || '✅ Đã xác nhận đồng ý Điều khoản & Chính sách V12!');
+        triggerNativeOrWebLockScreenNotification('📜 Đã Đồng Ý Điều Khoản Nexora V12', data.message);
+        await loadNotificationsByTab('terms');
+    } catch (e) {}
+}
+
+function openCheckin7DaysModal() {
+    openNxModal('nxCheckin7DaysModal');
+    drawCheckin7DaysCanvas();
+}
+
+function drawCheckin7DaysCanvas() {
+    const cv = document.getElementById('nxCheckin7DaysCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+    const streak = (__nxState.authUser && Number(__nxState.authUser.streak_days || 1)) || 1;
+    const rewards = ['+5K', '+10K', '+15K', '+20K', '+25K', '+30K', '+50K'];
+
+    for (let i = 0; i < 7; i++) {
+        const x = 14 + i * 54;
+        const y = 22;
+        const done = (i + 1) <= streak;
+        ctx.fillStyle = done ? '#059669' : '#dcfce7';
+        ctx.beginPath();
+        ctx.roundRect(x, y, 46, 76, 12);
+        ctx.fill();
+        ctx.fillStyle = done ? '#ffffff' : '#052e16';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Ngày ' + (i + 1), x + 23, y + 22);
+        ctx.fillStyle = done ? '#fde047' : '#059669';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(rewards[i], x + 23, y + 48);
+        ctx.font = '12px sans-serif';
+        ctx.fillText(done ? '🔥' : '🪙', x + 23, y + 68);
+    }
+}
+
+async function triggerMobileDailyCheckin() {
+    if (!requireMobileLoginForAction('điểm danh chuỗi lửa 7 ngày nhận Xu')) return;
+    try {
+        const res = await fetch(nxApiUrl('/api/settings/daily-checkin'), {
+            method: 'POST',
+            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ user_id: __nxState.authUser.id })
+        });
+        const data = await res.json();
+        nxToast(data.message || '🔥 Điểm danh chuỗi lửa thành công!');
+        speakBalanceChangeByAiSoundbox(data.message || 'Điểm danh chuỗi lửa thành công');
+        await syncMobileBridge();
+        drawCheckin7DaysCanvas();
+    } catch (e) {
+        nxToast('❌ Không thể kết nối API Điểm danh!');
+    }
+}
+
+function openMiniGameCenterModal(gameType = 'wheel') {
+    openNxModal('nxMiniGameCenterModal');
+    switchMiniGameMode(gameType);
+}
+
+function switchMiniGameMode(gameType) {
+    __nxState.activeMiniGame = gameType;
+    if (__nxState.aimTimer) {
+        clearInterval(__nxState.aimTimer);
+        __nxState.aimTimer = null;
+    }
+    ['wheel', 'aim', 'tree'].forEach(g => {
+        const b = document.getElementById('nxGameTab_' + g);
+        if (b) {
+            b.style.background = g === gameType ? 'var(--nx-primary)' : 'var(--nx-surface-2)';
+            b.style.color = g === gameType ? '#fff' : 'var(--nx-text)';
+        }
+    });
+    const actBtn = document.getElementById('nxMiniGamePrimaryBtn');
+    if (gameType === 'wheel') {
+        if (actBtn) {
+            actBtn.textContent = '🎡 QUAY VÒNG QUAY LỤC BẢO NGAY';
+            actBtn.onclick = startCanvasWheelSpin;
+        }
+        drawLuckyWheelGameCanvas();
+    } else if (gameType === 'aim') {
+        __nxState.aimScore = 0;
+        __nxState.aimTimeLeft = 30;
+        if (actBtn) {
+            actBtn.textContent = '🎯 BẮT ĐẦU BẮN TÂM 30 GIÂY & NHẬN XU';
+            actBtn.onclick = startAimReflexCanvasGame;
+        }
+        drawAimReflexGameCanvas();
+    } else {
+        if (actBtn) {
+            actBtn.textContent = '🌱 TƯỚI NƯỚC & THU HOẠCH QUẢ TIỀN VÀNG';
+            actBtn.onclick = waterAndHarvestEmeraldTree;
+        }
+        drawMoneyTreeGameCanvas();
+    }
+}
+
+function drawLuckyWheelGameCanvas() {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = 105;
+    const prizes = ['50K Xu', 'GEAR50K', '20K Xu', 'BRAND30K', '10K Xu', 'START15K', '5K Xu', '1K Xu'];
+    const cols = ['#059669', '#10b981', '#047857', '#0ea5e9', '#d97706', '#76b900', '#0284c7', '#f59e0b'];
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(__nxState.wheelAngle);
+    for (let i = 0; i < 8; i++) {
+        const a0 = (i * Math.PI) / 4;
+        const a1 = ((i + 1) * Math.PI) / 4;
+        ctx.fillStyle = cols[i];
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, r, a0, a1);
+        ctx.closePath();
+        ctx.fill();
+        ctx.save();
+        ctx.rotate(a0 + Math.PI / 8);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(prizes[i], r - 12, 4);
+        ctx.restore();
+    }
+    ctx.restore();
+
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r - 10);
+    ctx.lineTo(cx - 10, cy - r + 12);
+    ctx.lineTo(cx + 10, cy - r + 12);
+    ctx.closePath();
+    ctx.fill();
+}
+
+async function startCanvasWheelSpin() {
+    if (!requireMobileLoginForAction('quay Vòng Quay Lục Bảo')) return;
+    if (__nxState.wheelSpinning) return;
+    __nxState.wheelSpinning = true;
+    let vel = 0.42;
+    const anim = setInterval(() => {
+        __nxState.wheelAngle += vel;
+        vel *= 0.96;
+        drawLuckyWheelGameCanvas();
+        if (vel < 0.01) {
+            clearInterval(anim);
+            __nxState.wheelSpinning = false;
+            triggerMobileLuckySpin();
+        }
+    }, 30);
+}
+
+function drawAimReflexGameCanvas() {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.fillStyle = '#052e16';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`🎯 Điểm: ${__nxState.aimScore}  |  ⏱️ Còn: ${__nxState.aimTimeLeft}s`, 16, 26);
+
+    const t = __nxState.aimTarget;
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r * 0.6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#10b981';
+    ctx.beginPath(); ctx.arc(t.x, t.y, t.r * 0.28, 0, Math.PI * 2); ctx.fill();
+}
+
+function startAimReflexCanvasGame() {
+    if (!requireMobileLoginForAction('chơi Bắn Tâm Phản Xạ nhận Xu')) return;
+    __nxState.aimScore = 0;
+    __nxState.aimTimeLeft = 15;
+    if (__nxState.aimTimer) clearInterval(__nxState.aimTimer);
+    __nxState.aimTimer = setInterval(() => {
+        __nxState.aimTimeLeft -= 1;
+        drawAimReflexGameCanvas();
+        if (__nxState.aimTimeLeft <= 0) {
+            clearInterval(__nxState.aimTimer);
+            __nxState.aimTimer = null;
+            triggerMobileReflexArenaClaim();
+        }
+    }, 1000);
+    drawAimReflexGameCanvas();
+}
+
+function drawMoneyTreeGameCanvas() {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    ctx.fillStyle = '#ecfdf5';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(w / 2 - 14, h - 90, 28, 70);
+    ctx.fillStyle = '#059669';
+    ctx.beginPath(); ctx.arc(w / 2, h - 120, 56, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w / 2 - 38, h - 100, 40, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w / 2 + 38, h - 100, 40, 0, Math.PI * 2); ctx.fill();
+
+    const coinCoords = [[w / 2 - 30, h - 130], [w / 2 + 26, h - 135], [w / 2, h - 155], [w / 2 - 44, h - 95], [w / 2 + 44, h - 95]];
+    coinCoords.forEach(c => {
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath(); ctx.arc(c[0], c[1], 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('XU', c[0], c[1] + 3);
+    });
+}
+
+async function waterAndHarvestEmeraldTree() {
+    if (!requireMobileLoginForAction('tưới cây & thu hoạch Xu')) return;
+    drawMoneyTreeGameCanvas();
+    await triggerMobileDailyCheckin();
+}
+
+function handleInteractiveGameCanvasTap(ev) {
+    const cv = document.getElementById('nxInteractiveGameCanvas');
+    if (!cv) return;
+    const rect = cv.getBoundingClientRect();
+    const scaleX = cv.width / rect.width;
+    const scaleY = cv.height / rect.height;
+    const px = (ev.clientX - rect.left) * scaleX;
+    const py = (ev.clientY - rect.top) * scaleY;
+
+    if (__nxState.activeMiniGame === 'aim') {
+        const d = Math.hypot(px - __nxState.aimTarget.x, py - __nxState.aimTarget.y);
+        if (d <= __nxState.aimTarget.r + 14) {
+            __nxState.aimScore += 1;
+            __nxState.aimTarget.x = 40 + Math.random() * (cv.width - 80);
+            __nxState.aimTarget.y = 50 + Math.random() * (cv.height - 90);
+            drawAimReflexGameCanvas();
+        }
+    } else if (__nxState.activeMiniGame === 'wheel') {
+        startCanvasWheelSpin();
+    } else {
+        waterAndHarvestEmeraldTree();
     }
 }
 
@@ -1143,22 +1868,6 @@ async function claimDutchAuctionOnMobile(auctionId) {
     }
 }
 
-async function triggerMobileDailyCheckin() {
-    if (!requireMobileLoginForAction('điểm danh chuỗi lửa nhận Xu')) return;
-    try {
-        const res = await fetch(nxApiUrl('/api/settings/daily-checkin'), {
-            method: 'POST',
-            headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ user_id: __nxState.authUser.id })
-        });
-        const data = await res.json();
-        nxToast(data.message || '🔥 Điểm danh chuỗi lửa thành công!');
-        await syncMobileBridge();
-    } catch (e) {
-        nxToast('❌ Không thể kết nối API Điểm danh!');
-    }
-}
-
 async function triggerMobileLuckySpin() {
     if (!requireMobileLoginForAction('quay Vòng Quay May Mắn')) return;
     try {
@@ -1168,7 +1877,9 @@ async function triggerMobileLuckySpin() {
             body: JSON.stringify({ user_id: __nxState.authUser.id })
         });
         const data = await res.json();
-        nxToast(data.message || (data.prize && data.prize.label ? '🎡 Chúc mừng bạn quay trúng: ' + data.prize.label : '🎡 Đã quay Vòng Quay May Mắn!'));
+        const msg = data.message || (data.prize && data.prize.label ? '🎡 Chúc mừng bạn quay trúng: ' + data.prize.label : '🎡 Đã quay Vòng Quay May Mắn!');
+        nxToast(msg);
+        speakBalanceChangeByAiSoundbox(msg);
         await syncMobileBridge();
     } catch (e) {
         nxToast('❌ Không thể kết nối API Vòng quay may mắn!');
@@ -1178,18 +1889,20 @@ async function triggerMobileLuckySpin() {
 async function triggerMobileReflexArenaClaim() {
     if (!requireMobileLoginForAction('nhận thưởng Bắn Tâm Phản Xạ Esport')) return;
     try {
+        const hits = Math.max(15, __nxState.aimScore || 25);
         const res = await fetch(nxApiUrl('/api/minigame/reflex-arena/claim'), {
             method: 'POST',
             headers: nxAuthHeaders({ 'Content-Type': 'application/json' }),
             body: JSON.stringify({
-                score: 28,
-                hits: 28,
+                score: hits,
+                hits: hits,
                 user_id: __nxState.authUser.id,
                 username: __nxState.authUser.username
             })
         });
         const data = await res.json();
-        nxToast(data.message || '🎯 Đã nhận thưởng Bắn Tâm Phản Xạ Esport 30s!');
+        nxToast(data.message || '🎯 Đã nhận thưởng Bắn Tâm Phản Xạ Esport!');
+        speakBalanceChangeByAiSoundbox(data.message || 'Đã nhận thưởng bắn tâm phản xạ');
         await syncMobileBridge();
     } catch (e) {
         nxToast('❌ Không thể kết nối API Minigame!');
@@ -1248,7 +1961,9 @@ async function submitMobileWatchlistAlert() {
             })
         });
         const data = await res.json();
-        nxToast(data.message || `🔔 Đã đặt báo động giảm giá ở mức ${targetPrice.toLocaleString('vi-VN')} ₫!`);
+        const msg = data.message || `🔔 Đã đặt báo động giảm giá ở mức ${targetPrice.toLocaleString('vi-VN')} ₫!`;
+        nxToast(msg);
+        triggerNativeOrWebLockScreenNotification('🏷️ Đã Đặt Báo Động Giảm Giá', msg, '/services/market_tracker/price-tracker.html');
     } catch (e) {
         nxToast('❌ Lỗi khi lưu báo động giá!');
     }
@@ -1258,7 +1973,7 @@ function handleQuickSearchInput(ev) {
     if (ev && ev.key === 'Enter') {
         const val = (ev.target.value || '').trim();
         if (!val) return;
-        inspectQrTokenInvoice(val);
+        handleDecodedQrString(val);
     }
 }
 
@@ -1266,6 +1981,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderNexoraCanvasIcons();
     await nxApplyTheme(__nxState.themeId, false);
     await nxApplyCvdMode(__nxState.cvdMode, false);
+    if ('Notification' in window && Notification.permission === 'default') {
+        try { Notification.requestPermission(); } catch (e) {}
+    }
+    if ('serviceWorker' in navigator) {
+        try { navigator.serviceWorker.register('/sw.js'); } catch (e) {}
+    }
     await syncMobileBridge();
     await refreshLiveAuctionsList();
     const params = new URLSearchParams(window.location.search);

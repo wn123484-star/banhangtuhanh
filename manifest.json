@@ -1,7 +1,7 @@
 {
-  "name": "Nexora Mobile — Siêu Ứng Dụng Tài Chính Lục Bảo & Thương Mại Công Nghệ",
+  "name": "Nexora Mobile V12 Ultra — Siêu Ứng Dụng Tài Chính Lục Bảo & Smart OTP",
   "short_name": "Nexora Mobile",
-  "description": "Siêu ứng dụng Ví Nexora Pay, Quét QR Xem Giá 2 Bước, Chuyển Khoản Hộ & Sàn Đấu Giá Kép",
+  "description": "Siêu ứng dụng Ví Nexora Pay, Quét QR Xem Giá 2 Bước, Khóa Smart OTP 30s & Thông Báo Màn Hình Khóa",
   "start_url": "/services/mobile/mobile-app.html",
   "scope": "/",
   "display": "standalone",

@@ -8,8 +8,8 @@ android {
         applicationId "cloud.castletech.nexora.mobile"
         minSdk 24
         targetSdk 34
-        versionCode 70
-        versionName "7.0-NEXORA-SUPERAPP"
+        versionCode 120
+        versionName "12.0-NEXORA-ULTRA"
     }
 
     buildTypes {

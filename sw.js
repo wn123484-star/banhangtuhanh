@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexora-mobile-pwa-v11';
+const CACHE_NAME = 'nexora-mobile-pwa-v12-ultra';
 const CORE_ASSETS = [
     '/services/mobile/mobile-app.html',
     '/services/mobile/mobile-app.css',
@@ -22,6 +22,24 @@ self.addEventListener('activate', event => {
         ))
     );
     self.clients.claim();
+});
+
+self.addEventListener('notificationclick', event => {
+    event.notification.close();
+    const targetUrl = (event.notification.data && event.notification.data.url) || '/services/mobile/mobile-app.html';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+            for (const client of windowClients) {
+                if ('focus' in client) {
+                    client.navigate(targetUrl);
+                    return client.focus();
+                }
+            }
+            if (clients.openWindow) {
+                return clients.openWindow(targetUrl);
+            }
+        })
+    );
 });
 
 self.addEventListener('fetch', event => {
